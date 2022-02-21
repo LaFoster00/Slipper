@@ -18,9 +18,8 @@ endif()
 
 include_directories(src)
 
-
-option(LIB_COMPILE ON)
-if(LIB_COMPILE)
+option(OUTPUT_LIB OFF)
+if(OUTPUT_LIB)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
     add_library(Slipper_Engine SHARED src/Slipper_Engine.cpp)
 else()
@@ -30,10 +29,21 @@ endif()
 
 option(LIB_DEBUG OFF)
 
-#Packages
+
+#Libs
+
+#glfw
+target_include_directories(Slipper_Engine PRIVATE "${EXTERNAL_LIBS_DIR}/glfw/include")
+target_link_directories(Slipper_Engine PRIVATE "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
+message("${EXTERNAL_LIBS_DIR}/glfw/build/src/")
+target_link_libraries(Slipper_Engine glfw3 dl pthread X11)
+
+
 #include Vulkan
 find_package(Vulkan REQUIRED FATAL_ERROR)
+target_include_directories(Slipper_Engine PRIVATE ${VULKAN_INCLUDE_DIRS})
 target_link_libraries(Slipper_Engine ${VULKAN_LIB_LIST})
+target_link_libraries(Slipper_Engine GL)
 
 #bgfx
 include_directories(${EXTERNAL_LIBS_DIR}/bgfx/include)
@@ -43,16 +53,17 @@ if (UNIX)
         if (NOT EXISTS "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/libbgfxDebug.a")
             message(FATAL_ERROR "The bgfx submodule was not built as debug! Go to bgfx folder and run: make linux-debug64")
         endif()
-        target_link_libraries(Slipper_Engine bgfxDebug bimgDebug bxDebug bnetDebug)
+        target_link_libraries(Slipper_Engine bgfxDebug bimgDebug bxDebug)
     else()
         if (NOT EXISTS "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/libbgfxRelease.a")
             message(FATAL_ERROR "The bgfx submodule was not built as release! Go to bgfx folder and run: make linux-release64")
         endif()
-        target_link_libraries(Slipper_Engine bgfxRelease bimgRelease bxRelease bnetRelease)
+        target_link_libraries(Slipper_Engine bgfxRelease bimgRelease bxRelease)
     endif()
 elseif(WIN32)
     message(FATAL_ERROR "Setup bgfx for windows")
 endif()
+
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

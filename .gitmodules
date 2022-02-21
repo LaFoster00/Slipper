@@ -7,3 +7,6 @@
 [submodule "extern/bx"]
 	path = extern/bx
 	url = https://github.com/bkaradzic/bx.git
+[submodule "extern/glfw"]
+	path = extern/glfw
+	url = https://github.com/glfw/glfw.git

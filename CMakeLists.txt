@@ -30,31 +30,53 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/bgfx/makefile")
 endif()
 
 
+option(LIB_DEBUG OFF)
 
-option(FORCE_BGFX_MAKE "Call make command even if build dir exists" OFF)
-if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/bgfx/.build" OR FORCE_BGFX_MAKE)
-    execute_process(
-        COMMAND make
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
+execute_process(
+    COMMAND make
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
+)
+
+if (LINUX)
+    if(LIB_DEBUG)
+        execute_process(
+            COMMAND make linux-debug64
+            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
         )
-
-    if (LINUX)
+    else()
         execute_process(
             COMMAND make linux-release64
             WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
         )
     endif()
-
-    if (WIN32)
+elseif (WIN32)
+    if(LIB_DEBUG)
         execute_process(
-            COMMAND make mvs2017-release64
+            COMMAND make mvs2017-debug64
             WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
         )
+    else()
+    execute_process(
+        COMMAND make mvs2017-release64
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
+    )
     endif()
 endif()
 
+
+#GLFW
+message(STATUS "BUILDING GLFW")
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/glfw ${CMAKE_CURRENT_LIST_DIR}/extern/glfw/build)
+
+
+#Slipper
+message(STATUS "BUILDING SLIPPER_ENGINE")
 add_subdirectory(source/Slipper_Engine)
 
+message(STATUS "BUILDING SLIPPER_EDITOR")
 if (BUILD_TYPE STREQUAL "release")
     message(STATUS "Building Editor In Release Config")    
     execute_process(
