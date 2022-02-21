@@ -8,7 +8,7 @@
             "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/../bin/Engine/Slipper_Engine",
+            "program": "${workspaceRoot}/../bin/Engine/Debug/Slipper_Engine",
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build Debug",
         },
@@ -16,7 +16,7 @@
             "name": "Release",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/../bin/Engine/Slipper_Engine",
+            "program": "${workspaceRoot}/../bin/Engine/Release/Slipper_Engine",
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build Release",
         }
