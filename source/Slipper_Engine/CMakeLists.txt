@@ -23,6 +23,9 @@ include_directories(src)
 set(SLIPPER_ENGINE_SOURCE_FILES 
     src/Slipper_Engine.cpp
     src/Tutorial/HelloTriangleApplication.cpp
+    src/Window/Window.cpp
+    src/VulkanApp/Instance.cpp
+    src/VulkanApp/Device.cpp
 )
 
 option(OUTPUT_LIB OFF)
