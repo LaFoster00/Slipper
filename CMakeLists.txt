@@ -60,13 +60,17 @@ elseif (WIN32)
 endif()
 
 
+#GLM
+message(STATUS "Configuring GLM")
+add_subdirectory(extern/glm)
+
+
 #GLFW
 message(STATUS "Configuring GLFW")
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/glfw ${CMAKE_CURRENT_LIST_DIR}/extern/glfw/build)
-
 
 #Slipper
 message(STATUS "Configuring SLIPPER_ENGINE Lib")

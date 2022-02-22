@@ -5,7 +5,7 @@
             "label": "Build Debug",
             "command": "cmake --build ${workspaceRoot}/build --config Debug --target all -j 18 --",
             "options": {
-                "cwd": "${workspaceRoot}"
+                
             },
         },
         {
@@ -13,7 +13,6 @@
             "label": "Build Release",
             "command": "cmake --build ${workspaceRoot}/build --config Release --target all -j 18 --",
             "options": {
-                "cwd": "${workspaceRoot}"
             },
         }
     ],

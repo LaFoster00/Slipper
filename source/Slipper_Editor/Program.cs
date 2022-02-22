@@ -10,12 +10,12 @@ namespace SlipperEditor{
 #endif
 
         [DllImport(EngineDll, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void say_hello(int* array);
+        public static extern int main();
 
         static void Main(string[] args)
         {
             Console.WriteLine(File.Exists(EngineDll));
-            say_hello(null);
+            main();
         }
     }
 }

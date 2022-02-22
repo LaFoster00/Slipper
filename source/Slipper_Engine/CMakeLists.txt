@@ -10,7 +10,7 @@ enable_testing()
 string(CONCAT BUILD_TYPE ${CMAKE_BUILD_TYPE})
 message("Building with ${BUILD_TYPE} config!")
 
-set(BUILD_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../bin/Engine/$<CONFIG>)
+set(BUILD_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/$<CONFIG>)
 set(EXTERNAL_LIBS_DIR "${CMAKE_CURRENT_LIST_DIR}/../../extern")
 
 if ("${BUILD_TYPE}" STREQUAL "Debug")
@@ -20,52 +20,59 @@ endif()
 
 include_directories(src)
 
+set(SLIPPER_ENGINE_SOURCE_FILES 
+    src/Slipper_Engine.cpp
+    src/Tutorial/HelloTriangleApplication.cpp
+)
+
 option(OUTPUT_LIB OFF)
 if(OUTPUT_LIB)
     message("Building Engine Library")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_library(Slipper_Engine SHARED src/Slipper_Engine.cpp)
+    add_library(Slipper_Engine SHARED ${SLIPPER_ENGINE_SOURCE_FILES})
 else()
     message("Building Engine Executable")    
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_executable(Slipper_Engine src/Slipper_Engine_Standalone.cpp)
+    add_executable(Slipper_Engine ${SLIPPER_ENGINE_SOURCE_FILES})
 endif()
 
 option(LIB_DEBUG OFF)
 
 
 #Libs
+#include Vulkan
+find_package(Vulkan REQUIRED FATAL_ERROR)
+include_directories(Slipper_Engine ${Vulkan_INCLUDE_DIRS})
+target_link_libraries(Slipper_Engine ${Vulkan_LIBRARIES})
+
 
 #glfw
-target_include_directories(Slipper_Engine PRIVATE "${EXTERNAL_LIBS_DIR}/glfw/include")
-target_link_directories(Slipper_Engine PRIVATE "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
+target_include_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/include")
+target_link_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
 target_link_libraries(Slipper_Engine glfw3 dl pthread X11)
 
 
-#include Vulkan
-find_package(Vulkan REQUIRED FATAL_ERROR)
-target_include_directories(Slipper_Engine PRIVATE ${VULKAN_INCLUDE_DIRS})
-target_link_libraries(Slipper_Engine ${VULKAN_LIB_LIST})
-target_link_libraries(Slipper_Engine GL)
+#glm
+target_include_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
 
 #bgfx
-include_directories(${EXTERNAL_LIBS_DIR}/bgfx/include)
-if (UNIX)
-    target_link_directories(Slipper_Engine PRIVATE "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/")
-    if (${LIB_DEBUG})
-        if (NOT EXISTS "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/libbgfxDebug.a")
-            message(WARNING "The bgfx submodule was not built as debug! Go to bgfx folder and run 'make linux-debug64' or build the make file in the repo root directory!")
-        endif()
-        target_link_libraries(Slipper_Engine bgfxDebug bimgDebug bxDebug)
-    else()
-        if (NOT EXISTS "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/libbgfxRelease.a")
-            message(WARNING "The bgfx submodule was not built as release! Go to bgfx folder and run 'make linux-release64' or build the make file in the repo root directory!")
-        endif()
-        target_link_libraries(Slipper_Engine bgfxRelease bimgRelease bxRelease)
-    endif()
-elseif(WIN32)
-    message(FATAL_ERROR "Setup bgfx for windows")
-endif()
+#include_directories(${EXTERNAL_LIBS_DIR}/bgfx/include)
+#if (UNIX)
+#    target_link_directories(Slipper_Engine PRIVATE "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/")
+#    if (${LIB_DEBUG})
+#        if (NOT EXISTS "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/libbgfxDebug.a")
+#            message(WARNING "The bgfx submodule was not built as debug! Go to bgfx folder and run 'make linux-debug64' or build the make file in the repo root directory!")
+#        endif()
+#        target_link_libraries(Slipper_Engine bgfxDebug bimgDebug bxDebug)
+#    else()
+#        if (NOT EXISTS "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/libbgfxRelease.a")
+#            message(WARNING "The bgfx submodule was not built as release! Go to bgfx folder and run 'make linux-release64' or build the make file in the repo root directory!")
+#        endif()
+#        target_link_libraries(Slipper_Engine bgfxRelease bimgRelease bxRelease)
+#    endif()
+#elseif(WIN32)
+#    message(FATAL_ERROR "Setup bgfx for windows")
+#endif()
 
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
