@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 // DO NOT CHANGE NUMBERS WITHOUT CHANGING SHADERTYPENAMES ARRAY!!!
 enum class ShaderType
@@ -32,10 +33,12 @@ public:
     static VkPipelineShaderStageCreateInfo CreateShaderStage(Shader &shader);
 
 public:
+    static std::unordered_map<Device *, std::vector<VkPipelineShaderStageCreateInfo>> ShaderStages;
+
+public:
     Device *owningDevice;
 
     std::string name;
     ShaderType shaderType;
     VkShaderModule shaderModule;
-    VkPipelineShaderStageCreateInfo shaderStage;
 };

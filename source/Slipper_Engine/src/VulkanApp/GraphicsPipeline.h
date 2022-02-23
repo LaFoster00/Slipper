@@ -2,6 +2,7 @@
 
 #include "common_includes.h"
 #include "Shader.h"
+#include "RenderPass.h"
 
 #include <optional>
 #include <vector>
@@ -30,5 +31,7 @@ public:
     Device *owningDevice;
 
     std::vector<Shader> shaders;
-    VkPipelineLayout pipelineLayout;
+    RenderPass renderPass;
+    VkPipelineLayout vkPipelineLayout;
+    VkPipeline vkGraphicsPipeline;
 };

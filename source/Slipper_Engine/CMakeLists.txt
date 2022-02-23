@@ -32,6 +32,7 @@ set(SLIPPER_ENGINE_SOURCE_FILES
     src/Filesystem/File.cpp
     src/VulkanApp/Shader.cpp
     src/VulkanApp/GraphicsPipeline.cpp
+    src/VulkanApp/RenderPass.cpp
 )
 
 option(OUTPUT_LIB OFF)

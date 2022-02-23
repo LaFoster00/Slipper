@@ -9,6 +9,8 @@ const char *ShaderTypeNames[]{
     "Fragment",
     "Compute"};
 
+std::unordered_map<Device *, std::vector<VkPipelineShaderStageCreateInfo>> Shader::ShaderStages;
+
 Shader::Shader()
 {
     shaderModule = VK_NULL_HANDLE;
@@ -28,9 +30,10 @@ void Shader::Destroy()
 void Shader::LoadShader(const char *filepath, ShaderType shaderType, Device *device)
 {
     name = File::GetFileNameFromPath(filepath);
+    this->shaderType = shaderType;
     auto binaryCode = File::ReadBinaryFile(filepath);
     shaderModule = CreateShaderModule(binaryCode, device);
-    shaderStage = CreateShaderStage(*this);
+    CreateShaderStage(*this);
 
     std::cout << "Created " << ShaderTypeNames[static_cast<uint32_t>(shaderType)] << " shader '" << name << "' from " << filepath << '\n';
 }
@@ -63,7 +66,7 @@ VkPipelineShaderStageCreateInfo Shader::CreateShaderStage(Shader &shader)
     switch (shader.shaderType)
     {
     case ShaderType::Vertex:
-        createInfo.stage == VK_SHADER_STAGE_VERTEX_BIT;
+        createInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
         break;
     case ShaderType::Fragment:
         createInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -75,6 +78,15 @@ VkPipelineShaderStageCreateInfo Shader::CreateShaderStage(Shader &shader)
 
     createInfo.module = shader.shaderModule;
     createInfo.pName = "main";
+
+    if (!ShaderStages.contains(shader.owningDevice))
+    {
+        ShaderStages.insert(std::make_pair(shader.owningDevice, std::vector<VkPipelineShaderStageCreateInfo>{createInfo}));
+    }
+    else
+    {
+        ShaderStages.at(shader.owningDevice).push_back(createInfo);
+    }
 
     return createInfo;
 }
