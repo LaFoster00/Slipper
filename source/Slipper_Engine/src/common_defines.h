@@ -1,5 +1,6 @@
 #pragma once
 #include <stdexcept>
+#include <iostream>
 
 #ifdef __GNUC__
 #define LINUX
@@ -9,10 +10,14 @@
 #define SLIPPER_FUNCTION _declspec(dllexport)
 #endif
 
-#define VK_ASSERT(func, message)           \
-    if (func != VK_SUCCESS)                \
-    {                                      \
-        throw std::runtime_error(message); \
+#define VK_ASSERT(func, message)                                                                                   \
+    if (func != VK_SUCCESS)                                                                                        \
+    {                                                                                                              \
+        std::cout << "\nA Vulkan exepction occured at line: '" << __LINE__ << "' in file '" << __FILE__ << "':\n"; \
+        std::string formatedMessage = "\n\t";                                                                      \
+        formatedMessage += message;                                                                                \
+        formatedMessage += '\n';                                                                                   \
+        throw std::runtime_error(formatedMessage);                                                                 \
     }
 
 #define LOG(message) std::cout << message;

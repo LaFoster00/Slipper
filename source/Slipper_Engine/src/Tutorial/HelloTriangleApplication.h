@@ -6,6 +6,7 @@
 #include "VulkanApp/Surface.h"
 #include "Engine/Engine.h"
 #include "terminal_util.h"
+#include "VulkanApp/GraphicsPipeline.h"
 
 #include <vector>
 #include <fstream>
@@ -52,6 +53,7 @@ private:
     Instance instance;
     Surface surface;
     Device device;
+    GraphicsPipeline pipeline;
 
     VkSwapchainKHR swapchain;
 

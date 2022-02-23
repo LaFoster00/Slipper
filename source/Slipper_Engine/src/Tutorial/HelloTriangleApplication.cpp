@@ -19,6 +19,7 @@ void HelloTriangleApplication::initVulkan()
     surface.Create(&instance, window.glfwWindow);
     device = Device::PickPhysicalDevice(&instance, &surface, true);
     device.CreateSwapChain(&window, &surface);
+    pipeline.Create(&device);
 }
 
 void HelloTriangleApplication::mainLoop()
@@ -31,6 +32,7 @@ void HelloTriangleApplication::mainLoop()
 
 void HelloTriangleApplication::cleanup()
 {
+    pipeline.Destroy();
     device.Destroy();
     surface.Destroy();
     instance.Destroy();
