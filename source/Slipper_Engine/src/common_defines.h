@@ -15,6 +15,18 @@
         throw std::runtime_error(message); \
     }
 
+#define LOG(message) std::cout << message;
+
+#define ASSERT(statement, message)                                                                       \
+    if (statement)                                                                                       \
+    {                                                                                                    \
+        std::cout << "\nAn error occured at line: '" << __LINE__ << "' in file '" << __FILE__ << "':\n"; \
+        std::string formatedMessage = "\n\t";                                                            \
+        formatedMessage += message;                                                                      \
+        formatedMessage += '\n';                                                                         \
+        throw std::runtime_error(formatedMessage);                                                       \
+    }
+
 #ifdef __cplusplus
 #define EXTERNC extern "C"
 #else

@@ -5,7 +5,7 @@
 
 void Instance::CreateInstance()
 {
-    if (m_enableValidationLayers && !CheckValidationLayerSupport())
+    if (Engine::EnableValidationLayers && !CheckValidationLayerSupport())
         throw std::runtime_error("Validation layers requested, but not available!");
 
     VkApplicationInfo appInfo{};
@@ -27,10 +27,10 @@ void Instance::CreateInstance()
     createInfo.enabledExtensionCount = glfwExtensionCount;
     createInfo.ppEnabledExtensionNames = glfwExtensions;
 
-    if (m_enableValidationLayers)
+    if (Engine::EnableValidationLayers)
     {
-        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-        createInfo.ppEnabledLayerNames = validationLayers.data();
+        createInfo.enabledLayerCount = static_cast<uint32_t>(Engine::ValidationLayers.size());
+        createInfo.ppEnabledLayerNames = Engine::ValidationLayers.data();
     }
     else
     {
@@ -60,7 +60,7 @@ bool Instance::CheckValidationLayerSupport()
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-    for (const char *layerName : validationLayers)
+    for (const char *layerName : Engine::ValidationLayers)
     {
         bool layerFound = false;
 
@@ -90,7 +90,7 @@ std::vector<const char *> Instance::GetRequiredExtensions()
 
     std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    if (m_enableValidationLayers)
+    if (Engine::EnableValidationLayers)
     {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }

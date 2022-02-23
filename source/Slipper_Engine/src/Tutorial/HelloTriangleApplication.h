@@ -2,6 +2,9 @@
 
 #include "Window/Window.h"
 #include "VulkanApp/Instance.h"
+#include "VulkanApp/Device.h"
+#include "VulkanApp/Surface.h"
+#include "Engine/Engine.h"
 
 #include <vector>
 #include <fstream>
@@ -16,32 +19,12 @@ const uint32_t HEIGHT = 600;
 constexpr bool printCreationDetails = true;
 constexpr bool enableValidationLayers = true;
 
-const std::vector<const char *> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-struct QueueFamilyIndices
-{
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete()
-    {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
-};
-
-struct SwapChainSupportDetails
-{
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
-};
-
 class HelloTriangleApplication
 {
 public:
-    HelloTriangleApplication() : instance(enableValidationLayers)
+    HelloTriangleApplication()
     {
+        Engine::EnableValidationLayers = enableValidationLayers;
     }
 
     void run()
@@ -68,14 +51,10 @@ private:
 private:
     Window window;
     Instance instance;
+    Surface surface;
+    Device device;
 
-    VkPhysicalDevice physicalDevice;
-    VkDevice device;
-
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
     VkSwapchainKHR swapchain;
-    VkSurfaceKHR surface;
 
     VkFormat swapchainImageFormat;
     VkExtent2D swapchainExtent;

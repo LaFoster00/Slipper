@@ -1,10 +1,7 @@
 #include <iostream>
-#include "common_defines.h"
 #include <cstring>
 #include <filesystem>
 
-#define PRINT_CREATION_DETAILS
-#define ENABLE_VALIDATION_LAYERS
 #include "Tutorial/HelloTriangleApplication.h"
 
 EXTERNC

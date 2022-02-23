@@ -16,6 +16,9 @@ void HelloTriangleApplication::initWindow()
 void HelloTriangleApplication::initVulkan()
 {
     instance.CreateInstance();
+    surface.Create(&instance, window.glfwWindow);
+    device = Device::PickPhysicalDevice(&instance, &surface);
+    device.InitLogicalDevice();
 }
 
 void HelloTriangleApplication::mainLoop()
@@ -28,6 +31,8 @@ void HelloTriangleApplication::mainLoop()
 
 void HelloTriangleApplication::cleanup()
 {
+    device.Destroy();
+    surface.Destroy();
     instance.Destroy();
     window.Destroy();
     glfwTerminate();
