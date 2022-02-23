@@ -1,18 +1,13 @@
 #pragma once
 
 #include "common_includes.h"
+#include "SwapChain.h"
 #include <string>
 #include <optional>
 
 class Instance;
 class Surface;
-
-struct SwapChainSupportDetails
-{
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
-};
+class Window;
 
 struct QueueFamilyIndices
 {
@@ -25,6 +20,13 @@ struct QueueFamilyIndices
     }
 };
 
+struct SwapChainSupportDetails
+{
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
 class Device
 {
 public:
@@ -32,30 +34,45 @@ public:
     Device(VkPhysicalDevice physicalDevice);
 
     void InitLogicalDevice();
-    inline void Destroy()
-    {
-        vkDestroyDevice(logicalDevice, nullptr);
-    }
+    void CreateSwapChain(Window *window, Surface *Surface);
+
+    static Device PickPhysicalDevice(const Instance *instance, const Surface *surface, const bool initLogicalDevice);
 
     std::string DeviceInfoToString() const;
 
-    static Device PickPhysicalDevice(const Instance *instance, const Surface *surface);
-    const QueueFamilyIndices *PopulateQueueFamilyIndices(const Surface *surface);
+    inline void Destroy()
+    {
+        for (auto &swapChain : swapChains)
+        {
+            swapChain.Destroy();
+        }
+        vkDestroyDevice(logicalDevice, nullptr);
+    }
 
 private:
     bool IsDeviceSuitable(const Surface *surface);
     uint32_t RateDeviceSuitability() const;
+    bool CheckExtensionSupport() const;
+    const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *surface);
+    void QuerySwapChainSupport(const Surface *surface);
+
+    VkSurfaceFormatKHR ChooseSwapSurfaceFormat();
+    VkPresentModeKHR ChooseSwapPresentMode();
+    VkExtent2D ChooseSwapExtent(Window *window);
 
 public:
     /* Gets destroyed toghether with its instance. */
-    VkPhysicalDevice physicalDevice;
-    VkDevice logicalDevice;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice logicalDevice = VK_NULL_HANDLE;
 
     VkPhysicalDeviceProperties deviceProperties;
     VkPhysicalDeviceFeatures deviceFeatures;
 
     QueueFamilyIndices queueFamilyIndices;
 
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
+    VkQueue graphicsQueue = VK_NULL_HANDLE;
+    VkQueue presentQueue = VK_NULL_HANDLE;
+
+    SwapChainSupportDetails swapchainSupportDetails;
+    std::vector<SwapChain> swapChains;
 };

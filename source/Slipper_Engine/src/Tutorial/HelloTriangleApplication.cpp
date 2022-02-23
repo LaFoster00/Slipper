@@ -17,8 +17,8 @@ void HelloTriangleApplication::initVulkan()
 {
     instance.CreateInstance();
     surface.Create(&instance, window.glfwWindow);
-    device = Device::PickPhysicalDevice(&instance, &surface);
-    device.InitLogicalDevice();
+    device = Device::PickPhysicalDevice(&instance, &surface, true);
+    device.CreateSwapChain(&window, &surface);
 }
 
 void HelloTriangleApplication::mainLoop()

@@ -1,18 +1,19 @@
 #pragma once
 
 #include "common_includes.h"
-#include "Instance.h"
+
+class Instance;
+class Device;
+class Window;
 
 class Surface
 {
 public:
     void Create(const Instance *instance, GLFWwindow *window);
-    inline void Destroy()
-    {
-        vkDestroySurfaceKHR(instance->instance, surface, nullptr);
-    }
+    void Destroy();
 
+private:
 public:
-    Instance *instance;
+    const Instance *instance;
     VkSurfaceKHR surface;
 };

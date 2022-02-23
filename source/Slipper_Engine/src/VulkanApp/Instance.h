@@ -20,5 +20,4 @@ private:
 
 public:
     VkInstance instance;
-    std::vector<VkExtensionProperties> extensions;
 };

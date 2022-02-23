@@ -11,6 +11,13 @@
             "program": "${workspaceRoot}/bin/Debug/Slipper_Engine",
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build Debug",
+            "setupCommands": [
+                {   // Display content in STL containers pretty
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
         },
         {
             "name": "Release",

@@ -27,6 +27,8 @@ set(SLIPPER_ENGINE_SOURCE_FILES
     src/VulkanApp/Instance.cpp
     src/VulkanApp/Device.cpp
     src/VulkanApp/Surface.cpp
+    src/terminal_util.cpp
+    src/VulkanApp/SwapChain.cpp
 )
 
 option(OUTPUT_LIB OFF)

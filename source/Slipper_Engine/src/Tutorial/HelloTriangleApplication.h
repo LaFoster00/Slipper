@@ -5,6 +5,7 @@
 #include "VulkanApp/Device.h"
 #include "VulkanApp/Surface.h"
 #include "Engine/Engine.h"
+#include "terminal_util.h"
 
 #include <vector>
 #include <fstream>
@@ -17,14 +18,12 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
 constexpr bool printCreationDetails = true;
-constexpr bool enableValidationLayers = true;
 
 class HelloTriangleApplication
 {
 public:
     HelloTriangleApplication()
     {
-        Engine::EnableValidationLayers = enableValidationLayers;
     }
 
     void run()

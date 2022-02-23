@@ -5,8 +5,7 @@
 
 void Instance::CreateInstance()
 {
-    if (Engine::EnableValidationLayers && !CheckValidationLayerSupport())
-        throw std::runtime_error("Validation layers requested, but not available!");
+    ASSERT(Engine::EnableValidationLayers && !CheckValidationLayerSupport(), "Validation layers requested, but not available!")
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -14,7 +13,7 @@ void Instance::CreateInstance()
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "Slipper_Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
+    appInfo.apiVersion = VK_API_VERSION_1_3;
 
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -41,11 +40,16 @@ void Instance::CreateInstance()
 
     uint32_t extensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    extensions.resize(extensionCount);
+    std::vector<VkExtensionProperties> extensions(extensionCount);
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-    std::cout << "Available Exentsions:\n";
+    std::cout << "\nRequested Extensions:\n";
+    for (const char *extensionName : Engine::DeviceExtensions)
+    {
+        std::cout << '\t' << extensionName << '\n';
+    }
 
+    std::cout << "\nAvailable Extensions:\n";
     for (const auto &extension : extensions)
     {
         std::cout << '\t' << extension.extensionName << '\n';
@@ -59,6 +63,18 @@ bool Instance::CheckValidationLayerSupport()
 
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+    std::cout << "Requested Layers:\n";
+    for (const char *layerName : Engine::ValidationLayers)
+    {
+        std::cout << '\t' << layerName << '\n';
+    }
+
+    std::cout << "\nAvailable Layers:\n";
+    for (const auto &layer : availableLayers)
+    {
+        std::cout << '\t' << layer.layerName << '\n';
+    }
 
     for (const char *layerName : Engine::ValidationLayers)
     {
