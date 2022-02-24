@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Window/Window.h"
-#include "VulkanApp/Instance.h"
-#include "VulkanApp/Device.h"
-#include "VulkanApp/Surface.h"
+#include "VulkanApp/Setup/Instance.h"
+#include "VulkanApp/Setup/Device.h"
+#include "VulkanApp/Presentation/Surface.h"
 #include "Engine/Engine.h"
 #include "terminal_util.h"
-#include "VulkanApp/GraphicsPipeline.h"
+#include "VulkanApp/GraphicsPipeline/GraphicsPipeline.h"
 
 #include <vector>
 #include <fstream>

@@ -1,13 +1,14 @@
 #include "RenderPass.h"
 
-#include "Device.h"
+#include "../Setup/Device.h"
+#include "GraphicsPipeline.h"
 
-void RenderPass::Create(Device *device)
+void RenderPass::Create(Device *device, GraphicsPipeline *graphicsPipeline)
 {
     owningDevice = device;
 
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = device->swapChains[0].swapChainImageFormat;
+    colorAttachment.format = graphicsPipeline->swapChains[0].swapChainImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

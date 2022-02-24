@@ -17,10 +17,9 @@ public:
     void Destroy();
 
 public:
-    static std::unordered_map<const SwapChain *, std::vector<VkFramebuffer>> VkFramebuffers;
-
-public:
     const Device *owningDevice;
     const SwapChain *owningSwapchain;
+    RenderPass *owningRenderPass;
+
     VkFramebuffer vkFramebuffer;
 };

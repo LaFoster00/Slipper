@@ -1,5 +1,5 @@
 #include "SwapChain.h"
-#include "Device.h"
+#include "../Setup/Device.h"
 
 SwapChain::SwapChain(Device *device, VkSwapchainCreateInfoKHR *createInfo, bool createViews)
 {

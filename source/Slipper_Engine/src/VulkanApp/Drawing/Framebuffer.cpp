@@ -1,11 +1,9 @@
 #include "Framebuffer.h"
 
-#include "Device.h"
-#include "RenderPass.h"
+#include "../Setup/Device.h"
+#include "../GraphicsPipeline/RenderPass.h"
 #include "common_defines.h"
 #include <algorithm>
-
-std::unordered_map<const SwapChain *, std::vector<VkFramebuffer>> Framebuffer::VkFramebuffers;
 
 Framebuffer::Framebuffer(VkImageView *attachment, SwapChain *swapChain, RenderPass *renderPass)
 {
@@ -16,14 +14,15 @@ void Framebuffer::Create(VkImageView *attachments, SwapChain *swapChain, RenderP
 {
     owningDevice = swapChain->owningDevice;
     owningSwapchain = swapChain;
+    owningRenderPass = renderPass;
 
-    if (!VkFramebuffers.contains(swapChain))
+    if (!renderPass->vkFramebuffers.contains(swapChain))
     {
-        VkFramebuffers.emplace(swapChain, (swapChain->swapChainImageViews.size()));
+        renderPass->vkFramebuffers.emplace(swapChain, (swapChain->swapChainImageViews.size()));
     }
     else
     {
-        VkFramebuffers[swapChain].resize(swapChain->swapChainImageViews.size());
+        renderPass->vkFramebuffers[swapChain].resize(swapChain->swapChainImageViews.size(), VK_NULL_HANDLE);
     }
 
     VkFramebufferCreateInfo framebufferInfo{};
@@ -35,13 +34,22 @@ void Framebuffer::Create(VkImageView *attachments, SwapChain *swapChain, RenderP
     framebufferInfo.height = swapChain->swapChainExtent.height;
     framebufferInfo.layers = 1;
 
-    VkFramebuffer *framebuffers = VkFramebuffers[swapChain].data();
-    VK_ASSERT(vkCreateFramebuffer(swapChain->owningDevice->logicalDevice, &framebufferInfo, nullptr, framebuffers), "Failed to create framebuffer!")
+    /* Find the next free framebuffer in the array. */
+    VkFramebuffer *framebuffer;
+    for (size_t i = 0; i < renderPass->vkFramebuffers[swapChain].size(); i++)
+    {
+        if (renderPass->vkFramebuffers[swapChain][i] == VK_NULL_HANDLE)
+        {
+            framebuffer = &renderPass->vkFramebuffers[swapChain][i];
+        }
+    }
+    VK_ASSERT(vkCreateFramebuffer(swapChain->owningDevice->logicalDevice, &framebufferInfo, nullptr, framebuffer), "Failed to create framebuffer!")
+    vkFramebuffer = *framebuffer;
 }
 
 void Framebuffer::Destroy()
 {
-    std::vector<VkFramebuffer> &framebuffers = VkFramebuffers[owningSwapchain];
+    std::vector<VkFramebuffer> &framebuffers = owningRenderPass->vkFramebuffers[owningSwapchain];
     auto itr = std::find(framebuffers.begin(), framebuffers.end(), vkFramebuffer);
 
     if (itr == framebuffers.end())

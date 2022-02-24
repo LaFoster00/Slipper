@@ -1,6 +1,6 @@
 #include "Surface.h"
-#include "Device.h"
-#include "Instance.h"
+#include "../Setup/Device.h"
+#include "../Setup/Instance.h"
 
 void Surface::Create(const Instance *instance, GLFWwindow *window)
 {

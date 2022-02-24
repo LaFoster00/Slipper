@@ -1,7 +1,9 @@
 #include "Shader.h"
 
-#include "Device.h"
+#include "common_defines.h"
+#include "../Setup/Device.h"
 #include "Filesystem/File.h"
+#include "GraphicsPipeline.h"
 #include <cstring>
 
 const char *ShaderTypeNames[]{
@@ -9,23 +11,22 @@ const char *ShaderTypeNames[]{
     "Fragment",
     "Compute"};
 
-std::unordered_map<const Device *, std::vector<VkPipelineShaderStageCreateInfo>> Shader::ShaderStages;
-
 Shader::Shader()
 {
     shaderModule = VK_NULL_HANDLE;
 }
 
-Shader::Shader(const char *filepath, ShaderType shaderType, Device *device)
+Shader::Shader(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline)
 {
     owningDevice = device;
-    LoadShader(filepath, shaderType, device);
+    owningGraphicsPipeline = graphicsPipeline;
+    LoadShader(filepath, shaderType, device, graphicsPipeline);
 }
 
 void Shader::Destroy()
 {
     size_t index;
-    std::vector<VkPipelineShaderStageCreateInfo> &shaderstages = ShaderStages[owningDevice];
+    std::vector<VkPipelineShaderStageCreateInfo> &shaderstages = owningGraphicsPipeline->vkShaderStages;
     for (size_t i = 0; i < shaderstages.size(); i++)
     {
         if (shaderstages[i].module == shaderModule)
@@ -38,20 +39,21 @@ void Shader::Destroy()
     vkDestroyShaderModule(owningDevice->logicalDevice, shaderModule, nullptr);
 }
 
-void Shader::LoadShader(const char *filepath, ShaderType shaderType, Device *device)
+void Shader::LoadShader(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline)
 {
     name = File::GetFileNameFromPath(filepath);
     this->shaderType = shaderType;
     auto binaryCode = File::ReadBinaryFile(filepath);
     shaderModule = CreateShaderModule(binaryCode, device);
     shaderStage = CreateShaderStage(*this);
+    owningGraphicsPipeline->vkShaderStages.push_back(shaderStage);
 
     std::cout << "Created " << ShaderTypeNames[static_cast<uint32_t>(shaderType)] << " shader '" << name << "' from " << filepath << '\n';
 }
 
-Shader Shader::CreateShaderFromFile(const char *filepath, ShaderType shaderType, Device *device)
+Shader Shader::CreateShaderFromFile(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline)
 {
-    Shader shader(filepath, shaderType, device);
+    Shader shader(filepath, shaderType, device, graphicsPipeline);
     return shader;
 }
 
@@ -89,15 +91,6 @@ VkPipelineShaderStageCreateInfo Shader::CreateShaderStage(Shader &shader)
 
     createInfo.module = shader.shaderModule;
     createInfo.pName = "main";
-
-    if (!ShaderStages.contains(shader.owningDevice))
-    {
-        ShaderStages.insert(std::make_pair(shader.owningDevice, std::vector<VkPipelineShaderStageCreateInfo>{createInfo}));
-    }
-    else
-    {
-        ShaderStages.at(shader.owningDevice).push_back(createInfo);
-    }
 
     return createInfo;
 }

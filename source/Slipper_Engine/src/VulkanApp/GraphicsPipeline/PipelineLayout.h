@@ -1,0 +1,26 @@
+#pragma once
+
+#include "common_includes.h"
+
+#include <optional>
+
+class VkViewport;
+class VkRect2D;
+class VkPipelineColorBlendAttachmentState;
+class SwapChain;
+class Device;
+
+class PipelineLayout
+{
+public:
+    static VkPipelineLayout CreatePipelineLayout(Device *device);
+
+    static VkPipelineVertexInputStateCreateInfo SetupVertexInputState();
+    static VkPipelineInputAssemblyStateCreateInfo SetupInputAssemblyState();
+    static VkPipelineViewportStateCreateInfo SetupViewportState(VkViewport &viewport, VkRect2D &scissor, SwapChain *swapChain);
+    static VkPipelineRasterizationStateCreateInfo SetupRasterizationState();
+    static VkPipelineMultisampleStateCreateInfo SetupMultisampleState();
+    static VkPipelineDepthStencilStateCreateInfo SetupDepthStencilState();
+    static VkPipelineColorBlendStateCreateInfo SetupColorBlendState(VkPipelineColorBlendAttachmentState &colorBlendAttachment);
+    static VkPipelineDynamicStateCreateInfo SetupDynamicState(std::optional<std::vector<VkDynamicState>> dynamicStates);
+};

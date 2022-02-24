@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common_includes.h"
-#include "SwapChain.h"
+#include "../Presentation/SwapChain.h"
 #include <string>
 #include <optional>
 
@@ -32,6 +32,7 @@ class Device
 public:
     Device(){};
     Device(VkPhysicalDevice physicalDevice);
+    void Destroy();
 
     void InitLogicalDevice();
     void CreateSwapChain(Window *window, Surface *Surface);
@@ -40,26 +41,12 @@ public:
 
     std::string DeviceInfoToString() const;
 
-    inline void Destroy()
-    {
-        for (auto &swapChain : swapChains)
-        {
-            swapChain.Destroy();
-        }
-
-        vkDestroyDevice(logicalDevice, nullptr);
-    }
-
 private:
     bool IsDeviceSuitable(const Surface *surface);
     uint32_t RateDeviceSuitability() const;
     bool CheckExtensionSupport() const;
     const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *surface);
     void QuerySwapChainSupport(const Surface *surface);
-
-    VkSurfaceFormatKHR ChooseSwapSurfaceFormat();
-    VkPresentModeKHR ChooseSwapPresentMode();
-    VkExtent2D ChooseSwapExtent(Window *window);
 
 public:
     /* Gets destroyed toghether with its instance. */
@@ -75,5 +62,4 @@ public:
     VkQueue presentQueue = VK_NULL_HANDLE;
 
     SwapChainSupportDetails swapchainSupportDetails;
-    std::vector<SwapChain> swapChains;
 };

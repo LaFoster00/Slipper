@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common_includes.h"
-#include "common_defines.h"
 
 #include <vector>
 #include <string>
@@ -18,25 +17,24 @@ enum class ShaderType
 extern const char *ShaderTypeNames[];
 
 class Device;
+class GraphicsPipeline;
 
 class Shader
 {
 public:
     Shader();
-    Shader(const char *filepath, ShaderType shaderType, Device *device);
+    Shader(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline);
     void Destroy();
 
-    void LoadShader(const char *filepath, ShaderType shaderType, Device *device);
+    void LoadShader(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline);
 
-    static Shader CreateShaderFromFile(const char *filepath, ShaderType shaderType, Device *device);
+    static Shader CreateShaderFromFile(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline);
     static VkShaderModule CreateShaderModule(const std::vector<char> &code, Device *device);
     static VkPipelineShaderStageCreateInfo CreateShaderStage(Shader &shader);
 
 public:
-    static std::unordered_map<const Device *, std::vector<VkPipelineShaderStageCreateInfo>> ShaderStages;
-
-public:
     Device *owningDevice;
+    GraphicsPipeline *owningGraphicsPipeline;
 
     std::string name;
     ShaderType shaderType;

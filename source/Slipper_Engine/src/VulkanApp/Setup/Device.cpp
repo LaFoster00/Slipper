@@ -1,13 +1,11 @@
 #include "Device.h"
 #include "Instance.h"
-#include "Surface.h"
+#include "../Presentation/Surface.h"
 #include "Window/Window.h"
 
 #include <iostream>
 #include <map>
 #include <set>
-#include <limits>
-#include <algorithm>
 
 Device::Device(VkPhysicalDevice physicalDevice) : physicalDevice(physicalDevice)
 {
@@ -60,50 +58,9 @@ void Device::InitLogicalDevice()
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
 }
 
-void Device::CreateSwapChain(Window *window, Surface *surface)
+void Device::Destroy()
 {
-    VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat();
-    VkPresentModeKHR presentMode = ChooseSwapPresentMode();
-    VkExtent2D extent = ChooseSwapExtent(window);
-
-    uint32_t imageCount = std::clamp(
-        static_cast<uint32_t>(swapchainSupportDetails.capabilities.minImageCount + 1),
-        static_cast<uint32_t>(0),
-        static_cast<uint32_t>(swapchainSupportDetails.capabilities.maxImageCount));
-
-    VkSwapchainCreateInfoKHR createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface->surface;
-    createInfo.minImageCount = imageCount;
-    createInfo.imageFormat = surfaceFormat.format;
-    createInfo.imageColorSpace = surfaceFormat.colorSpace;
-    createInfo.imageExtent = extent;
-    createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-    uint32_t indices[] = {this->queueFamilyIndices.graphicsFamily.value(), this->queueFamilyIndices.presentFamily.value()};
-
-    if (queueFamilyIndices.graphicsFamily != queueFamilyIndices.presentFamily)
-    {
-        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        createInfo.queueFamilyIndexCount = 2;
-        createInfo.pQueueFamilyIndices = indices;
-    }
-    else
-    {
-        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        createInfo.queueFamilyIndexCount = 0;     // Optional
-        createInfo.pQueueFamilyIndices = nullptr; // Optional
-    }
-
-    createInfo.preTransform = swapchainSupportDetails.capabilities.currentTransform;
-    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    createInfo.presentMode = presentMode;
-    createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
-
-    // Create new swap chain for this device
-    swapChains.emplace_back(this, &createInfo, true);
+    vkDestroyDevice(logicalDevice, nullptr);
 }
 
 std::string Device::DeviceInfoToString() const
@@ -289,57 +246,5 @@ void Device::QuerySwapChainSupport(const Surface *surface)
     {
         swapchainSupportDetails.presentModes.resize(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface->surface, &presentModeCount, swapchainSupportDetails.presentModes.data());
-    }
-}
-
-VkSurfaceFormatKHR Device::ChooseSwapSurfaceFormat()
-{
-    for (const auto &availableFormat : swapchainSupportDetails.formats)
-    {
-        if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-        {
-            return availableFormat;
-        }
-    }
-
-    return swapchainSupportDetails.formats[0];
-}
-
-VkPresentModeKHR Device::ChooseSwapPresentMode()
-{
-    for (const auto &availablePresentMode : swapchainSupportDetails.presentModes)
-    {
-        if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-        {
-            return availablePresentMode;
-        }
-    }
-
-    return VK_PRESENT_MODE_FIFO_KHR;
-}
-
-VkExtent2D Device::ChooseSwapExtent(Window *window)
-{
-    if (swapchainSupportDetails.capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-    {
-        return swapchainSupportDetails.capabilities.currentExtent;
-    }
-    else
-    {
-        int width, height;
-        glfwGetFramebufferSize(window->glfwWindow, &width, &height);
-
-        VkExtent2D actualExtent = {
-            static_cast<uint32_t>(width),
-            static_cast<uint32_t>(height)};
-
-        actualExtent.width = std::clamp(actualExtent.width,
-                                        swapchainSupportDetails.capabilities.minImageExtent.width,
-                                        swapchainSupportDetails.capabilities.maxImageExtent.width);
-        actualExtent.height = std::clamp(actualExtent.height,
-                                         swapchainSupportDetails.capabilities.minImageExtent.height,
-                                         swapchainSupportDetails.capabilities.maxImageExtent.height);
-
-        return actualExtent;
     }
 }

@@ -21,20 +21,26 @@ endif()
 include_directories(src)
 
 set(SLIPPER_ENGINE_SOURCE_FILES 
-    src/Engine/Slipper_Engine.cpp
-    src/Tutorial/HelloTriangleApplication.cpp
-    src/Window/Window.cpp
-    src/VulkanApp/Instance.cpp
-    src/VulkanApp/Device.cpp
-    src/VulkanApp/Surface.cpp
-    src/terminal_util.cpp
-    src/VulkanApp/SwapChain.cpp
+    src/terminal_util.cpp    
     src/Filesystem/File.cpp
-    src/VulkanApp/Shader.cpp
-    src/VulkanApp/GraphicsPipeline.cpp
-    src/VulkanApp/RenderPass.cpp
-    src/VulkanApp/Framebuffer.cpp
-    src/VulkanApp/CommandBuffer/CommandPool.cpp
+    src/Engine/Slipper_Engine.cpp
+    
+    src/Tutorial/HelloTriangleApplication.cpp
+    
+    src/Window/Window.cpp
+    
+    src/VulkanApp/Setup/Instance.cpp
+    src/VulkanApp/Setup/Device.cpp
+    src/VulkanApp/Presentation/Surface.cpp
+    src/VulkanApp/Presentation/SwapChain.cpp
+    
+    src/VulkanApp/GraphicsPipeline/Shader.cpp
+    src/VulkanApp/GraphicsPipeline/GraphicsPipeline.cpp
+    src/VulkanApp/GraphicsPipeline/RenderPass.cpp
+    src/VulkanApp/GraphicsPipeline/PipelineLayout.cpp
+
+    src/VulkanApp/Drawing/Framebuffer.cpp
+    src/VulkanApp/Drawing/CommandPool.cpp
 )
 
 option(OUTPUT_LIB OFF)
