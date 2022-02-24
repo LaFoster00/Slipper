@@ -32,10 +32,10 @@ void RenderPass::Create(Device *device)
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
 
-    VK_ASSERT(vkCreateRenderPass(owningDevice->logicalDevice, &renderPassInfo, nullptr, &renderPass), "Failed to create render pass")
+    VK_ASSERT(vkCreateRenderPass(owningDevice->logicalDevice, &renderPassInfo, nullptr, &vkRenderPass), "Failed to create render pass")
 }
 
 void RenderPass::Destroy()
 {
-    vkDestroyRenderPass(owningDevice->logicalDevice, renderPass, nullptr);
+    vkDestroyRenderPass(owningDevice->logicalDevice, vkRenderPass, nullptr);
 }

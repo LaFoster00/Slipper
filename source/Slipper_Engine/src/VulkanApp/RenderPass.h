@@ -13,5 +13,5 @@ public:
 public:
     Device *owningDevice;
 
-    VkRenderPass renderPass;
+    VkRenderPass vkRenderPass;
 };

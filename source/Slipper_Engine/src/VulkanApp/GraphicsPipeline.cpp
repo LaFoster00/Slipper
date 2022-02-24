@@ -86,7 +86,7 @@ void GraphicsPipeline::Create(Device *device)
     CreatePipelineLayout();
     pipelineInfo.layout = vkPipelineLayout;
 
-    pipelineInfo.renderPass = renderPass.renderPass;
+    pipelineInfo.renderPass = renderPass.vkRenderPass;
     pipelineInfo.subpass = 0;
 
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
@@ -97,6 +97,11 @@ void GraphicsPipeline::Create(Device *device)
 
 void GraphicsPipeline::Destroy()
 {
+    for (auto framebuffer : swapChainFramebuffers)
+    {
+        framebuffer.Destroy();
+    }
+
     vkDestroyPipeline(owningDevice->logicalDevice, vkGraphicsPipeline, nullptr);
     vkDestroyPipelineLayout(owningDevice->logicalDevice, vkPipelineLayout, nullptr);
 
@@ -248,4 +253,13 @@ void GraphicsPipeline::CreatePipelineLayout()
     pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
     VK_ASSERT(vkCreatePipelineLayout(owningDevice->logicalDevice, &pipelineLayoutInfo, nullptr, &vkPipelineLayout), "Failed to create pipeline layout!");
+}
+
+void GraphicsPipeline::CreateSwapChainFramebuffers()
+{
+    for (size_t i = 0; i < owningDevice->swapChains[0].swapChainImageViews.size(); i++)
+    {
+        VkImageView *attachment = &owningDevice->swapChains[0].swapChainImageViews[i];
+        swapChainFramebuffers.emplace_back(attachment, &owningDevice->swapChains[0], &renderPass);
+    }
 }

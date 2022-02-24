@@ -3,6 +3,7 @@
 #include "common_includes.h"
 #include "Shader.h"
 #include "RenderPass.h"
+#include "Framebuffer.h"
 
 #include <optional>
 #include <vector>
@@ -27,6 +28,8 @@ private:
 
     void CreatePipelineLayout();
 
+    void CreateSwapChainFramebuffers();
+
 public:
     Device *owningDevice;
 
@@ -34,4 +37,6 @@ public:
     RenderPass renderPass;
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkGraphicsPipeline;
+
+    std::vector<Framebuffer> swapChainFramebuffers;
 };

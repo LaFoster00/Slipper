@@ -46,6 +46,7 @@ public:
         {
             swapChain.Destroy();
         }
+
         vkDestroyDevice(logicalDevice, nullptr);
     }
 

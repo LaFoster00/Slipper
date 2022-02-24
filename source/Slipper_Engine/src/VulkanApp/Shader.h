@@ -33,7 +33,7 @@ public:
     static VkPipelineShaderStageCreateInfo CreateShaderStage(Shader &shader);
 
 public:
-    static std::unordered_map<Device *, std::vector<VkPipelineShaderStageCreateInfo>> ShaderStages;
+    static std::unordered_map<const Device *, std::vector<VkPipelineShaderStageCreateInfo>> ShaderStages;
 
 public:
     Device *owningDevice;
@@ -41,4 +41,5 @@ public:
     std::string name;
     ShaderType shaderType;
     VkShaderModule shaderModule;
+    VkPipelineShaderStageCreateInfo shaderStage;
 };

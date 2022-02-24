@@ -9,7 +9,7 @@ const char *ShaderTypeNames[]{
     "Fragment",
     "Compute"};
 
-std::unordered_map<Device *, std::vector<VkPipelineShaderStageCreateInfo>> Shader::ShaderStages;
+std::unordered_map<const Device *, std::vector<VkPipelineShaderStageCreateInfo>> Shader::ShaderStages;
 
 Shader::Shader()
 {
@@ -24,6 +24,17 @@ Shader::Shader(const char *filepath, ShaderType shaderType, Device *device)
 
 void Shader::Destroy()
 {
+    size_t index;
+    std::vector<VkPipelineShaderStageCreateInfo> &shaderstages = ShaderStages[owningDevice];
+    for (size_t i = 0; i < shaderstages.size(); i++)
+    {
+        if (shaderstages[i].module == shaderModule)
+        {
+            shaderstages.erase(std::next(shaderstages.begin(), i));
+            break;
+        }
+    }
+
     vkDestroyShaderModule(owningDevice->logicalDevice, shaderModule, nullptr);
 }
 
@@ -33,7 +44,7 @@ void Shader::LoadShader(const char *filepath, ShaderType shaderType, Device *dev
     this->shaderType = shaderType;
     auto binaryCode = File::ReadBinaryFile(filepath);
     shaderModule = CreateShaderModule(binaryCode, device);
-    CreateShaderStage(*this);
+    shaderStage = CreateShaderStage(*this);
 
     std::cout << "Created " << ShaderTypeNames[static_cast<uint32_t>(shaderType)] << " shader '" << name << "' from " << filepath << '\n';
 }
