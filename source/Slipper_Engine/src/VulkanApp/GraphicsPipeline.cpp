@@ -93,10 +93,19 @@ void GraphicsPipeline::Create(Device *device)
     pipelineInfo.basePipelineIndex = -1;              // Optional
 
     VK_ASSERT(vkCreateGraphicsPipelines(device->logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkGraphicsPipeline), "Failed to create graphics pipeline!")
+
+    CreateSwapChainFramebuffers();
+    auto &commandPool = commandPools.emplace_back(*owningDevice);
+    commandPool.CreateCommandBuffer();
 }
 
 void GraphicsPipeline::Destroy()
 {
+    for (auto &commandPool : commandPools)
+    {
+        commandPool.Destroy();
+    }
+
     for (auto framebuffer : swapChainFramebuffers)
     {
         framebuffer.Destroy();

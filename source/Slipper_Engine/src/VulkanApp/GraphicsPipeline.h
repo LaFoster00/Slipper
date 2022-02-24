@@ -4,6 +4,7 @@
 #include "Shader.h"
 #include "RenderPass.h"
 #include "Framebuffer.h"
+#include "CommandBuffer/CommnadPool.h"
 
 #include <optional>
 #include <vector>
@@ -39,4 +40,6 @@ public:
     VkPipeline vkGraphicsPipeline;
 
     std::vector<Framebuffer> swapChainFramebuffers;
+
+    std::vector<CommandPool> commandPools;
 };

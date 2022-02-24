@@ -34,6 +34,7 @@ set(SLIPPER_ENGINE_SOURCE_FILES
     src/VulkanApp/GraphicsPipeline.cpp
     src/VulkanApp/RenderPass.cpp
     src/VulkanApp/Framebuffer.cpp
+    src/VulkanApp/CommandBuffer/CommandPool.cpp
 )
 
 option(OUTPUT_LIB OFF)
