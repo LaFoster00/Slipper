@@ -1,18 +1,16 @@
 #include "SwapChain.h"
 #include "../Setup/Device.h"
 
-SwapChain::SwapChain(Device *device, VkSwapchainCreateInfoKHR *createInfo, bool createViews)
+SwapChain::SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool createViews) : device(device)
 {
-    owningDevice = device;
-
-    VK_ASSERT(vkCreateSwapchainKHR(device->logicalDevice, createInfo, nullptr, &swapChain), "Failed to create swap chain!");
+    VK_ASSERT(vkCreateSwapchainKHR(device.logicalDevice, createInfo, nullptr, &vkSwapChain), "Failed to create swap chain!");
 
     uint32_t imageCount = 0;
-    vkGetSwapchainImagesKHR(device->logicalDevice, swapChain, &imageCount, nullptr);
-    swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(device->logicalDevice, swapChain, &imageCount, swapChainImages.data());
-    swapChainImageFormat = createInfo->imageFormat;
-    swapChainExtent = createInfo->imageExtent;
+    vkGetSwapchainImagesKHR(device.logicalDevice, vkSwapChain, &imageCount, nullptr);
+    vkImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(device.logicalDevice, vkSwapChain, &imageCount, vkImages.data());
+    vkImageFormat = createInfo->imageFormat;
+    vkExtent = createInfo->imageExtent;
 
     if (createViews)
     {
@@ -22,24 +20,24 @@ SwapChain::SwapChain(Device *device, VkSwapchainCreateInfoKHR *createInfo, bool 
 
 void SwapChain::Destroy()
 {
-    for (auto imageView : swapChainImageViews)
+    for (auto imageView : vkImageViews)
     {
-        vkDestroyImageView(owningDevice->logicalDevice, imageView, nullptr);
+        vkDestroyImageView(device.logicalDevice, imageView, nullptr);
     }
 
-    vkDestroySwapchainKHR(owningDevice->logicalDevice, swapChain, nullptr);
+    vkDestroySwapchainKHR(device.logicalDevice, vkSwapChain, nullptr);
 }
 
 void SwapChain::CreateImageViews()
 {
-    swapChainImageViews.resize(swapChainImages.size());
-    for (size_t i = 0; i < swapChainImages.size(); i++)
+    vkImageViews.resize(vkImages.size());
+    for (size_t i = 0; i < vkImages.size(); i++)
     {
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = swapChainImages[i];
+        createInfo.image = vkImages[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = swapChainImageFormat;
+        createInfo.format = vkImageFormat;
 
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -53,7 +51,7 @@ void SwapChain::CreateImageViews()
         createInfo.subresourceRange.layerCount = 1;
 
         VK_ASSERT(
-            vkCreateImageView(owningDevice->logicalDevice, &createInfo, nullptr, &swapChainImageViews[i]),
+            vkCreateImageView(device.logicalDevice, &createInfo, nullptr, &vkImageViews[i]),
             "Failed to create image views!")
     }
 }

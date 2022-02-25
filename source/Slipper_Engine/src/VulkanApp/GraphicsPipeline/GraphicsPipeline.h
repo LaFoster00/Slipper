@@ -17,31 +17,17 @@ class Surface;
 class GraphicsPipeline
 {
 public:
-    void Create(Device *device, Window *window, Surface *surface);
+    GraphicsPipeline() = delete;
+    GraphicsPipeline(Device &device);
+    GraphicsPipeline(Device &device, VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass);
+    void Create(VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass);
     void Destroy();
 
-    void CreateSwapChain(Window *window, Surface *surface);
-
-private:
-    void CreateSwapChainFramebuffers();
-
-    VkSurfaceFormatKHR ChooseSwapSurfaceFormat();
-    VkPresentModeKHR ChooseSwapPresentMode();
-    VkExtent2D ChooseSwapExtent(Window *window);
-
 public:
-    Device *owningDevice;
-
-    std::vector<Shader> shaders;
-    std::vector<VkPipelineShaderStageCreateInfo> vkShaderStages;
-
-    RenderPass renderPass;
+    Device &device;
 
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkGraphicsPipeline;
-
-    std::vector<SwapChain> swapChains;
-    std::vector<Framebuffer> swapChainFramebuffers;
 
     std::vector<CommandPool> commandPools;
 };

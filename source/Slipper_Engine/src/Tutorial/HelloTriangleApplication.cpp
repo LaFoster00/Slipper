@@ -1,5 +1,7 @@
 #include "HelloTriangleApplication.h"
 
+#include "VulkanApp/GraphicsEngine.h"
+
 void HelloTriangleApplication::initWindow()
 {
     glfwInit();
@@ -18,7 +20,9 @@ void HelloTriangleApplication::initVulkan()
     instance.CreateInstance();
     surface.Create(&instance, window.glfwWindow);
     device = Device::PickPhysicalDevice(&instance, &surface, true);
-    pipeline.Create(&device, &window, &surface);
+    graphics = new GraphicsEngine(device);
+    size_t pipelineIndex;
+    auto &pipelines = graphics->SetupSimpleRenderPipeline(window, surface, pipelineIndex);
 }
 
 void HelloTriangleApplication::mainLoop()
@@ -31,7 +35,7 @@ void HelloTriangleApplication::mainLoop()
 
 void HelloTriangleApplication::cleanup()
 {
-    pipeline.Destroy();
+    delete graphics;
     device.Destroy();
     surface.Destroy();
     instance.Destroy();

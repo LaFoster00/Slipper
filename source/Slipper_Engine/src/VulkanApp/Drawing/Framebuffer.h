@@ -12,14 +12,11 @@ class SwapChain;
 class Framebuffer
 {
 public:
-    Framebuffer(VkImageView *attachment, SwapChain *swapChain, RenderPass *renderPass);
-    void Create(VkImageView *attachment, SwapChain *swapChain, RenderPass *renderPass);
+    Framebuffer(Device *device, RenderPass *renderPass, VkImageView *attachments, size_t attachmentCount, VkExtent2D extent);
+    void Create(RenderPass *renderPass, VkImageView *attachments, size_t attachmentCount, VkExtent2D extent);
     void Destroy();
 
 public:
-    const Device *owningDevice;
-    const SwapChain *owningSwapchain;
-    RenderPass *owningRenderPass;
-
+    const Device *device;
     VkFramebuffer vkFramebuffer;
 };

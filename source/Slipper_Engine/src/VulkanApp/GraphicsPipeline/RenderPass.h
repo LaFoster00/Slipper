@@ -1,6 +1,8 @@
 #pragma once
 
 #include "common_includes.h"
+#include "../Drawing/Framebuffer.h"
+
 #include <unordered_map>
 #include <vector>
 
@@ -11,13 +13,20 @@ class GraphicsPipeline;
 class RenderPass
 {
 public:
-    void Create(Device *device, GraphicsPipeline *graphicsPipeline);
+    RenderPass() = delete;
+    RenderPass(Device &device, VkFormat *attachementFormat);
     void Destroy();
 
+    void DestroyAllFrameBuffers();
+    void DestroyFramebuffer(Framebuffer *framebuffer);
+
+    void CreateSwapChainFramebuffers(SwapChain *swapChain);
+
 public:
-    Device *owningDevice;
+    Device &device;
 
     VkRenderPass vkRenderPass;
 
-    std::unordered_map<const SwapChain *, std::vector<VkFramebuffer>> vkFramebuffers;
+    std::vector<Framebuffer> framebuffers;
+    std::vector<VkFramebuffer> vkFramebuffers;
 };

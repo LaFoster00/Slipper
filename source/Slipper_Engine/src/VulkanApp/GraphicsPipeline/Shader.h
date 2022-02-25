@@ -17,24 +17,24 @@ enum class ShaderType
 extern const char *ShaderTypeNames[];
 
 class Device;
-class GraphicsPipeline;
+class GraphicsEngine;
 
 class Shader
 {
 public:
-    Shader();
-    Shader(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline);
+    Shader() = delete;
+    Shader(Device &device, GraphicsEngine *graphicsPipeline, const char *filepath, ShaderType shaderType);
     void Destroy();
 
-    void LoadShader(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline);
-
-    static Shader CreateShaderFromFile(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline);
-    static VkShaderModule CreateShaderModule(const std::vector<char> &code, Device *device);
+    static VkShaderModule CreateShaderModule(const std::vector<char> &code, Device &device);
     static VkPipelineShaderStageCreateInfo CreateShaderStage(Shader &shader);
 
+private:
+    void LoadShader(const char *filepath, ShaderType shaderType);
+
 public:
-    Device *owningDevice;
-    GraphicsPipeline *owningGraphicsPipeline;
+    Device &device;
+    GraphicsEngine *graphicsPipeline;
 
     std::string name;
     ShaderType shaderType;

@@ -46,9 +46,9 @@ void CommandPool::BeginCommandBuffer(RenderPass *renderPass, SwapChain *swapChai
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = renderPass->vkRenderPass;
-    renderPassInfo.framebuffer = renderPass->vkFramebuffers[swapChain][imageIndex];
+    renderPassInfo.framebuffer = renderPass->vkFramebuffers[imageIndex];
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapChain->swapChainExtent;
+    renderPassInfo.renderArea.extent = swapChain->vkExtent;
 
     VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
     renderPassInfo.clearValueCount = 1;

@@ -5,7 +5,7 @@
 
 #include <optional>
 
-VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device *device)
+VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device)
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -15,7 +15,7 @@ VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device *device)
     pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
     VkPipelineLayout pipelineLayout;
-    VK_ASSERT(vkCreatePipelineLayout(device->logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout), "Failed to create pipeline layout!");
+    VK_ASSERT(vkCreatePipelineLayout(device.logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout), "Failed to create pipeline layout!");
 
     return pipelineLayout;
 }
@@ -42,18 +42,17 @@ VkPipelineInputAssemblyStateCreateInfo PipelineLayout::SetupInputAssemblyState()
     return inputAssembly;
 }
 
-/* DO NOT USE!!! VIEWPORT AND RECT WILL TURN INVALID! */
-VkPipelineViewportStateCreateInfo PipelineLayout::SetupViewportState(VkViewport &viewport, VkRect2D &scissor, SwapChain *swapChain)
+VkPipelineViewportStateCreateInfo PipelineLayout::SetupViewportState(VkViewport &viewport, VkRect2D &scissor, VkExtent2D &extent)
 {
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float)swapChain->swapChainExtent.width;
-    viewport.height = (float)swapChain->swapChainExtent.height;
+    viewport.width = (float)extent.width;
+    viewport.height = (float)extent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     scissor.offset = {0, 0};
-    scissor.extent = swapChain->swapChainExtent;
+    scissor.extent = extent;
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

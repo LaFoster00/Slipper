@@ -10,18 +10,18 @@ class SwapChain
 {
 public:
     SwapChain() = delete;
-    SwapChain(Device *device, VkSwapchainCreateInfoKHR *createInfo, bool createViews);
+    SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool createViews);
     void Destroy();
 
     void CreateImageViews();
 
 public:
-    const Device *owningDevice;
+    const Device &device;
 
-    VkSwapchainKHR swapChain;
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
+    VkSwapchainKHR vkSwapChain;
+    VkFormat vkImageFormat;
+    VkExtent2D vkExtent;
 
-    std::vector<VkImage> swapChainImages;
-    std::vector<VkImageView> swapChainImageViews;
+    std::vector<VkImage> vkImages;
+    std::vector<VkImageView> vkImageViews;
 };

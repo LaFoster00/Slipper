@@ -29,6 +29,8 @@ set(SLIPPER_ENGINE_SOURCE_FILES
     
     src/Window/Window.cpp
     
+    src/VulkanApp/GraphicsEngine.cpp
+
     src/VulkanApp/Setup/Instance.cpp
     src/VulkanApp/Setup/Device.cpp
     src/VulkanApp/Presentation/Surface.cpp

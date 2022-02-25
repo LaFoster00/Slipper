@@ -3,7 +3,7 @@
 #include "common_defines.h"
 #include "../Setup/Device.h"
 #include "Filesystem/File.h"
-#include "GraphicsPipeline.h"
+#include "../GraphicsEngine.h"
 #include <cstring>
 
 const char *ShaderTypeNames[]{
@@ -11,22 +11,17 @@ const char *ShaderTypeNames[]{
     "Fragment",
     "Compute"};
 
-Shader::Shader()
+Shader::Shader(Device &device, GraphicsEngine *graphicsPipeline, const char *filepath, ShaderType shaderType) : device(device)
 {
-    shaderModule = VK_NULL_HANDLE;
-}
+    this->graphicsPipeline = graphicsPipeline;
 
-Shader::Shader(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline)
-{
-    owningDevice = device;
-    owningGraphicsPipeline = graphicsPipeline;
-    LoadShader(filepath, shaderType, device, graphicsPipeline);
+    LoadShader(filepath, shaderType);
 }
 
 void Shader::Destroy()
 {
     size_t index;
-    std::vector<VkPipelineShaderStageCreateInfo> &shaderstages = owningGraphicsPipeline->vkShaderStages;
+    std::vector<VkPipelineShaderStageCreateInfo> &shaderstages = graphicsPipeline->vkShaderStages;
     for (size_t i = 0; i < shaderstages.size(); i++)
     {
         if (shaderstages[i].module == shaderModule)
@@ -36,28 +31,22 @@ void Shader::Destroy()
         }
     }
 
-    vkDestroyShaderModule(owningDevice->logicalDevice, shaderModule, nullptr);
+    vkDestroyShaderModule(device.logicalDevice, shaderModule, nullptr);
 }
 
-void Shader::LoadShader(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline)
+void Shader::LoadShader(const char *filepath, ShaderType shaderType)
 {
     name = File::GetFileNameFromPath(filepath);
     this->shaderType = shaderType;
     auto binaryCode = File::ReadBinaryFile(filepath);
     shaderModule = CreateShaderModule(binaryCode, device);
     shaderStage = CreateShaderStage(*this);
-    owningGraphicsPipeline->vkShaderStages.push_back(shaderStage);
+    graphicsPipeline->vkShaderStages.push_back(shaderStage);
 
     std::cout << "Created " << ShaderTypeNames[static_cast<uint32_t>(shaderType)] << " shader '" << name << "' from " << filepath << '\n';
 }
 
-Shader Shader::CreateShaderFromFile(const char *filepath, ShaderType shaderType, Device *device, GraphicsPipeline *graphicsPipeline)
-{
-    Shader shader(filepath, shaderType, device, graphicsPipeline);
-    return shader;
-}
-
-VkShaderModule Shader::CreateShaderModule(const std::vector<char> &code, Device *device)
+VkShaderModule Shader::CreateShaderModule(const std::vector<char> &code, Device &device)
 {
     VkShaderModuleCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -66,7 +55,7 @@ VkShaderModule Shader::CreateShaderModule(const std::vector<char> &code, Device 
     createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
     VkShaderModule shaderModule;
-    VK_ASSERT(vkCreateShaderModule(device->logicalDevice, &createInfo, nullptr, &shaderModule), "Failed to create shader module!");
+    VK_ASSERT(vkCreateShaderModule(device.logicalDevice, &createInfo, nullptr, &shaderModule), "Failed to create shader module!");
 
     return shaderModule;
 }

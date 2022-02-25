@@ -10,6 +10,7 @@ class RenderPass;
 class CommandPool
 {
 public:
+    CommandPool() = delete;
     CommandPool(Device &device);
     void Destroy();
 

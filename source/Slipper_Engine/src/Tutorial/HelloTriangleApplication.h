@@ -20,13 +20,11 @@ const uint32_t HEIGHT = 600;
 
 constexpr bool printCreationDetails = true;
 
+class GraphicsEngine;
+
 class HelloTriangleApplication
 {
 public:
-    HelloTriangleApplication()
-    {
-    }
-
     void run()
     {
         initWindow();
@@ -53,7 +51,7 @@ private:
     Instance instance;
     Surface surface;
     Device device;
-    GraphicsPipeline pipeline;
+    GraphicsEngine *graphics;
 
     VkSwapchainKHR swapchain;
 
