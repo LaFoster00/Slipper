@@ -15,7 +15,9 @@ public:
     void Destroy();
 
     VkCommandBuffer CreateCommandBuffer();
-    void BeginCommandBuffer(RenderPass *renderpass, SwapChain *swapChain, VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    VkCommandBuffer BeginCommandBuffer(uint32_t bufferIndex);
+    void EndCommandBuffer(VkCommandBuffer commandBuffer);
+    void EndCommandBuffer(uint32_t bufferIndex);
 
 public:
     Device &owningDevice;

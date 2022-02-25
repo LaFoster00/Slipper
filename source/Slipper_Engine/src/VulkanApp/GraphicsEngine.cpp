@@ -52,22 +52,6 @@ void GraphicsEngine::SetupDefaultAssets()
     shaders.emplace_back(device, this, "src/Shaders/Spir-V/frag.spv", ShaderType::Fragment);
 }
 
-std::vector<GraphicsPipeline> &GraphicsEngine::SetupSimpleRenderPipeline(Window &window, Surface &surface, size_t &pipelineIndex)
-{
-    CreateSwapChain(window, surface);
-
-    /* Create renderpass for this pipeline */
-    renderPasses.emplace_back(device, &swapChains[0].vkImageFormat);
-    renderPasses[0].CreateSwapChainFramebuffers(&swapChains[0]);
-
-    graphicsPipelines.emplace_back(device, vkShaderStages.data(), swapChains[0].vkExtent, &renderPasses[0]);
-
-    commandPools.emplace_back(device);
-    commandPools[0].CreateCommandBuffer();
-
-    return graphicsPipelines;
-}
-
 void GraphicsEngine::CreateSwapChain(Window &window, Surface &surface)
 {
     VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat();
@@ -112,6 +96,35 @@ void GraphicsEngine::CreateSwapChain(Window &window, Surface &surface)
 
     // Create new swap chain for this device
     swapChains.emplace_back(device, &createInfo, true);
+}
+
+GraphicsPipeline &GraphicsEngine::SetupSimpleRenderPipeline(Window &window, Surface &surface)
+{
+    CreateSwapChain(window, surface);
+
+    /* Create renderpass for this pipeline */
+    renderPasses.emplace_back(device, &swapChains[0].vkImageFormat);
+    renderPasses[0].CreateSwapChainFramebuffers(&swapChains[0]);
+
+    auto &pipeline = graphicsPipelines.emplace_back(device, vkShaderStages.data(), swapChains[0].vkExtent, &renderPasses[0]);
+
+    commandPools.emplace_back(device);
+    commandPools[0].CreateCommandBuffer();
+
+    return pipeline;
+}
+
+VkCommandBuffer GraphicsEngine::SetupSimpleDraw(GraphicsPipeline &graphicsPipeline, uint32_t imageIndex)
+{
+    VkCommandBuffer commandBuffer = commandPools[0].BeginCommandBuffer(0);
+    renderPasses[0].BeginRenderPass(&swapChains[0], imageIndex, commandBuffer, graphicsPipeline);
+
+    vkCmdDraw(commandPools[0].vkCommandBuffers[0], 3, 1, 0, 0);
+
+    renderPasses[0].EndRenderPass(commandBuffer);
+    commandPools[0].EndCommandBuffer(commandBuffer);
+
+    return commandBuffer;
 }
 
 VkSurfaceFormatKHR GraphicsEngine::ChooseSwapSurfaceFormat()

@@ -21,8 +21,8 @@ void HelloTriangleApplication::initVulkan()
     surface.Create(&instance, window.glfwWindow);
     device = Device::PickPhysicalDevice(&instance, &surface, true);
     graphics = new GraphicsEngine(device);
-    size_t pipelineIndex;
-    auto &pipelines = graphics->SetupSimpleRenderPipeline(window, surface, pipelineIndex);
+
+    auto &pipeline = graphics->SetupSimpleRenderPipeline(window, surface);
 }
 
 void HelloTriangleApplication::mainLoop()

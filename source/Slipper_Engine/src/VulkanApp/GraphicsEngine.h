@@ -21,13 +21,12 @@ public:
     ~GraphicsEngine();
 
     void SetupDefaultAssets();
-    std::vector<GraphicsPipeline> &SetupSimpleRenderPipeline(Window &window, Surface &surface, size_t &pipelineIndex);
 
     void CreateSwapChain(Window &window, Surface &surface);
+    GraphicsPipeline &SetupSimpleRenderPipeline(Window &window, Surface &surface);
+    VkCommandBuffer SetupSimpleDraw(GraphicsPipeline &graphicsPipeline, uint32_t imageIndex);
 
 private:
-    void CreateSwapChainFramebuffers();
-
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat();
     VkPresentModeKHR ChooseSwapPresentMode();
     VkExtent2D ChooseSwapExtent(Window &window);

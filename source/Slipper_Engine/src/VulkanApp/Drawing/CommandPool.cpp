@@ -34,25 +34,24 @@ VkCommandBuffer CommandPool::CreateCommandBuffer()
     return commandBuffer;
 }
 
-void CommandPool::BeginCommandBuffer(RenderPass *renderPass, SwapChain *swapChain, VkCommandBuffer commandBuffer, uint32_t imageIndex)
+VkCommandBuffer CommandPool::BeginCommandBuffer(uint32_t bufferIndex)
 {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0;                  // Optional
     beginInfo.pInheritanceInfo = nullptr; // Optional
 
-    VK_ASSERT(vkBeginCommandBuffer(commandBuffer, &beginInfo), "Failed to begin recording command buffer!");
+    VK_ASSERT(vkBeginCommandBuffer(vkCommandBuffers[bufferIndex], &beginInfo), "Failed to begin recording command buffer!");
 
-    VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass->vkRenderPass;
-    renderPassInfo.framebuffer = renderPass->vkFramebuffers[imageIndex];
-    renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapChain->vkExtent;
+    return vkCommandBuffers[bufferIndex];
+}
 
-    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+void CommandPool::EndCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    VK_ASSERT(vkEndCommandBuffer(commandBuffer), "Failed to record to command buffer!");
+}
 
-    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+void CommandPool::EndCommandBuffer(uint32_t bufferIndex)
+{
+    EndCommandBuffer(vkCommandBuffers[bufferIndex]);
 }

@@ -36,18 +36,6 @@ RenderPass::RenderPass(Device &device, VkFormat *attachementFormat) : device(dev
     VK_ASSERT(vkCreateRenderPass(device.logicalDevice, &renderPassInfo, nullptr, &vkRenderPass), "Failed to create render pass")
 }
 
-// TODO expand this for more swap chains after introduction of smart pointers
-void RenderPass::CreateSwapChainFramebuffers(SwapChain *swapChain)
-{
-    for (size_t i = 0; i < swapChain->vkImageViews.size(); i++)
-    {
-        VkImageView *attachments = &swapChain->vkImageViews[i];
-        size_t attachmentCount = 1;
-        VkExtent2D extent = swapChain->vkExtent;
-        framebuffers.emplace_back(&device, this, attachments, attachmentCount, extent);
-    }
-}
-
 void RenderPass::Destroy()
 {
     DestroyAllFrameBuffers();
@@ -75,4 +63,40 @@ void RenderPass::DestroyFramebuffer(Framebuffer *framebuffer)
             return;
         }
     }
+}
+
+// TODO expand this for more swap chains after introduction of smart pointers
+void RenderPass::CreateSwapChainFramebuffers(SwapChain *swapChain)
+{
+    for (size_t i = 0; i < swapChain->vkImageViews.size(); i++)
+    {
+        VkImageView *attachments = &swapChain->vkImageViews[i];
+        size_t attachmentCount = 1;
+        VkExtent2D extent = swapChain->vkExtent;
+        framebuffers.emplace_back(&device, this, attachments, attachmentCount, extent);
+    }
+}
+
+// TODO: expand for more swap chains after smart pointers
+void RenderPass::BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCommandBuffer commandBuffer, GraphicsPipeline &graphicsPipeline)
+{
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = vkRenderPass;
+    renderPassInfo.framebuffer = vkFramebuffers[imageIndex];
+
+    renderPassInfo.renderArea.offset = {0, 0};
+    renderPassInfo.renderArea.extent = swapChain->vkExtent;
+
+    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearColor;
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.vkGraphicsPipeline);
+}
+
+void RenderPass::EndRenderPass(VkCommandBuffer commandBuffer)
+{
+    vkCmdEndRenderPass(commandBuffer);
 }
