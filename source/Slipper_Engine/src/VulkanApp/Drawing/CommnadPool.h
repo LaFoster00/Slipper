@@ -15,7 +15,7 @@ public:
     void Destroy();
 
     VkCommandBuffer CreateCommandBuffer();
-    VkCommandBuffer BeginCommandBuffer(uint32_t bufferIndex);
+    VkCommandBuffer BeginCommandBuffer(uint32_t bufferIndex, bool resetCommandBuffer = true);
     void EndCommandBuffer(VkCommandBuffer commandBuffer);
     void EndCommandBuffer(uint32_t bufferIndex);
 

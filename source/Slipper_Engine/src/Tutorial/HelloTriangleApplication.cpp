@@ -23,6 +23,7 @@ void HelloTriangleApplication::initVulkan()
     graphics = new GraphicsEngine(device);
 
     auto &pipeline = graphics->SetupSimpleRenderPipeline(window, surface);
+    graphics->SetupSimpleDraw();
 }
 
 void HelloTriangleApplication::mainLoop()
@@ -30,11 +31,14 @@ void HelloTriangleApplication::mainLoop()
     while (!window.ShouldClose())
     {
         glfwPollEvents();
+        graphics->DrawFrame();
     }
 }
 
 void HelloTriangleApplication::cleanup()
 {
+    vkDeviceWaitIdle(device.logicalDevice);
+
     delete graphics;
     device.Destroy();
     surface.Destroy();

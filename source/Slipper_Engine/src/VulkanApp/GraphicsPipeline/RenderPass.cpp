@@ -33,6 +33,15 @@ RenderPass::RenderPass(Device &device, VkFormat *attachementFormat) : device(dev
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
 
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
+
     VK_ASSERT(vkCreateRenderPass(device.logicalDevice, &renderPassInfo, nullptr, &vkRenderPass), "Failed to create render pass")
 }
 

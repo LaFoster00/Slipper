@@ -53,12 +53,7 @@ private:
     Device device;
     GraphicsEngine *graphics;
 
-    VkSwapchainKHR swapchain;
-
-    VkFormat swapchainImageFormat;
-    VkExtent2D swapchainExtent;
-    std::vector<VkImage> swapchainImages;
-    std::vector<VkImageView> swapchainImageViews;
+    VkCommandBuffer simpleDrawCommand;
 
     VkDebugUtilsMessengerEXT debugMessenger;
 };

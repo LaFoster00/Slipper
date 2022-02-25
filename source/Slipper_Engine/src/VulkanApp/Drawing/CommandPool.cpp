@@ -34,8 +34,10 @@ VkCommandBuffer CommandPool::CreateCommandBuffer()
     return commandBuffer;
 }
 
-VkCommandBuffer CommandPool::BeginCommandBuffer(uint32_t bufferIndex)
+VkCommandBuffer CommandPool::BeginCommandBuffer(uint32_t bufferIndex, bool resetCommandBuffer)
 {
+    vkResetCommandBuffer(vkCommandBuffers[bufferIndex], 0);
+
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0;                  // Optional

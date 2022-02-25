@@ -9,6 +9,9 @@
 #include "GraphicsPipeline/RenderPass.h"
 #include "Drawing/CommnadPool.h"
 
+#include <vector>
+#include <functional>
+
 class Device;
 class Window;
 class Surface;
@@ -23,8 +26,14 @@ public:
     void SetupDefaultAssets();
 
     void CreateSwapChain(Window &window, Surface &surface);
+    void CreateSyncObjects();
+
     GraphicsPipeline &SetupSimpleRenderPipeline(Window &window, Surface &surface);
-    VkCommandBuffer SetupSimpleDraw(GraphicsPipeline &graphicsPipeline, uint32_t imageIndex);
+    void SetupSimpleDraw();
+
+    void AddRepeatedDrawCommand(std::function<void(VkCommandBuffer &)> command);
+
+    void DrawFrame();
 
 private:
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat();
@@ -46,4 +55,11 @@ public:
     std::vector<GraphicsPipeline> graphicsPipelines;
 
     std::vector<CommandPool> commandPools;
+
+    std::vector<std::function<void(VkCommandBuffer &)>> repeatedRenderCommands;
+
+private:
+    VkSemaphore m_imageAvailableSemaphore;
+    VkSemaphore m_renderFinishedSemaphore;
+    VkFence m_inFlightFence;
 };
