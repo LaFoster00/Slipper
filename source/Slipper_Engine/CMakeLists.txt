@@ -13,9 +13,15 @@ message("Building with ${BUILD_TYPE} config!")
 set(BUILD_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/$<CONFIG>)
 set(EXTERNAL_LIBS_DIR "${CMAKE_CURRENT_LIST_DIR}/../../extern")
 
+
 if ("${BUILD_TYPE}" STREQUAL "Debug")
-    set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
+    if(LINUX)
+        set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
+        set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
+    else()
+        set(CMAKE_C_FLAGS_DEBUG "-DDEBUG")
+        set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG")
+    endif()
 endif()
 
 include_directories(src)

@@ -4,9 +4,9 @@
 
 #include <optional>
 
-class VkViewport;
-class VkRect2D;
-class VkPipelineColorBlendAttachmentState;
+struct VkViewport;
+struct VkRect2D;
+struct VkPipelineColorBlendAttachmentState;
 class SwapChain;
 class Device;
 

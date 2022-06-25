@@ -134,7 +134,7 @@ VkPipelineDynamicStateCreateInfo PipelineLayout::SetupDynamicState(std::optional
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     if (dynamicStates.has_value())
     {
-        dynamicState.dynamicStateCount = dynamicStates.value().size();
+        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.value().size());
         dynamicState.pDynamicStates = dynamicStates.value().data();
     }
     else

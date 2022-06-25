@@ -55,7 +55,7 @@ void RenderPass::Destroy()
 
 void RenderPass::DestroyAllFrameBuffers()
 {
-    for (int32_t i = framebuffers.size() - 1; i >= 0; i--)
+    for (size_t i = framebuffers.size() - 1; i >= 0; i--)
     {
         DestroyFramebuffer(&framebuffers[i]);
     }
@@ -64,7 +64,7 @@ void RenderPass::DestroyAllFrameBuffers()
 /* Destroys the last occurence of the frame buffer. */
 void RenderPass::DestroyFramebuffer(Framebuffer *framebuffer)
 {
-    for (int32_t i = framebuffers.size(); i >= 0; i--)
+    for (size_t i = framebuffers.size(); i >= 0; i--)
     {
         if (&framebuffers[i] == framebuffer)
         {
