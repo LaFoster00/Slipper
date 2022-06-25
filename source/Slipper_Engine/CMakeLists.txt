@@ -69,7 +69,16 @@ target_link_libraries(Slipper_Engine ${Vulkan_LIBRARIES})
 #glfw
 target_include_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/include")
 target_link_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
-target_link_libraries(Slipper_Engine glfw3 dl pthread X11)
+
+if(LINUX)
+    target_link_libraries(Slipper_Engine glfw3 dl pthread X11)
+else()
+    message("Linking for windows")    
+    target_link_libraries(Slipper_Engine User32.lib glfw3 msvcrt.lib)
+    #if (NOT OUTPUT_LIB)
+    #    set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Slipper_Engine)
+    #endif()
+endif()
 
 
 #glm
@@ -93,6 +102,10 @@ target_include_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
 #elseif(WIN32)
 #    message(FATAL_ERROR "Setup bgfx for windows")
 #endif()
+
+add_custom_command(TARGET Slipper_Engine PRE_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_LIST_DIR}/EngineContent/ ${BUILD_OUTPUT_DIRECTORY}/EngineContent/)
 
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

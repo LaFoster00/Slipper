@@ -5,8 +5,11 @@ include(CTest)
 enable_testing()
 
 if(UNIX AND NOT APPLE)
-        set(LINUX TRUE)
+    set(LINUX TRUE CACHE BOOL "Is Linux Platform")
+elseif(NOT APPLE)
+    set(LINUX FALSE CACHE BOOL "Not Linux Platform")
 endif()
+
 
 string(CONCAT BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
@@ -67,14 +70,19 @@ add_subdirectory(extern/glm)
 
 #GLFW
 message(STATUS "Configuring GLFW")
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
+set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
+
 add_subdirectory(extern/glfw ${CMAKE_CURRENT_LIST_DIR}/extern/glfw/build)
+
+if( MSVC )
+    SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
+endif()
+
 
 #Slipper
 message(STATUS "Configuring SLIPPER_ENGINE Lib")
-set(OUTPUT_LIB ON CACHE INTERNAL "")
+set(OUTPUT_LIB OFF CACHE INTERNAL "")
 add_subdirectory(source/Slipper_Engine)
 
 message(STATUS "Configuring SLIPPER_EDITOR")

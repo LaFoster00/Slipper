@@ -4,16 +4,7 @@
 #include "VulkanApp/Setup/Instance.h"
 #include "VulkanApp/Setup/Device.h"
 #include "VulkanApp/Presentation/Surface.h"
-#include "Engine/Engine.h"
-#include "terminal_util.h"
 #include "VulkanApp/GraphicsPipeline/GraphicsPipeline.h"
-
-#include <vector>
-#include <fstream>
-#include <iostream>
-#include <set>
-#include <cstring>
-#include <optional>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;

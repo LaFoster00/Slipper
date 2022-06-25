@@ -1,5 +1,7 @@
 #include "GraphicsEngine.h"
 
+#include <algorithm>
+
 #include "Setup/Device.h"
 #include "Window/Window.h"
 #include "Presentation/Surface.h"
@@ -55,8 +57,8 @@ GraphicsEngine::~GraphicsEngine()
 void GraphicsEngine::SetupDefaultAssets()
 {
     /* Create shader for this pipeline. */
-    shaders.emplace_back(device, this, "src/Shaders/Spir-V/vert.spv", ShaderType::Vertex);
-    shaders.emplace_back(device, this, "src/Shaders/Spir-V/frag.spv", ShaderType::Fragment);
+    shaders.emplace_back(device, this, "EngineContent/Shaders/Spir-V/vert.spv", ShaderType::Vertex);
+    shaders.emplace_back(device, this, "EngineContent/Shaders/Spir-V/frag.spv", ShaderType::Fragment);
 }
 
 void GraphicsEngine::CreateSwapChain(Window &window, Surface &surface)
