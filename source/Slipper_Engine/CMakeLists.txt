@@ -26,65 +26,36 @@ endif()
 
 include_directories(src)
 
-set(SLIPPER_ENGINE_SOURCE_FILES
-    src/Engine/Slipper_Engine.cpp
-    src/terminal_util.cpp
-    src/Filesystem/File.cpp
-    
-    src/Tutorial/HelloTriangleApplication.cpp
-    
-    src/Window/Window.cpp
-    
-    src/VulkanApp/Setup/Instance.cpp
-    src/VulkanApp/Setup/Device.cpp
-    src/VulkanApp/Presentation/Surface.cpp
-    src/VulkanApp/Presentation/SwapChain.cpp
-    
-    src/VulkanApp/GraphicsEngine.cpp
-    src/VulkanApp/GraphicsPipeline/Shader.cpp
-    src/VulkanApp/GraphicsPipeline/GraphicsPipeline.cpp
-    src/VulkanApp/GraphicsPipeline/RenderPass.cpp
-    src/VulkanApp/GraphicsPipeline/PipelineLayout.cpp
+file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES "*.h" "*.cpp")
 
-    src/VulkanApp/Drawing/Framebuffer.cpp
-    src/VulkanApp/Drawing/CommandPool.cpp
-)
+# Special thanks to Luca Gherardi who wrote this special little peace of code :)
+macro(GroupSources curdir)
+    file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR}/${curdir} ${CMAKE_CURRENT_LIST_DIR}/${curdir}/*)
+    foreach(child ${children})
+        if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
+            GroupSources(${curdir}/${child})
+        else()
+            string(REPLACE "/" "\\" groupname ${curdir})
+            message("Child dir ${groupname}")
+            message("Child entry ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child}")
+            # I would like to call the src root folder in a different name, only in visual studio (not mandatory requirement)
+            string(REPLACE "src" "Source" groupname ${groupname})
+            source_group(${groupname} FILES ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
+        endif()
+    endforeach()
+endmacro()
 
-set(SLIPPER_ENGINE_HEADER_FILES
-    src/Tutorial/HelloTriangleApplication.h
-
-    src/common_defines.h
-    src/common_includes.h
-    src/terminal_util.h
-
-    src/Engine/Engine.h
-    src/Filesystem/File.h
-    src/Filesystem/Path.h
-
-    src/VulkanApp/Setup/Instance.h
-    src/VulkanApp/Setup/Device.h
-    src/VulkanApp/Presentation/Surface.h
-    src/VulkanApp/Presentation/SwapChain.h
-    
-    src/VulkanApp/GraphicsEngine.h
-    src/VulkanApp/GraphicsPipeline/Shader.h
-    src/VulkanApp/GraphicsPipeline/GraphicsPipeline.h
-    src/VulkanApp/GraphicsPipeline/RenderPass.h
-    src/VulkanApp/GraphicsPipeline/PipelineLayout.h
-
-    src/VulkanApp/Drawing/Framebuffer.h
-    src/VulkanApp/Drawing/CommandPool.h
-)
+GroupSources(src)
 
 option(OUTPUT_LIB OFF)
 if(OUTPUT_LIB)
     message("Building Engine Library")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_library(Slipper_Engine SHARED ${SLIPPER_ENGINE_SOURCE_FILES} ${SLIPPER_ENGINE_HEADER_FILES})
+    add_library(Slipper_Engine SHARED ${SLIPPER_ENGINE_SOURCE_FILES})
 else()
     message("Building Engine Executable")    
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_executable(Slipper_Engine ${SLIPPER_ENGINE_SOURCE_FILES} ${SLIPPER_ENGINE_HEADER_FILES})
+    add_executable(Slipper_Engine ${SLIPPER_ENGINE_SOURCE_FILES})
 endif()
 
 option(LIB_DEBUG OFF)
