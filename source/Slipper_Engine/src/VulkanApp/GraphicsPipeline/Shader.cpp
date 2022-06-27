@@ -11,7 +11,7 @@ const char *ShaderTypeNames[]{
     "Fragment",
     "Compute"};
 
-Shader::Shader(Device &device, GraphicsEngine *graphicsPipeline, const char *filepath, ShaderType shaderType) : device(device)
+Shader::Shader(Device &device, GraphicsEngine *graphicsPipeline, std::string_view filepath, ShaderType shaderType) : device(device)
 {
     this->graphicsPipeline = graphicsPipeline;
 
@@ -34,11 +34,11 @@ void Shader::Destroy()
     vkDestroyShaderModule(device.logicalDevice, shaderModule, nullptr);
 }
 
-void Shader::LoadShader(const char *filepath, ShaderType shaderType)
+void Shader::LoadShader(std::string_view filepath, ShaderType shaderType)
 {
     name = File::GetFileNameFromPath(filepath);
     this->shaderType = shaderType;
-    auto binaryCode = File::ReadBinaryFile(filepath);
+    const auto binaryCode = File::ReadBinaryFile(filepath);
     shaderModule = CreateShaderModule(binaryCode, device);
     shaderStage = CreateShaderStage(*this);
     graphicsPipeline->vkShaderStages.push_back(shaderStage);

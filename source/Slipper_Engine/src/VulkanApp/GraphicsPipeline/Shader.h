@@ -23,14 +23,14 @@ class Shader
 {
 public:
     Shader() = delete;
-    Shader(Device &device, GraphicsEngine *graphicsPipeline, const char *filepath, ShaderType shaderType);
+    Shader(Device &device, GraphicsEngine *graphicsPipeline, std::string_view filepath, ShaderType shaderType);
     void Destroy();
 
     static VkShaderModule CreateShaderModule(const std::vector<char> &code, Device &device);
     static VkPipelineShaderStageCreateInfo CreateShaderStage(Shader &shader);
 
 private:
-    void LoadShader(const char *filepath, ShaderType shaderType);
+    void LoadShader(std::string_view filepath, ShaderType shaderType);
 
 public:
     Device &device;

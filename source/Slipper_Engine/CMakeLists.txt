@@ -26,22 +26,21 @@ endif()
 
 include_directories(src)
 
-set(SLIPPER_ENGINE_SOURCE_FILES 
-    src/terminal_util.cpp    
-    src/Filesystem/File.cpp
+set(SLIPPER_ENGINE_SOURCE_FILES
     src/Engine/Slipper_Engine.cpp
+    src/terminal_util.cpp
+    src/Filesystem/File.cpp
     
     src/Tutorial/HelloTriangleApplication.cpp
     
     src/Window/Window.cpp
     
-    src/VulkanApp/GraphicsEngine.cpp
-
     src/VulkanApp/Setup/Instance.cpp
     src/VulkanApp/Setup/Device.cpp
     src/VulkanApp/Presentation/Surface.cpp
     src/VulkanApp/Presentation/SwapChain.cpp
     
+    src/VulkanApp/GraphicsEngine.cpp
     src/VulkanApp/GraphicsPipeline/Shader.cpp
     src/VulkanApp/GraphicsPipeline/GraphicsPipeline.cpp
     src/VulkanApp/GraphicsPipeline/RenderPass.cpp
@@ -51,15 +50,41 @@ set(SLIPPER_ENGINE_SOURCE_FILES
     src/VulkanApp/Drawing/CommandPool.cpp
 )
 
+set(SLIPPER_ENGINE_HEADER_FILES
+    src/Tutorial/HelloTriangleApplication.h
+
+    src/common_defines.h
+    src/common_includes.h
+    src/terminal_util.h
+
+    src/Engine/Engine.h
+    src/Filesystem/File.h
+    src/Filesystem/Path.h
+
+    src/VulkanApp/Setup/Instance.h
+    src/VulkanApp/Setup/Device.h
+    src/VulkanApp/Presentation/Surface.h
+    src/VulkanApp/Presentation/SwapChain.h
+    
+    src/VulkanApp/GraphicsEngine.h
+    src/VulkanApp/GraphicsPipeline/Shader.h
+    src/VulkanApp/GraphicsPipeline/GraphicsPipeline.h
+    src/VulkanApp/GraphicsPipeline/RenderPass.h
+    src/VulkanApp/GraphicsPipeline/PipelineLayout.h
+
+    src/VulkanApp/Drawing/Framebuffer.h
+    src/VulkanApp/Drawing/CommandPool.h
+)
+
 option(OUTPUT_LIB OFF)
 if(OUTPUT_LIB)
     message("Building Engine Library")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_library(Slipper_Engine SHARED ${SLIPPER_ENGINE_SOURCE_FILES})
+    add_library(Slipper_Engine SHARED ${SLIPPER_ENGINE_SOURCE_FILES} ${SLIPPER_ENGINE_HEADER_FILES})
 else()
     message("Building Engine Executable")    
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_executable(Slipper_Engine ${SLIPPER_ENGINE_SOURCE_FILES})
+    add_executable(Slipper_Engine ${SLIPPER_ENGINE_SOURCE_FILES} ${SLIPPER_ENGINE_HEADER_FILES})
 endif()
 
 option(LIB_DEBUG OFF)
@@ -80,7 +105,13 @@ if(LINUX)
     target_link_libraries(Slipper_Engine glfw3 dl pthread X11)
 else()
     message("Linking for windows")    
-    target_link_libraries(Slipper_Engine User32.lib glfw3)
+    if (CMAKE_GENERATOR MATCHES "Visual Studio")
+        target_link_libraries(Slipper_Engine User32.lib glfw3)
+    else()
+        target_link_libraries(Slipper_Engine User32.lib glfw3 msvcrt.lib)
+    endif()
+
+    
     #if (NOT OUTPUT_LIB)
     #    set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Slipper_Engine)
     #endif()

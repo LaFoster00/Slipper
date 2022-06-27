@@ -1,6 +1,8 @@
+
 #include "GraphicsEngine.h"
 
 #include <algorithm>
+#include <filesystem>
 
 #include "Setup/Device.h"
 #include "Window/Window.h"
@@ -57,6 +59,7 @@ GraphicsEngine::~GraphicsEngine()
 void GraphicsEngine::SetupDefaultAssets()
 {
     /* Create shader for this pipeline. */
+    auto path = std::filesystem::absolute("EngineContent/Shaders/Spir-V/vert.spv");
     shaders.emplace_back(device, this, "EngineContent/Shaders/Spir-V/vert.spv", ShaderType::Vertex);
     shaders.emplace_back(device, this, "EngineContent/Shaders/Spir-V/frag.spv", ShaderType::Fragment);
 }

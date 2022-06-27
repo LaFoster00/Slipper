@@ -14,12 +14,6 @@ public:
 class Window
 {
 public:
-    GLFWwindow *glfwWindow;
-
-private:
-    WindowInfo info;
-
-public:
     GLFWwindow *CreateWindow(WindowInfo createInfo);
 
     bool ShouldClose()
@@ -31,4 +25,10 @@ public:
     {
         glfwDestroyWindow(glfwWindow);
     }
+
+public:
+    GLFWwindow* glfwWindow;
+
+private:
+    WindowInfo info;
 };

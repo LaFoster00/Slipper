@@ -5,6 +5,6 @@
 
 namespace File
 {
-    extern std::vector<char> ReadBinaryFile(const char *filepath);
-    extern std::string GetFileNameFromPath(const char *filepath);
+    extern std::vector<char> ReadBinaryFile(std::string_view filepath);
+    extern std::string GetFileNameFromPath(std::string_view filepath);
 }

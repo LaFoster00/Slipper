@@ -1,18 +1,26 @@
 #include "File.h"
 
 #include "common_defines.h"
+#include "Path.h"
 
 #include <fstream>
+#include <algorithm>
 
 namespace File
 {
-    std::vector<char> ReadBinaryFile(const char *filepath)
+    // Mark relative path with "./"
+    std::vector<char> ReadBinaryFile(std::string_view filepath)
     {
-        std::ifstream file(filepath, std::ios::ate | std::ios::binary);
+        std::string finalPath(filepath);
+        if (*filepath.begin() == '.')
+        {
+            finalPath = Path::MakeEngineRelativePathAbsolute(filepath);
+        }
+        std::ifstream file(filepath.data(), std::ios::ate | std::ios::binary);
 
         ASSERT(!file.is_open(), "Failed to open file!")
 
-        size_t fileSize = (size_t)file.tellg();
+        const size_t fileSize = (size_t)file.tellg();
         std::vector<char> buffer(fileSize);
         file.seekg(0);
         file.read(buffer.data(), fileSize);
@@ -22,9 +30,13 @@ namespace File
     }
 
     /* Needs further refinement! */
-    std::string GetFileNameFromPath(const char *filepath)
+    std::string GetFileNameFromPath(std::string_view filepath)
     {
         std::string fp(filepath);
+        if (*filepath.begin() == '.')
+        {
+            std::replace(fp.begin(), fp.end(), '\\', '/');
+        }
         fp = fp.substr(fp.find_last_of('/') + 1);
         return fp.substr(0, fp.find_last_of('.'));
     }
