@@ -18,16 +18,15 @@ class GraphicsPipeline
 {
 public:
     GraphicsPipeline() = delete;
-    GraphicsPipeline(Device &device);
     GraphicsPipeline(Device &device, VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass);
+    ~GraphicsPipeline();
+
+private:
     void Create(VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass);
-    void Destroy();
 
 public:
     Device &device;
 
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkGraphicsPipeline;
-
-    std::vector<CommandPool> commandPools;
 };

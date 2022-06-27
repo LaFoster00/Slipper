@@ -9,7 +9,8 @@
 const char *ShaderTypeNames[]{
     "Vertex",
     "Fragment",
-    "Compute"};
+    "Compute"
+};
 
 Shader::Shader(Device &device, GraphicsEngine *graphicsPipeline, std::string_view filepath, ShaderType shaderType) : device(device)
 {

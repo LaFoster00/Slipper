@@ -9,9 +9,6 @@
 #include <limits>
 #include <algorithm>
 
-GraphicsPipeline::GraphicsPipeline(Device &device) : device(device)
-{
-}
 GraphicsPipeline::GraphicsPipeline(Device &device, VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass) : device(device)
 {
     Create(shaderStages, extent, renderPass);
@@ -60,13 +57,8 @@ void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages, VkE
     VK_ASSERT(vkCreateGraphicsPipelines(device.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkGraphicsPipeline), "Failed to create graphics pipeline!");
 }
 
-void GraphicsPipeline::Destroy()
+GraphicsPipeline::~GraphicsPipeline()
 {
-    for (auto &commandPool : commandPools)
-    {
-        commandPool.Destroy();
-    }
-
     vkDestroyPipeline(device.logicalDevice, vkGraphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device.logicalDevice, vkPipelineLayout, nullptr);
 }

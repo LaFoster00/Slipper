@@ -3,7 +3,7 @@
 #include "../Setup/Device.h"
 #include "../GraphicsPipeline/RenderPass.h"
 
-CommandPool::CommandPool(Device &device) : owningDevice(device)
+CommandPool::CommandPool(Device &device, int32_t BufferCount) : owningDevice(device)
 {
     QueueFamilyIndices &queueFamilyIndices = device.queueFamilyIndices;
 
@@ -13,25 +13,27 @@ CommandPool::CommandPool(Device &device) : owningDevice(device)
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
     VK_ASSERT(vkCreateCommandPool(device.logicalDevice, &poolInfo, nullptr, &vkCommandPool), "Failed to create command pool");
+
+    CreateCommandBuffers(BufferCount);
 }
 
-void CommandPool::Destroy()
+CommandPool::~CommandPool()
 {
     vkDestroyCommandPool(owningDevice.logicalDevice, vkCommandPool, nullptr);
 }
 
-VkCommandBuffer CommandPool::CreateCommandBuffer()
+std::vector<VkCommandBuffer>& CommandPool::CreateCommandBuffers(int32_t BufferCount)
 {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = vkCommandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = 1;
+    allocInfo.commandBufferCount = BufferCount;
 
-    auto &commandBuffer = vkCommandBuffers.emplace_back();
+    vkCommandBuffers.resize(BufferCount);
 
     VK_ASSERT(vkAllocateCommandBuffers(owningDevice.logicalDevice, &allocInfo, vkCommandBuffers.data()), "Failed to create command buffers!");
-    return commandBuffer;
+    return vkCommandBuffers;
 }
 
 VkCommandBuffer CommandPool::BeginCommandBuffer(uint32_t bufferIndex, bool resetCommandBuffer)

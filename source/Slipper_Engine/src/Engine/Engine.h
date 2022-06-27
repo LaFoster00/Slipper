@@ -4,6 +4,8 @@
 
 namespace Engine
 {
+    static constexpr int MaxFramesInFlight = 2;
+
     static bool EnableValidationLayers = true;
 
     static const std::vector<const char *> DeviceExtensions = {

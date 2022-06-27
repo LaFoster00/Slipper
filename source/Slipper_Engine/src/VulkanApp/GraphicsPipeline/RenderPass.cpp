@@ -88,7 +88,7 @@ void RenderPass::CreateSwapChainFramebuffers(SwapChain *swapChain)
 }
 
 // TODO: expand for more swap chains after smart pointers
-void RenderPass::BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCommandBuffer commandBuffer, GraphicsPipeline &graphicsPipeline)
+void RenderPass::BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCommandBuffer commandBuffer)
 {
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -102,8 +102,7 @@ void RenderPass::BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCo
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
 
-    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.vkGraphicsPipeline);
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE); 
 }
 
 void RenderPass::EndRenderPass(VkCommandBuffer commandBuffer)

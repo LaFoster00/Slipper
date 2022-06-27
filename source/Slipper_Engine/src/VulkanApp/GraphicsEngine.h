@@ -46,6 +46,8 @@ private:
 public:
     Device &device;
 
+    uint32_t currentFrame = 0;
+
     std::vector<Shader> shaders;
     std::vector<VkPipelineShaderStageCreateInfo> vkShaderStages;
 
@@ -59,7 +61,7 @@ public:
     std::vector<std::function<void(VkCommandBuffer &)>> repeatedRenderCommands;
 
 private:
-    VkSemaphore m_imageAvailableSemaphore;
-    VkSemaphore m_renderFinishedSemaphore;
-    VkFence m_inFlightFence;
+    std::vector<VkSemaphore> m_imageAvailableSemaphores;
+    std::vector<VkSemaphore> m_renderFinishedSemaphores;
+    std::vector<VkFence> m_inFlightFences;
 };

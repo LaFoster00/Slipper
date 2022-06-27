@@ -26,15 +26,9 @@ GraphicsEngine::GraphicsEngine(Device &device, bool setupDefaultAssets) : device
 
 GraphicsEngine::~GraphicsEngine()
 {
-    for (auto &commandPool : commandPools)
-    {
-        commandPool.Destroy();
-    }
+    commandPools.clear();
 
-    for (auto &graphicsPipeline : graphicsPipelines)
-    {
-        graphicsPipeline.Destroy();
-    }
+    graphicsPipelines.clear();
 
     for (auto &renderPass : renderPasses)
     {
@@ -46,9 +40,20 @@ GraphicsEngine::~GraphicsEngine()
         swapChain.Destroy();
     }
 
-    vkDestroySemaphore(device.logicalDevice, m_imageAvailableSemaphore, nullptr);
-    vkDestroySemaphore(device.logicalDevice, m_renderFinishedSemaphore, nullptr);
-    vkDestroyFence(device.logicalDevice, m_inFlightFence, nullptr);
+    for (const auto m_imageAvailableSemaphore : m_imageAvailableSemaphores)
+    {
+        vkDestroySemaphore(device.logicalDevice, m_imageAvailableSemaphore, nullptr);
+    }
+
+    for (const auto m_renderFinishedSemaphore : m_renderFinishedSemaphores)
+    {
+        vkDestroySemaphore(device.logicalDevice, m_renderFinishedSemaphore, nullptr);
+    }
+
+    for (const auto m_inFlightFence : m_inFlightFences)
+    {
+        vkDestroyFence(device.logicalDevice, m_inFlightFence, nullptr);
+    }
 
     for (auto &shader : shaders)
     {
@@ -59,7 +64,6 @@ GraphicsEngine::~GraphicsEngine()
 void GraphicsEngine::SetupDefaultAssets()
 {
     /* Create shader for this pipeline. */
-    auto path = std::filesystem::absolute("EngineContent/Shaders/Spir-V/vert.spv");
     shaders.emplace_back(device, this, "./EngineContent/Shaders/Spir-V/vert.spv", ShaderType::Vertex);
     shaders.emplace_back(device, this, "./EngineContent/Shaders/Spir-V/frag.spv", ShaderType::Fragment);
 }
@@ -119,9 +123,16 @@ void GraphicsEngine::CreateSyncObjects()
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    VK_ASSERT(vkCreateSemaphore(device.logicalDevice, &semaphoreInfo, nullptr, &m_imageAvailableSemaphore), "Failed to create semaphore!")
-    VK_ASSERT(vkCreateSemaphore(device.logicalDevice, &semaphoreInfo, nullptr, &m_renderFinishedSemaphore), "Failed to create semaphore!")
-    VK_ASSERT(vkCreateFence(device.logicalDevice, &fenceInfo, nullptr, &m_inFlightFence), "Failed to create fence!")
+    m_imageAvailableSemaphores.resize(Engine::MaxFramesInFlight);
+    m_renderFinishedSemaphores.resize(Engine::MaxFramesInFlight);
+    m_inFlightFences.resize(Engine::MaxFramesInFlight);
+
+    for (int i = 0; i < Engine::MaxFramesInFlight; ++i)
+    {
+        VK_ASSERT(vkCreateSemaphore(device.logicalDevice, &semaphoreInfo, nullptr, &m_imageAvailableSemaphores[i]), "Failed to create semaphore!")
+        VK_ASSERT(vkCreateSemaphore(device.logicalDevice, &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]), "Failed to create semaphore!")
+        VK_ASSERT(vkCreateFence(device.logicalDevice, &fenceInfo, nullptr, &m_inFlightFences[i]), "Failed to create fence!")
+    }
 }
 
 GraphicsPipeline &GraphicsEngine::SetupSimpleRenderPipeline(Window &window, Surface &surface)
@@ -134,8 +145,7 @@ GraphicsPipeline &GraphicsEngine::SetupSimpleRenderPipeline(Window &window, Surf
 
     auto &pipeline = graphicsPipelines.emplace_back(device, vkShaderStages.data(), swapChains[0].vkExtent, &renderPasses[0]);
 
-    commandPools.emplace_back(device);
-    commandPools[0].CreateCommandBuffer();
+    commandPools.emplace_back(device, Engine::MaxFramesInFlight);
 
     return pipeline;
 }
@@ -153,14 +163,16 @@ void GraphicsEngine::AddRepeatedDrawCommand(std::function<void(VkCommandBuffer &
 
 void GraphicsEngine::DrawFrame()
 {
-    vkWaitForFences(device.logicalDevice, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(device.logicalDevice, 1, &m_inFlightFence);
+    vkWaitForFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkResetFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame]);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(device.logicalDevice, swapChains[0].vkSwapChain, UINT64_MAX, m_imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    vkAcquireNextImageKHR(device.logicalDevice, swapChains[0].vkSwapChain, UINT64_MAX, m_imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-    VkCommandBuffer commandBuffer = commandPools[0].BeginCommandBuffer(0);
-    renderPasses[0].BeginRenderPass(&swapChains[0], imageIndex, commandBuffer, graphicsPipelines[0]);
+    VkCommandBuffer commandBuffer = commandPools[0].BeginCommandBuffer(currentFrame);
+    renderPasses[0].BeginRenderPass(&swapChains[0], imageIndex, commandBuffer);
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[0].vkGraphicsPipeline);
 
     for (auto &command : repeatedRenderCommands)
     {
@@ -173,18 +185,18 @@ void GraphicsEngine::DrawFrame()
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = {m_imageAvailableSemaphore};
+    VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphores[currentFrame] };
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
-    VkSemaphore signalSemaphores[] = {m_renderFinishedSemaphore};
+    VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphores[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    VK_ASSERT(vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, m_inFlightFence), "Failed to submit draw command buffer!");
+    VK_ASSERT(vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, m_inFlightFences[currentFrame]), "Failed to submit draw command buffer!");
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -199,6 +211,8 @@ void GraphicsEngine::DrawFrame()
     presentInfo.pResults = nullptr; // Optional
 
     vkQueuePresentKHR(device.presentQueue, &presentInfo);
+
+    currentFrame = (currentFrame + 1) % Engine::MaxFramesInFlight;
 }
 
 VkSurfaceFormatKHR GraphicsEngine::ChooseSwapSurfaceFormat()

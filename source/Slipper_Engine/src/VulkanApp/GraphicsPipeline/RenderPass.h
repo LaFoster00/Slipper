@@ -22,7 +22,7 @@ public:
 
     void CreateSwapChainFramebuffers(SwapChain *swapChain);
 
-    void BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCommandBuffer commandBuffer, GraphicsPipeline &graphicsPipeline);
+    void BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCommandBuffer commandBuffer);
     void EndRenderPass(VkCommandBuffer commandBuffer);
 
 public:
