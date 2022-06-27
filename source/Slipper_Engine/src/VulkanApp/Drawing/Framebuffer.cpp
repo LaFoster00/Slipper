@@ -25,7 +25,7 @@ void Framebuffer::Create(RenderPass *renderPass, VkImageView *attachments, size_
     VK_ASSERT(vkCreateFramebuffer(device->logicalDevice, &framebufferInfo, nullptr, &vkFramebuffer), "Failed to create framebuffer!")
 }
 
-void Framebuffer::Destroy()
+Framebuffer::~Framebuffer()
 {
     const Device *deviceptr = device;
     vkDestroyFramebuffer(device->logicalDevice, vkFramebuffer, nullptr);

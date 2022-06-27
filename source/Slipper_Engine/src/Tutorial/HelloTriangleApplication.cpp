@@ -10,9 +10,11 @@ void HelloTriangleApplication::initWindow()
     windowCreateInfo.name = "Slipper";
     windowCreateInfo.width = WIDTH;
     windowCreateInfo.height = HEIGHT;
-    windowCreateInfo.resizable = false;
+    windowCreateInfo.resizable = true;
 
     window.CreateWindow(windowCreateInfo);
+    glfwSetWindowUserPointer(window.glfwWindow, this);
+    glfwSetFramebufferSizeCallback(window.glfwWindow, FramebufferResizeCallback);
 }
 
 void HelloTriangleApplication::initVulkan()
@@ -22,7 +24,7 @@ void HelloTriangleApplication::initVulkan()
     device = Device::PickPhysicalDevice(&instance, &surface, true);
     graphics = new GraphicsEngine(device);
 
-    auto &pipeline = graphics->SetupSimpleRenderPipeline(window, surface);
+    auto pipeline = graphics->SetupSimpleRenderPipelineForRenderPass(window, surface, graphics->CreateRenderPass());
     graphics->SetupSimpleDraw();
 }
 
@@ -45,4 +47,10 @@ void HelloTriangleApplication::cleanup()
     instance.Destroy();
     window.Destroy();
     glfwTerminate();
+}
+
+void HelloTriangleApplication::FramebufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+    auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+    app->graphics->OnWindowResized(window, width, height);
 }

@@ -5,10 +5,10 @@
 
 #include <algorithm>
 
-RenderPass::RenderPass(Device &device, VkFormat *attachementFormat) : device(device)
+RenderPass::RenderPass(Device &device, VkFormat attachementFormat) : device(device)
 {
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = *attachementFormat;
+    colorAttachment.format = attachementFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -47,7 +47,7 @@ RenderPass::RenderPass(Device &device, VkFormat *attachementFormat) : device(dev
     VK_ASSERT(vkCreateRenderPass(device.logicalDevice, &renderPassInfo, nullptr, &vkRenderPass), "Failed to create render pass")
 }
 
-void RenderPass::Destroy()
+RenderPass::~RenderPass()
 {
     DestroyAllFrameBuffers();
     vkDestroyRenderPass(device.logicalDevice, vkRenderPass, nullptr);
@@ -55,35 +55,33 @@ void RenderPass::Destroy()
 
 void RenderPass::DestroyAllFrameBuffers()
 {
-    for (int64_t i = static_cast<int64_t>(framebuffers.size()) - 1; i >= 0; i--)
-    {
-        DestroyFramebuffer(&framebuffers[i]);
-    }
+    swapChainFramebuffers.clear();
 }
 
 /* Destroys the last occurence of the frame buffer. */
-void RenderPass::DestroyFramebuffer(Framebuffer *framebuffer)
+bool RenderPass::DestroySwapChainFramebuffers(SwapChain* SwapChain)
 {
-    for (int64_t i = static_cast<int64_t>(framebuffers.size()) - 1; i >= 0; i--)
+    if (swapChainFramebuffers.contains(SwapChain))
     {
-        if (&framebuffers[i] == framebuffer)
-        {
-            framebuffers[i].Destroy();
-            framebuffers.erase(std::next(framebuffers.begin(), i));
-            return;
-        }
+        swapChainFramebuffers.erase(SwapChain);
+        return true;
     }
+    return false;
 }
 
 // TODO expand this for more swap chains after introduction of smart pointers
 void RenderPass::CreateSwapChainFramebuffers(SwapChain *swapChain)
 {
+    if (swapChainFramebuffers.contains(swapChain))
+    {
+	    ASSERT(1, "Swapchain allready has Framebuffers for this swap chain. Clean them up before creating new ones!")
+    }
     for (size_t i = 0; i < swapChain->vkImageViews.size(); i++)
     {
         VkImageView *attachments = &swapChain->vkImageViews[i];
         size_t attachmentCount = 1;
         VkExtent2D extent = swapChain->vkExtent;
-        framebuffers.emplace_back(&device, this, attachments, attachmentCount, extent);
+        swapChainFramebuffers[swapChain].emplace_back(std::make_unique<Framebuffer>(&device, this, attachments, attachmentCount, extent));
     }
 }
 
@@ -93,7 +91,7 @@ void RenderPass::BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCo
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = vkRenderPass;
-    renderPassInfo.framebuffer = framebuffers[imageIndex].vkFramebuffer;
+    renderPassInfo.framebuffer = swapChainFramebuffers.at(swapChain)[imageIndex]->vkFramebuffer;
 
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = swapChain->vkExtent;

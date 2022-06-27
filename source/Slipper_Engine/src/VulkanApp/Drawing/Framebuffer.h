@@ -13,8 +13,10 @@ class Framebuffer
 {
 public:
     Framebuffer(Device *device, RenderPass *renderPass, VkImageView *attachments, size_t attachmentCount, VkExtent2D extent);
-    void Create(RenderPass *renderPass, VkImageView *attachments, size_t attachmentCount, VkExtent2D extent);
-    void Destroy();
+    ~Framebuffer();
+
+private:
+    void Create(RenderPass* renderPass, VkImageView* attachments, size_t attachmentCount, VkExtent2D extent);
 
 public:
     const Device *device;

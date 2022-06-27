@@ -22,23 +22,17 @@ GraphicsEngine::GraphicsEngine(Device &device, bool setupDefaultAssets) : device
         SetupDefaultAssets();
         CreateSyncObjects();
     }
+
+    commandPool = new CommandPool(device, Engine::MaxFramesInFlight);
 }
 
 GraphicsEngine::~GraphicsEngine()
 {
-    commandPools.clear();
-
+    renderPasses.clear();
     graphicsPipelines.clear();
+    swapChains.clear();
 
-    for (auto &renderPass : renderPasses)
-    {
-        renderPass.Destroy();
-    }
-
-    for (auto &swapChain : swapChains)
-    {
-        swapChain.Destroy();
-    }
+    delete commandPool;
 
     for (const auto m_imageAvailableSemaphore : m_imageAvailableSemaphores)
     {
@@ -61,14 +55,7 @@ GraphicsEngine::~GraphicsEngine()
     }
 }
 
-void GraphicsEngine::SetupDefaultAssets()
-{
-    /* Create shader for this pipeline. */
-    shaders.emplace_back(device, this, "./EngineContent/Shaders/Spir-V/vert.spv", ShaderType::Vertex);
-    shaders.emplace_back(device, this, "./EngineContent/Shaders/Spir-V/frag.spv", ShaderType::Fragment);
-}
-
-void GraphicsEngine::CreateSwapChain(Window &window, Surface &surface)
+SwapChain *GraphicsEngine::CreateSwapChain(Window& window, Surface& surface)
 {
     VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat();
     VkPresentModeKHR presentMode = ChooseSwapPresentMode();
@@ -89,7 +76,7 @@ void GraphicsEngine::CreateSwapChain(Window &window, Surface &surface)
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    uint32_t indices[] = {device.queueFamilyIndices.graphicsFamily.value(), device.queueFamilyIndices.presentFamily.value()};
+    uint32_t indices[] = { device.queueFamilyIndices.graphicsFamily.value(), device.queueFamilyIndices.presentFamily.value() };
 
     if (device.queueFamilyIndices.graphicsFamily != device.queueFamilyIndices.presentFamily)
     {
@@ -110,8 +97,69 @@ void GraphicsEngine::CreateSwapChain(Window &window, Surface &surface)
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    // Create new swap chain for this device
-    swapChains.emplace_back(device, &createInfo, true);
+    // Create new swap chain for this device and insert it into the mapping
+    auto newSwapDependency = swapChainDependencies.insert(
+        std::make_pair(
+            swapChains.emplace_back(std::make_unique<SwapChain>(device, &createInfo, true)).get(),
+            std::tuple<Window&, Surface&, std::vector<RenderPass*>>(window, surface, {})
+        )
+    );
+    return newSwapDependency.first->first;
+}
+
+void GraphicsEngine::CleanupSwapChain(SwapChain *SwapChain)
+{
+	for (auto& renderPass : renderPasses)
+	{
+        if (renderPass->DestroySwapChainFramebuffers(SwapChain) && graphicsPipelines.contains(renderPass.get()))
+        {
+            graphicsPipelines.erase(renderPass.get());
+        }
+	}
+
+    for (auto swapChainIt = swapChains.begin(); swapChainIt != swapChains.end(); ++swapChainIt)
+    {
+	    if (swapChainIt->get() == SwapChain)
+	    {
+            swapChains.erase(swapChainIt);
+            break;
+	    }
+    }
+
+    swapChainDependencies.erase(SwapChain);
+}
+
+void GraphicsEngine::RecreateSwapChain(SwapChain *SwapChain)
+{
+    int width = 0, height = 0;
+    auto currentSCD = swapChainDependencies.at(SwapChain);
+    glfwGetFramebufferSize(std::get<0>(currentSCD).glfwWindow, &width, &height);
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(std::get<0>(currentSCD).glfwWindow, &width, &height);
+        glfwWaitEvents();
+    }
+
+    vkDeviceWaitIdle(device.logicalDevice);
+
+    const auto currentSwapChainDependencies = swapChainDependencies.at(SwapChain);
+
+    CleanupSwapChain(SwapChain);
+
+    for (const auto RenderPass : std::get<2>(currentSwapChainDependencies))
+    {
+        SetupSimpleRenderPipelineForRenderPass(
+            std::get<0>(currentSwapChainDependencies),
+            std::get<1>(currentSwapChainDependencies),
+            RenderPass);
+    }
+    
+}
+
+void GraphicsEngine::SetupDefaultAssets()
+{
+    /* Create shader for this pipeline. */
+    shaders.emplace_back(device, this, "./EngineContent/Shaders/Spir-V/vert.spv", ShaderType::Vertex);
+    shaders.emplace_back(device, this, "./EngineContent/Shaders/Spir-V/frag.spv", ShaderType::Fragment);
 }
 
 void GraphicsEngine::CreateSyncObjects()
@@ -135,19 +183,25 @@ void GraphicsEngine::CreateSyncObjects()
     }
 }
 
-GraphicsPipeline &GraphicsEngine::SetupSimpleRenderPipeline(Window &window, Surface &surface)
+RenderPass* GraphicsEngine::CreateRenderPass()
 {
-    CreateSwapChain(window, surface);
+    return renderPasses.emplace_back(std::make_unique<RenderPass>(device, ChooseSwapSurfaceFormat().format)).get();
+}
+
+GraphicsPipeline *GraphicsEngine::SetupSimpleRenderPipelineForRenderPass(Window &window, Surface &surface, RenderPass *RenderPass)
+{
+	const auto SwapChain = CreateSwapChain(window, surface);
 
     /* Create renderpass for this pipeline */
-    renderPasses.emplace_back(device, &swapChains[0].vkImageFormat);
-    renderPasses[0].CreateSwapChainFramebuffers(&swapChains[0]);
+    RenderPass->CreateSwapChainFramebuffers(SwapChain);
+    std::get<2>(swapChainDependencies.at(SwapChain)).push_back(RenderPass);
 
-    auto &pipeline = graphicsPipelines.emplace_back(device, vkShaderStages.data(), swapChains[0].vkExtent, &renderPasses[0]);
+	auto pipeline = graphicsPipelines.insert(
+        std::make_pair(
+            RenderPass,
+			std::make_unique<GraphicsPipeline>(device, vkShaderStages.data(), swapChains[0]->vkExtent, RenderPass)));
 
-    commandPools.emplace_back(device, Engine::MaxFramesInFlight);
-
-    return pipeline;
+    return pipeline.first->second.get();
 }
 
 void GraphicsEngine::SetupSimpleDraw()
@@ -164,23 +218,40 @@ void GraphicsEngine::AddRepeatedDrawCommand(std::function<void(VkCommandBuffer &
 void GraphicsEngine::DrawFrame()
 {
     vkWaitForFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame]);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(device.logicalDevice, swapChains[0].vkSwapChain, UINT64_MAX, m_imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(
+        device.logicalDevice, 
+        swapChains[0]->vkSwapChain, 
+        UINT64_MAX, 
+        m_imageAvailableSemaphores[currentFrame], 
+        VK_NULL_HANDLE, 
+        &imageIndex);
 
-    VkCommandBuffer commandBuffer = commandPools[0].BeginCommandBuffer(currentFrame);
-    renderPasses[0].BeginRenderPass(&swapChains[0], imageIndex, commandBuffer);
+    if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_framebufferResized)
+    {
+        RecreateSwapChain(swapChains[0].get());
+        m_framebufferResized = false;
+        return;
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        throw std::runtime_error("Failed to acquire swap chain image!");
+    }
 
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[0].vkGraphicsPipeline);
+    vkResetFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame]);
+
+    VkCommandBuffer commandBuffer = commandPool->BeginCommandBuffer(currentFrame);
+    renderPasses[0]->BeginRenderPass(swapChains[0].get(), imageIndex, commandBuffer);
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines.at(renderPasses[0].get())->vkGraphicsPipeline);
 
     for (auto &command : repeatedRenderCommands)
     {
         command(commandBuffer);
     }
 
-    renderPasses[0].EndRenderPass(commandBuffer);
-    commandPools[0].EndCommandBuffer(commandBuffer);
+    renderPasses[0]->EndRenderPass(commandBuffer);
+    commandPool->EndCommandBuffer(commandBuffer);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -204,15 +275,28 @@ void GraphicsEngine::DrawFrame()
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR presentSwapChains[] = {swapChains[0].vkSwapChain};
+    VkSwapchainKHR presentSwapChains[] = {swapChains[0]->vkSwapChain};
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = presentSwapChains;
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr; // Optional
 
-    vkQueuePresentKHR(device.presentQueue, &presentInfo);
+    result = vkQueuePresentKHR(device.presentQueue, &presentInfo);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        RecreateSwapChain(swapChains[0].get());
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        throw std::runtime_error("Failed to acquire swap chain image!");
+    }
 
     currentFrame = (currentFrame + 1) % Engine::MaxFramesInFlight;
+}
+
+void GraphicsEngine::OnWindowResized(GLFWwindow* window, int width, int height)
+{
+    m_framebufferResized = true;
 }
 
 VkSurfaceFormatKHR GraphicsEngine::ChooseSwapSurfaceFormat()

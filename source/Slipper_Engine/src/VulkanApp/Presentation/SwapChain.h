@@ -11,8 +11,9 @@ class SwapChain
 public:
     SwapChain() = delete;
     SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool createViews);
-    void Destroy();
+	~SwapChain();
 
+private:
     void CreateImageViews();
 
 public:

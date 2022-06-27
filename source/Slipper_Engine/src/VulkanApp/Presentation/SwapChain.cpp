@@ -18,7 +18,7 @@ SwapChain::SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool 
     }
 }
 
-void SwapChain::Destroy()
+SwapChain::~SwapChain()
 {
     for (auto imageView : vkImageViews)
     {

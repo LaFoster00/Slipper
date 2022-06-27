@@ -37,6 +37,8 @@ private:
 
 #pragma endregion MainFunctions
 
+    static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+
 private:
     Window window;
     Instance instance;

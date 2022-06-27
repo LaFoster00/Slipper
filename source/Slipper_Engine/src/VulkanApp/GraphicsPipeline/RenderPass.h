@@ -1,10 +1,13 @@
 #pragma once
 
+
+
 #include "common_includes.h"
 #include "../Drawing/Framebuffer.h"
 
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 class Device;
 class SwapChain;
@@ -14,11 +17,11 @@ class RenderPass
 {
 public:
     RenderPass() = delete;
-    RenderPass(Device &device, VkFormat *attachementFormat);
-    void Destroy();
+    RenderPass(Device &device, VkFormat attachementFormat);
+    ~RenderPass();
 
     void DestroyAllFrameBuffers();
-    void DestroyFramebuffer(Framebuffer *framebuffer);
+    bool DestroySwapChainFramebuffers(SwapChain *SwapChain);
 
     void CreateSwapChainFramebuffers(SwapChain *swapChain);
 
@@ -30,5 +33,5 @@ public:
 
     VkRenderPass vkRenderPass;
 
-    std::vector<Framebuffer> framebuffers;
+    std::unordered_map<SwapChain*, std::vector<std::unique_ptr<Framebuffer>>> swapChainFramebuffers;
 };
