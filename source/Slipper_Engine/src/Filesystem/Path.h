@@ -1,33 +1,16 @@
 #pragma once
 
+#include "common_defines.h"
 #include <algorithm>
 
+#ifdef WINDOWS
 #define NOMINMAX
 #include "windows.h"
+#endif
 
 namespace Path
 {
-	std::string GetEnginePath()
-	{
-		char ModuleFileName[MAX_PATH];
-		GetModuleFileName(nullptr, ModuleFileName, MAX_PATH);
-		return std::string(ModuleFileName);
-	}
-
-	std::string MakeEngineRelativePathAbsolute(std::string_view RelativePath)
-	{
-		std::string finalPath(RelativePath);
-		std::replace(finalPath.begin(), finalPath.end(), '\\', '/');
-		if (RelativePath[1] == '/')
-		{
-			finalPath = finalPath.substr(1);
-		}
-		else
-		{
-			finalPath = finalPath.substr(2);
-		}
-			
-		finalPath = std::string(Path::GetEnginePath()) + finalPath;
-		return finalPath;
-	}
+	extern void ReplaceSubstring(std::string& str, const std::string& from, const std::string& to);
+	extern std::string GetEnginePath();
+	extern std::string MakeEngineRelativePathAbsolute(std::string_view RelativePath);
 }
