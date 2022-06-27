@@ -55,7 +55,7 @@ void RenderPass::Destroy()
 
 void RenderPass::DestroyAllFrameBuffers()
 {
-    for (size_t i = framebuffers.size() - 1; i >= 0; i--)
+    for (int64_t i = static_cast<int64_t>(framebuffers.size()) - 1; i >= 0; i--)
     {
         DestroyFramebuffer(&framebuffers[i]);
     }
@@ -64,13 +64,12 @@ void RenderPass::DestroyAllFrameBuffers()
 /* Destroys the last occurence of the frame buffer. */
 void RenderPass::DestroyFramebuffer(Framebuffer *framebuffer)
 {
-    for (size_t i = framebuffers.size(); i >= 0; i--)
+    for (int64_t i = static_cast<int64_t>(framebuffers.size()) - 1; i >= 0; i--)
     {
         if (&framebuffers[i] == framebuffer)
         {
             framebuffers[i].Destroy();
             framebuffers.erase(std::next(framebuffers.begin(), i));
-            vkFramebuffers.erase(std::next(vkFramebuffers.begin(), i));
             return;
         }
     }
@@ -94,7 +93,7 @@ void RenderPass::BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCo
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = vkRenderPass;
-    renderPassInfo.framebuffer = vkFramebuffers[imageIndex];
+    renderPassInfo.framebuffer = framebuffers[imageIndex].vkFramebuffer;
 
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = swapChain->vkExtent;

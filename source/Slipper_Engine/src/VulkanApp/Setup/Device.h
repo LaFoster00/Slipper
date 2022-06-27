@@ -22,7 +22,7 @@ struct QueueFamilyIndices
 
 struct SwapChainSupportDetails
 {
-    VkSurfaceCapabilitiesKHR capabilities;
+    VkSurfaceCapabilitiesKHR capabilities{};
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
 };
@@ -30,7 +30,8 @@ struct SwapChainSupportDetails
 class Device
 {
 public:
-    Device(){};
+    Device(): deviceProperties(), deviceFeatures()
+	{};
     Device(VkPhysicalDevice physicalDevice);
     void Destroy();
 

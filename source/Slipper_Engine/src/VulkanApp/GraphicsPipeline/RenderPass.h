@@ -31,5 +31,4 @@ public:
     VkRenderPass vkRenderPass;
 
     std::vector<Framebuffer> framebuffers;
-    std::vector<VkFramebuffer> vkFramebuffers;
 };
