@@ -16,7 +16,7 @@ namespace File
         {
             finalPath = Path::MakeEngineRelativePathAbsolute(filepath);
         }
-        std::ifstream file(filepath.data(), std::ios::ate | std::ios::binary);
+        std::ifstream file(finalPath.data(), std::ios::ate | std::ios::binary);
 
         ASSERT(!file.is_open(), "Failed to open file!")
 
