@@ -35,34 +35,6 @@ endif()
 
 set(EXTERNAL_LIB_DEBUG CACHE BOOL "Compile external libs with debug config.")
 
-message(STATUS "Configuring BGFX")
-if (LINUX)
-    if(EXTERNAL_LIB_DEBUG)
-        execute_process(
-            COMMAND make linux-debug64
-            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
-        )
-    else()
-        execute_process(
-            COMMAND make linux-release64
-            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
-        )
-    endif()
-elseif (WIN32)
-    if(EXTERNAL_LIB_DEBUG)
-        execute_process(
-            COMMAND make mvs2017-debug64
-            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
-        )
-    else()
-    execute_process(
-        COMMAND make mvs2017-release64
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/extern/bgfx
-    )
-    endif()
-endif()
-
-
 #GLM
 message(STATUS "Configuring GLM")
 add_subdirectory(extern/glm)

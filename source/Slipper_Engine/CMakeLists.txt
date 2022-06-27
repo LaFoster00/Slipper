@@ -80,7 +80,7 @@ if(LINUX)
     target_link_libraries(Slipper_Engine glfw3 dl pthread X11)
 else()
     message("Linking for windows")    
-    target_link_libraries(Slipper_Engine User32.lib glfw3 msvcrt.lib)
+    target_link_libraries(Slipper_Engine User32.lib glfw3)
     #if (NOT OUTPUT_LIB)
     #    set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Slipper_Engine)
     #endif()
@@ -89,25 +89,6 @@ endif()
 
 #glm
 target_include_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
-
-#bgfx
-#include_directories(${EXTERNAL_LIBS_DIR}/bgfx/include)
-#if (UNIX)
-#    target_link_directories(Slipper_Engine PRIVATE "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/")
-#    if (${LIB_DEBUG})
-#        if (NOT EXISTS "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/libbgfxDebug.a")
-#            message(WARNING "The bgfx submodule was not built as debug! Go to bgfx folder and run 'make linux-debug64' or build the make file in the repo root directory!")
-#        endif()
-#        target_link_libraries(Slipper_Engine bgfxDebug bimgDebug bxDebug)
-#    else()
-#        if (NOT EXISTS "${EXTERNAL_LIBS_DIR}/bgfx/.build/linux64_gcc/bin/libbgfxRelease.a")
-#            message(WARNING "The bgfx submodule was not built as release! Go to bgfx folder and run 'make linux-release64' or build the make file in the repo root directory!")
-#        endif()
-#        target_link_libraries(Slipper_Engine bgfxRelease bimgRelease bxRelease)
-#    endif()
-#elseif(WIN32)
-#    message(FATAL_ERROR "Setup bgfx for windows")
-#endif()
 
 add_custom_command(TARGET Slipper_Engine PRE_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
