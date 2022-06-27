@@ -58,6 +58,8 @@ else()
     add_executable(Slipper_Engine ${SLIPPER_ENGINE_SOURCE_FILES})
 endif()
 
+set_property(TARGET Slipper_Engine PROPERTY CXX_STANDARD 20)
+
 option(LIB_DEBUG OFF)
 
 
