@@ -5,6 +5,8 @@
 
 #include <optional>
 
+#include "Rendering/Mesh/Mesh.h"
+
 VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device)
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -24,12 +26,17 @@ VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device)
 
 VkPipelineVertexInputStateCreateInfo PipelineLayout::SetupVertexInputState()
 {
+	const auto bindingDescription = Mesh::Vertex::GetBindingDescription();
+    const auto attributeDescriptions = Mesh::Vertex::GetAttributeDescriptions();
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;  // Optional
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;  // Optional
+
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = bindingDescription;
+
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions->size());
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions->data();
 
     return vertexInputInfo;
 }

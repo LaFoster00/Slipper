@@ -251,3 +251,18 @@ void Device::QuerySwapChainSupport(const Surface *surface)
                                                   swapchainSupportDetails.presentModes.data());
     }
 }
+
+uint32_t Device::FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const
+{
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    for (uint32_t MemoryType = 0; MemoryType < memProperties.memoryTypeCount; MemoryType++) {
+        if (TypeFilter & (1 << MemoryType) &&
+            (memProperties.memoryTypes[MemoryType].propertyFlags & Properties) == Properties) {
+            return MemoryType;
+        }
+    }
+
+    throw std::runtime_error("Failed to find suitable memory type!");
+}

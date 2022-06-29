@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <filesystem>
 
+#include "Mesh/Mesh.h"
+#include "Mesh/VertexBuffer.h"
 #include "Presentation/Surface.h"
 #include "Setup/Device.h"
 #include "Window/Window.h"
@@ -27,6 +29,8 @@ GraphicsEngine::GraphicsEngine(Device &device, bool setupDefaultAssets) : device
 
 GraphicsEngine::~GraphicsEngine()
 {
+    vertexBuffers.clear();
+
     renderPasses.clear();
     graphicsPipelines.clear();
     swapChains.clear();
@@ -200,13 +204,21 @@ GraphicsPipeline *GraphicsEngine::SetupSimpleRenderPipelineForRenderPass(Window 
                        std::make_unique<GraphicsPipeline>(
                            device, vkShaderStages.data(), swapChains[0]->vkExtent, RenderPass)));
 
+    vertexBuffers.emplace_back(std::make_unique<VertexBuffer>(
+        device, Mesh::DebugTriangleVertices.data(), Mesh::DebugTriangleVertices.size()));
+
     return pipeline.first->second.get();
 }
 
 void GraphicsEngine::SetupSimpleDraw()
 {
-    AddRepeatedDrawCommand(
-        [](VkCommandBuffer commandBuffer) { vkCmdDraw(commandBuffer, 3, 1, 0, 0); });
+    AddRepeatedDrawCommand([=, this](VkCommandBuffer commandBuffer) {
+	    const VkBuffer vertexBuffers[] = {*this->vertexBuffers[0]};
+	    constexpr VkDeviceSize offsets[] = {0};
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+        vkCmdDraw(commandBuffer, static_cast<uint32_t>(this->vertexBuffers[0]->numVertices), 1, 0, 0);
+    });
 }
 
 void GraphicsEngine::AddRepeatedDrawCommand(std::function<void(VkCommandBuffer &)> command)

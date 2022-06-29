@@ -42,9 +42,11 @@ class Device
                                       const Surface *surface,
                                       const bool initLogicalDevice);
 
-    std::string DeviceInfoToString() const;
+    [[nodiscard]] std::string DeviceInfoToString() const;
 
     void QuerySwapChainSupport(const Surface *surface);
+
+    uint32_t FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const;
 
  private:
     bool IsDeviceSuitable(const Surface *surface);

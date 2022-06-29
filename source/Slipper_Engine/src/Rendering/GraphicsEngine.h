@@ -12,6 +12,7 @@
 #include <functional>
 #include <vector>
 
+class VertexBuffer;
 class Device;
 class Window;
 class Surface;
@@ -28,9 +29,7 @@ class GraphicsEngine
     void RecreateSwapChain(SwapChain *SwapChain);
 
     void SetupDefaultAssets();
-
     void CreateSyncObjects();
-
     RenderPass *CreateRenderPass();
     GraphicsPipeline *SetupSimpleRenderPipelineForRenderPass(Window &window,
                                                              Surface &surface,
@@ -67,8 +66,10 @@ class GraphicsEngine
 
     std::unordered_map<RenderPass *, std::unique_ptr<GraphicsPipeline>> graphicsPipelines;
 
-    CommandPool *commandPool;
+    std::vector<std::unique_ptr<VertexBuffer>> vertexBuffers;
 
+    //Render commands
+    CommandPool *commandPool;
     std::vector<std::function<void(VkCommandBuffer &)>> repeatedRenderCommands;
 
  private:
