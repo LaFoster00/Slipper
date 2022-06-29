@@ -33,8 +33,6 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/bimg/makefile")
 endif()
 
 
-set(EXTERNAL_LIB_DEBUG CACHE BOOL "Compile external libs with debug config.")
-
 #GLM
 message(STATUS "Configuring GLM")
 add_subdirectory(extern/glm)

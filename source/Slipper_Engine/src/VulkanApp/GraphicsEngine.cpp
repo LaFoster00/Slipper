@@ -146,9 +146,9 @@ void GraphicsEngine::SetupDefaultAssets()
 {
     /* Create shader for this pipeline. */
     shaders.emplace_back(
-        device, this, "./EngineContent/Shaders/Spir-V/vert.spv", ShaderType::Vertex);
+        device, this, "./EngineContent/Shaders/Spir-V/Basic.vert.spv", ShaderType::Vertex);
     shaders.emplace_back(
-        device, this, "./EngineContent/Shaders/Spir-V/frag.spv", ShaderType::Fragment);
+        device, this, "./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::Fragment);
 }
 
 void GraphicsEngine::CreateSyncObjects()

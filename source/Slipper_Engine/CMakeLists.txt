@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(Slipper_Engine VERSION 0.1.0)
+project(SlipperEngine VERSION 0.1.0)
 
 include(CTest)
 enable_testing()
@@ -29,75 +29,88 @@ include_directories(src)
 file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES "*.h" "*.cpp") 
 
 # Special thanks to Luca Gherardi who wrote this special little peace of code :)
-macro(GroupSources curdir)
+function(GroupSources curdir rootfiledir rootsolutiondir)
     file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR}/${curdir} ${CMAKE_CURRENT_LIST_DIR}/${curdir}/*)
     foreach(child ${children})
         if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
-            GroupSources(${curdir}/${child})
+            GroupSources(${curdir}/${child} ${rootfiledir} ${rootsolutiondir})
         else()
-            string(REPLACE "/" "\\" groupname ${curdir})
-            #message("Child dir ${groupname}")
-            #message("Child entry ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child}")
-            # I would like to call the src root folder in a different name, only in visual studio (not mandatory requirement)
-            string(REPLACE "src" "Source" groupname ${groupname})
-            source_group(${groupname} FILES ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
+            if(NOT ${child} STREQUAL CMakeLists.txt)
+                string(REPLACE "/" "\\" groupname ${curdir})
+                #message("Child dir ${groupname}")
+                #message("Child entry ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child}")
+                # I would like to call the src root folder in a different name, only in visual studio (not mandatory requirement)
+                string(REPLACE "${rootfiledir}" "${rootsolutiondir}" groupname ${groupname})
+                #message("Groupname entry ${groupname}")
+                source_group(${groupname} FILES ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
+            endif()
         endif()
     endforeach()
-endmacro()
+endfunction()
 
-GroupSources(src)
+GroupSources(src src Source)
+
+#Include Engine Content containing shader handling
+add_subdirectory(EngineContent)
+
 
 option(OUTPUT_LIB OFF)
 if(OUTPUT_LIB)
     message("Building Engine Library")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_library(Slipper_Engine SHARED ${SLIPPER_ENGINE_SOURCE_FILES})
+    add_library(SlipperEngine SHARED ${SLIPPER_ENGINE_SOURCE_FILES})
 else()
     message("Building Engine Executable")    
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_executable(Slipper_Engine ${SLIPPER_ENGINE_SOURCE_FILES})
+    add_executable(SlipperEngine ${SLIPPER_ENGINE_SOURCE_FILES})
 endif()
 
-set_property(TARGET Slipper_Engine PROPERTY CXX_STANDARD 20)
+add_dependencies(SlipperEngine SlipperEngine_EngineContent)
 
-option(LIB_DEBUG OFF)
+set_property(TARGET SlipperEngine PROPERTY CXX_STANDARD 20)
 
 
 #Libs
 #include Vulkan
-find_package(Vulkan REQUIRED FATAL_ERROR)
-include_directories(Slipper_Engine ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(Slipper_Engine ${Vulkan_LIBRARIES})
+find_package(Vulkan)
+if(NOT ${Vulkan_FOUND})
+    message( FATAL_ERROR "Vulkan was not found!")
+endif()
+include_directories(SlipperEngine ${Vulkan_INCLUDE_DIRS})
+target_link_libraries(SlipperEngine ${Vulkan_LIBRARIES})
 
 
 #glfw
-target_include_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/include")
-target_link_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
+target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/include")
+target_link_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
 
 if(LINUX)
-    target_link_libraries(Slipper_Engine glfw3 dl pthread X11)
+    target_link_libraries(SlipperEngine glfw3 dl pthread X11)
 else()
     message("Linking for windows")    
     if (CMAKE_GENERATOR MATCHES "Visual Studio")
-        target_link_libraries(Slipper_Engine User32.lib glfw3)
+        target_link_libraries(SlipperEngine User32.lib glfw3)
     else()
-        target_link_libraries(Slipper_Engine User32.lib glfw3 msvcrt.lib)
+        target_link_libraries(SlipperEngine User32.lib glfw3 msvcrt.lib)
     endif()
 
     
     #if (NOT OUTPUT_LIB)
-    #    set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Slipper_Engine)
+    #    set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT SlipperEngine)
     #endif()
 endif()
 
 
 #glm
-target_include_directories(Slipper_Engine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
+target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
 
-add_custom_command(TARGET Slipper_Engine PRE_BUILD
+add_custom_command(TARGET SlipperEngine PRE_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_LIST_DIR}/EngineContent/ ${BUILD_OUTPUT_DIRECTORY}/EngineContent/)
 
+add_custom_command(TARGET SlipperEngine PRE_BUILD
+                COMMAND ${CMAKE_COMMAND} -E remove
+                ${BUILD_OUTPUT_DIRECTORY}/EngineContent/CMakeLists.txt)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
