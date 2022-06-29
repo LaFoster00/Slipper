@@ -57,6 +57,8 @@ GraphicsEngine::~GraphicsEngine()
 
 SwapChain *GraphicsEngine::CreateSwapChain(Window& window, Surface& surface)
 {
+    device.QuerySwapChainSupport(&surface);
+
     VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat();
     VkPresentModeKHR presentMode = ChooseSwapPresentMode();
     VkExtent2D extent = ChooseSwapExtent(window);

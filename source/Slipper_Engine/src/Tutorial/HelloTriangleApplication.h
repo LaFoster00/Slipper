@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Window/Window.h"
-#include "VulkanApp/Setup/Instance.h"
-#include "VulkanApp/Setup/Device.h"
-#include "VulkanApp/Presentation/Surface.h"
 #include "VulkanApp/GraphicsPipeline/GraphicsPipeline.h"
+#include "VulkanApp/Presentation/Surface.h"
+#include "VulkanApp/Setup/Device.h"
+#include "VulkanApp/Setup/Instance.h"
+#include "Window/Window.h"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -15,7 +15,7 @@ class GraphicsEngine;
 
 class HelloTriangleApplication
 {
-public:
+ public:
     void run()
     {
         initWindow();
@@ -24,7 +24,7 @@ public:
         cleanup();
     }
 
-private:
+ private:
 #pragma region MainFunctions
 
     void initWindow();
@@ -37,13 +37,13 @@ private:
 
 #pragma endregion MainFunctions
 
-    static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+    static void FramebufferResizeCallback(GLFWwindow *window, int width, int height);
 
-private:
+ private:
     Window window;
     Instance instance;
     Surface surface;
-    Device device;
+    Device *device;
     GraphicsEngine *graphics;
 
     VkCommandBuffer simpleDrawCommand;

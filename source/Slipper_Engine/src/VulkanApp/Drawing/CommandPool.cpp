@@ -1,7 +1,7 @@
 #include "CommandPool.h"
 
-#include "../Setup/Device.h"
 #include "../GraphicsPipeline/RenderPass.h"
+#include "../Setup/Device.h"
 
 CommandPool::CommandPool(Device &device, int32_t BufferCount) : owningDevice(device)
 {
@@ -12,7 +12,8 @@ CommandPool::CommandPool(Device &device, int32_t BufferCount) : owningDevice(dev
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-    VK_ASSERT(vkCreateCommandPool(device.logicalDevice, &poolInfo, nullptr, &vkCommandPool), "Failed to create command pool");
+    VK_ASSERT(vkCreateCommandPool(device.logicalDevice, &poolInfo, nullptr, &vkCommandPool),
+              "Failed to create command pool");
 
     CreateCommandBuffers(BufferCount);
 }
@@ -22,7 +23,7 @@ CommandPool::~CommandPool()
     vkDestroyCommandPool(owningDevice.logicalDevice, vkCommandPool, nullptr);
 }
 
-std::vector<VkCommandBuffer>& CommandPool::CreateCommandBuffers(int32_t BufferCount)
+std::vector<VkCommandBuffer> &CommandPool::CreateCommandBuffers(int32_t BufferCount)
 {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -32,7 +33,9 @@ std::vector<VkCommandBuffer>& CommandPool::CreateCommandBuffers(int32_t BufferCo
 
     vkCommandBuffers.resize(BufferCount);
 
-    VK_ASSERT(vkAllocateCommandBuffers(owningDevice.logicalDevice, &allocInfo, vkCommandBuffers.data()), "Failed to create command buffers!");
+    VK_ASSERT(
+        vkAllocateCommandBuffers(owningDevice.logicalDevice, &allocInfo, vkCommandBuffers.data()),
+        "Failed to create command buffers!");
     return vkCommandBuffers;
 }
 
@@ -42,10 +45,11 @@ VkCommandBuffer CommandPool::BeginCommandBuffer(uint32_t bufferIndex, bool reset
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = 0;                  // Optional
-    beginInfo.pInheritanceInfo = nullptr; // Optional
+    beginInfo.flags = 0;                   // Optional
+    beginInfo.pInheritanceInfo = nullptr;  // Optional
 
-    VK_ASSERT(vkBeginCommandBuffer(vkCommandBuffers[bufferIndex], &beginInfo), "Failed to begin recording command buffer!");
+    VK_ASSERT(vkBeginCommandBuffer(vkCommandBuffers[bufferIndex], &beginInfo),
+              "Failed to begin recording command buffer!");
 
     return vkCommandBuffers[bufferIndex];
 }

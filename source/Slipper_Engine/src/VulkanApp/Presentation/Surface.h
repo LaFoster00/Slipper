@@ -8,12 +8,12 @@ class Window;
 
 class Surface
 {
-public:
+ public:
     void Create(const Instance *instance, GLFWwindow *window);
     void Destroy();
 
-private:
-public:
+ private:
+ public:
     const Instance *instance;
     VkSurfaceKHR surface;
 };

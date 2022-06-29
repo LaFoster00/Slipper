@@ -6,7 +6,7 @@
 
 class Instance
 {
-public:
+ public:
     void CreateInstance();
 
     void Destroy()
@@ -14,10 +14,10 @@ public:
         vkDestroyInstance(instance, nullptr);
     }
 
-private:
+ private:
     bool CheckValidationLayerSupport();
     std::vector<const char *> GetRequiredExtensions();
 
-public:
+ public:
     VkInstance instance;
 };

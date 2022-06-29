@@ -2,10 +2,10 @@
 
 #include "common_includes.h"
 
-#include "Shader.h"
 #include "RenderPass.h"
-#include "VulkanApp/Drawing/Framebuffer.h"
+#include "Shader.h"
 #include "VulkanApp/Drawing/CommandPool.h"
+#include "VulkanApp/Drawing/Framebuffer.h"
 
 #include <optional>
 #include <vector>
@@ -16,15 +16,20 @@ class Surface;
 
 class GraphicsPipeline
 {
-public:
+ public:
     GraphicsPipeline() = delete;
-    GraphicsPipeline(Device &device, VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass);
+    GraphicsPipeline(Device &device,
+                     VkPipelineShaderStageCreateInfo *shaderStages,
+                     VkExtent2D extent,
+                     RenderPass *renderPass);
     ~GraphicsPipeline();
 
-private:
-    void Create(VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass);
+ private:
+    void Create(VkPipelineShaderStageCreateInfo *shaderStages,
+                VkExtent2D extent,
+                RenderPass *renderPass);
 
-public:
+ public:
     Device &device;
 
     VkPipelineLayout vkPipelineLayout;

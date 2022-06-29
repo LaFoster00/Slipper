@@ -44,7 +44,8 @@ RenderPass::RenderPass(Device &device, VkFormat attachementFormat) : device(devi
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    VK_ASSERT(vkCreateRenderPass(device.logicalDevice, &renderPassInfo, nullptr, &vkRenderPass), "Failed to create render pass")
+    VK_ASSERT(vkCreateRenderPass(device.logicalDevice, &renderPassInfo, nullptr, &vkRenderPass),
+              "Failed to create render pass")
 }
 
 RenderPass::~RenderPass()
@@ -59,34 +60,35 @@ void RenderPass::DestroyAllFrameBuffers()
 }
 
 /* Destroys the last occurence of the frame buffer. */
-bool RenderPass::DestroySwapChainFramebuffers(SwapChain* SwapChain)
+bool RenderPass::DestroySwapChainFramebuffers(SwapChain *SwapChain)
 {
-    if (swapChainFramebuffers.contains(SwapChain))
-    {
+    if (swapChainFramebuffers.contains(SwapChain)) {
         swapChainFramebuffers.erase(SwapChain);
         return true;
     }
     return false;
 }
 
-// TODO expand this for more swap chains after introduction of smart pointers
 void RenderPass::CreateSwapChainFramebuffers(SwapChain *swapChain)
 {
-    if (swapChainFramebuffers.contains(swapChain))
-    {
-	    ASSERT(1, "Swapchain allready has Framebuffers for this swap chain. Clean them up before creating new ones!")
+    if (swapChainFramebuffers.contains(swapChain)) {
+        ASSERT(1,
+               "Swapchain allready has Framebuffers for this swap chain. Clean them up before "
+               "creating new ones!")
     }
-    for (size_t i = 0; i < swapChain->vkImageViews.size(); i++)
-    {
+    for (size_t i = 0; i < swapChain->vkImageViews.size(); i++) {
         VkImageView *attachments = &swapChain->vkImageViews[i];
         size_t attachmentCount = 1;
         VkExtent2D extent = swapChain->vkExtent;
-        swapChainFramebuffers[swapChain].emplace_back(std::make_unique<Framebuffer>(&device, this, attachments, attachmentCount, extent));
+        swapChainFramebuffers[swapChain].emplace_back(
+            std::make_unique<Framebuffer>(&device, this, attachments, attachmentCount, extent));
     }
 }
 
 // TODO: expand for more swap chains after smart pointers
-void RenderPass::BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCommandBuffer commandBuffer)
+void RenderPass::BeginRenderPass(SwapChain *swapChain,
+                                 uint32_t imageIndex,
+                                 VkCommandBuffer commandBuffer)
 {
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -100,7 +102,7 @@ void RenderPass::BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCo
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
 
-    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE); 
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void RenderPass::EndRenderPass(VkCommandBuffer commandBuffer)

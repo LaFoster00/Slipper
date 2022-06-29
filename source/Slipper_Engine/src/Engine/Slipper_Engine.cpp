@@ -1,6 +1,6 @@
-#include <iostream>
 #include <cstring>
 #include <filesystem>
+#include <iostream>
 
 #include "Tutorial/HelloTriangleApplication.h"
 
@@ -10,12 +10,10 @@ EXTERNC
     {
         HelloTriangleApplication app;
 
-        try
-        {
+        try {
             app.run();
         }
-        catch (const std::exception &e)
-        {
+        catch (const std::exception &e) {
             std::cerr << e.what() << std::endl;
             return EXIT_FAILURE;
         }

@@ -1,20 +1,26 @@
 #include "GraphicsPipeline.h"
 
-#include "common_defines.h"
+#include "../../Window/Window.h"
+#include "../Presentation/Surface.h"
 #include "../Setup/Device.h"
 #include "PipelineLayout.h"
-#include "../Presentation/Surface.h"
-#include "../../Window/Window.h"
+#include "common_defines.h"
 
-#include <limits>
 #include <algorithm>
+#include <limits>
 
-GraphicsPipeline::GraphicsPipeline(Device &device, VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass) : device(device)
+GraphicsPipeline::GraphicsPipeline(Device &device,
+                                   VkPipelineShaderStageCreateInfo *shaderStages,
+                                   VkExtent2D extent,
+                                   RenderPass *renderPass)
+    : device(device)
 {
     Create(shaderStages, extent, renderPass);
 }
 
-void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages, VkExtent2D extent, RenderPass *renderPass)
+void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages,
+                              VkExtent2D extent,
+                              RenderPass *renderPass)
 {
     /* Create graphicspipeline */
     VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -38,12 +44,12 @@ void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages, VkE
 
     auto multisampling = PipelineLayout::SetupMultisampleState();
     pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = nullptr; // Optional
+    pipelineInfo.pDepthStencilState = nullptr;  // Optional
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     auto colorBlending = PipelineLayout::SetupColorBlendState(colorBlendAttachment);
     pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.pDynamicState = nullptr; // Optional
+    pipelineInfo.pDynamicState = nullptr;  // Optional
 
     vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device);
     pipelineInfo.layout = vkPipelineLayout;
@@ -51,10 +57,13 @@ void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages, VkE
     pipelineInfo.renderPass = renderPass->vkRenderPass;
     pipelineInfo.subpass = 0;
 
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-    pipelineInfo.basePipelineIndex = -1;              // Optional
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;  // Optional
+    pipelineInfo.basePipelineIndex = -1;               // Optional
 
-    VK_ASSERT(vkCreateGraphicsPipelines(device.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkGraphicsPipeline), "Failed to create graphics pipeline!");
+    VK_ASSERT(
+        vkCreateGraphicsPipelines(
+            device.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkGraphicsPipeline),
+        "Failed to create graphics pipeline!");
 }
 
 GraphicsPipeline::~GraphicsPipeline()

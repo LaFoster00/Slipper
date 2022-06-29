@@ -1,9 +1,11 @@
 #include "SwapChain.h"
 #include "../Setup/Device.h"
 
-SwapChain::SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool createViews) : device(device)
+SwapChain::SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool createViews)
+    : device(device)
 {
-    VK_ASSERT(vkCreateSwapchainKHR(device.logicalDevice, createInfo, nullptr, &vkSwapChain), "Failed to create swap chain!");
+    VK_ASSERT(vkCreateSwapchainKHR(device.logicalDevice, createInfo, nullptr, &vkSwapChain),
+              "Failed to create swap chain!");
 
     uint32_t imageCount = 0;
     vkGetSwapchainImagesKHR(device.logicalDevice, vkSwapChain, &imageCount, nullptr);
@@ -12,16 +14,14 @@ SwapChain::SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool 
     vkImageFormat = createInfo->imageFormat;
     vkExtent = createInfo->imageExtent;
 
-    if (createViews)
-    {
+    if (createViews) {
         CreateImageViews();
     }
 }
 
 SwapChain::~SwapChain()
 {
-    for (auto imageView : vkImageViews)
-    {
+    for (auto imageView : vkImageViews) {
         vkDestroyImageView(device.logicalDevice, imageView, nullptr);
     }
 
@@ -31,8 +31,7 @@ SwapChain::~SwapChain()
 void SwapChain::CreateImageViews()
 {
     vkImageViews.resize(vkImages.size());
-    for (size_t i = 0; i < vkImages.size(); i++)
-    {
+    for (size_t i = 0; i < vkImages.size(); i++) {
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = vkImages[i];
@@ -50,8 +49,7 @@ void SwapChain::CreateImageViews()
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        VK_ASSERT(
-            vkCreateImageView(device.logicalDevice, &createInfo, nullptr, &vkImageViews[i]),
-            "Failed to create image views!")
+        VK_ASSERT(vkCreateImageView(device.logicalDevice, &createInfo, nullptr, &vkImageViews[i]),
+                  "Failed to create image views!")
     }
 }

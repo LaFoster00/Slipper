@@ -2,9 +2,9 @@
 
 #include "common_includes.h"
 
-#include <vector>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 // DO NOT CHANGE NUMBERS WITHOUT CHANGING SHADERTYPENAMES ARRAY!!!
 enum class ShaderType
@@ -21,18 +21,21 @@ class GraphicsEngine;
 
 class Shader
 {
-public:
+ public:
     Shader() = delete;
-    Shader(Device &device, GraphicsEngine *graphicsPipeline, std::string_view filepath, ShaderType shaderType);
+    Shader(Device &device,
+           GraphicsEngine *graphicsPipeline,
+           std::string_view filepath,
+           ShaderType shaderType);
     void Destroy();
 
     static VkShaderModule CreateShaderModule(const std::vector<char> &code, Device &device);
     static VkPipelineShaderStageCreateInfo CreateShaderStage(Shader &shader);
 
-private:
+ private:
     void LoadShader(std::string_view filepath, ShaderType shaderType);
 
-public:
+ public:
     Device &device;
     GraphicsEngine *graphicsPipeline;
 

@@ -1,11 +1,12 @@
 #include "Instance.h"
 
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 void Instance::CreateInstance()
 {
-    ASSERT(Engine::EnableValidationLayers && !CheckValidationLayerSupport(), "Validation layers requested, but not available!")
+    ASSERT(Engine::EnableValidationLayers && !CheckValidationLayerSupport(),
+           "Validation layers requested, but not available!")
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -26,13 +27,11 @@ void Instance::CreateInstance()
     createInfo.enabledExtensionCount = glfwExtensionCount;
     createInfo.ppEnabledExtensionNames = glfwExtensions;
 
-    if (Engine::EnableValidationLayers)
-    {
+    if (Engine::EnableValidationLayers) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(Engine::ValidationLayers.size());
         createInfo.ppEnabledLayerNames = Engine::ValidationLayers.data();
     }
-    else
-    {
+    else {
         createInfo.enabledLayerCount = 0;
     }
 
@@ -44,14 +43,12 @@ void Instance::CreateInstance()
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
     std::cout << "\nRequested Extensions:\n";
-    for (const char *extensionName : Engine::DeviceExtensions)
-    {
+    for (const char *extensionName : Engine::DeviceExtensions) {
         std::cout << '\t' << extensionName << '\n';
     }
 
     std::cout << "\nAvailable Extensions:\n";
-    for (const auto &extension : extensions)
-    {
+    for (const auto &extension : extensions) {
         std::cout << '\t' << extension.extensionName << '\n';
     }
 }
@@ -65,32 +62,26 @@ bool Instance::CheckValidationLayerSupport()
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
     std::cout << "Requested Layers:\n";
-    for (const char *layerName : Engine::ValidationLayers)
-    {
+    for (const char *layerName : Engine::ValidationLayers) {
         std::cout << '\t' << layerName << '\n';
     }
 
     std::cout << "\nAvailable Layers:\n";
-    for (const auto &layer : availableLayers)
-    {
+    for (const auto &layer : availableLayers) {
         std::cout << '\t' << layer.layerName << '\n';
     }
 
-    for (const char *layerName : Engine::ValidationLayers)
-    {
+    for (const char *layerName : Engine::ValidationLayers) {
         bool layerFound = false;
 
-        for (const auto &layerProperties : availableLayers)
-        {
-            if (strcmp(layerName, layerProperties.layerName) == 0)
-            {
+        for (const auto &layerProperties : availableLayers) {
+            if (strcmp(layerName, layerProperties.layerName) == 0) {
                 layerFound = true;
                 break;
             }
         }
 
-        if (!layerFound)
-        {
+        if (!layerFound) {
             return false;
         }
     }
@@ -106,8 +97,7 @@ std::vector<const char *> Instance::GetRequiredExtensions()
 
     std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    if (Engine::EnableValidationLayers)
-    {
+    if (Engine::EnableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 

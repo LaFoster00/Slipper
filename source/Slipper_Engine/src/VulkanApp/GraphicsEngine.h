@@ -2,15 +2,15 @@
 
 #include "common_includes.h"
 
-#include "GraphicsPipeline/Shader.h"
-#include "Presentation/SwapChain.h"
+#include "Drawing/CommandPool.h"
 #include "Drawing/Framebuffer.h"
 #include "GraphicsPipeline/GraphicsPipeline.h"
 #include "GraphicsPipeline/RenderPass.h"
-#include "Drawing/CommandPool.h"
+#include "GraphicsPipeline/Shader.h"
+#include "Presentation/SwapChain.h"
 
-#include <vector>
 #include <functional>
+#include <vector>
 
 class Device;
 class Window;
@@ -18,12 +18,12 @@ class Surface;
 
 class GraphicsEngine
 {
-public:
+ public:
     GraphicsEngine() = delete;
     GraphicsEngine(Device &device, bool setupDefaultAssets = true);
     ~GraphicsEngine();
 
-    SwapChain *CreateSwapChain(Window& window, Surface& surface);
+    SwapChain *CreateSwapChain(Window &window, Surface &surface);
     void CleanupSwapChain(SwapChain *SwapChain);
     void RecreateSwapChain(SwapChain *SwapChain);
 
@@ -31,25 +31,27 @@ public:
 
     void CreateSyncObjects();
 
-    RenderPass* CreateRenderPass();
-    GraphicsPipeline *SetupSimpleRenderPipelineForRenderPass(Window &window, Surface &surface, RenderPass* RenderPass);
+    RenderPass *CreateRenderPass();
+    GraphicsPipeline *SetupSimpleRenderPipelineForRenderPass(Window &window,
+                                                             Surface &surface,
+                                                             RenderPass *RenderPass);
     void SetupSimpleDraw();
 
     void AddRepeatedDrawCommand(std::function<void(VkCommandBuffer &)> command);
 
     void DrawFrame();
 
-    void OnWindowResized(GLFWwindow* window, int width, int height);
+    void OnWindowResized(GLFWwindow *window, int width, int height);
 
-private:
+ private:
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat();
     VkPresentModeKHR ChooseSwapPresentMode();
     VkExtent2D ChooseSwapExtent(Window &window);
 
-private:
+ private:
     static GraphicsEngine *instance;
 
-public:
+ public:
     Device &device;
 
     uint32_t currentFrame = 0;
@@ -58,17 +60,18 @@ public:
     std::vector<VkPipelineShaderStageCreateInfo> vkShaderStages;
 
     std::vector<std::unique_ptr<SwapChain>> swapChains;
-    std::unordered_map<SwapChain*, std::tuple<Window&, Surface&, std::vector<RenderPass*>>> swapChainDependencies;
+    std::unordered_map<SwapChain *, std::tuple<Window &, Surface &, std::vector<RenderPass *>>>
+        swapChainDependencies;
 
     std::vector<std::unique_ptr<RenderPass>> renderPasses;
 
-    std::unordered_map<RenderPass*, std::unique_ptr<GraphicsPipeline>> graphicsPipelines;
+    std::unordered_map<RenderPass *, std::unique_ptr<GraphicsPipeline>> graphicsPipelines;
 
-    CommandPool* commandPool;
+    CommandPool *commandPool;
 
     std::vector<std::function<void(VkCommandBuffer &)>> repeatedRenderCommands;
 
-private:
+ private:
     bool m_framebufferResized = false;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;

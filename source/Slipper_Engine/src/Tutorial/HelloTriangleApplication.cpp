@@ -22,16 +22,16 @@ void HelloTriangleApplication::initVulkan()
     instance.CreateInstance();
     surface.Create(&instance, window.glfwWindow);
     device = Device::PickPhysicalDevice(&instance, &surface, true);
-    graphics = new GraphicsEngine(device);
+    graphics = new GraphicsEngine(*device);
 
-    auto pipeline = graphics->SetupSimpleRenderPipelineForRenderPass(window, surface, graphics->CreateRenderPass());
+    auto pipeline = graphics->SetupSimpleRenderPipelineForRenderPass(
+        window, surface, graphics->CreateRenderPass());
     graphics->SetupSimpleDraw();
 }
 
 void HelloTriangleApplication::mainLoop()
 {
-    while (!window.ShouldClose())
-    {
+    while (!window.ShouldClose()) {
         glfwPollEvents();
         graphics->DrawFrame();
     }
@@ -39,18 +39,18 @@ void HelloTriangleApplication::mainLoop()
 
 void HelloTriangleApplication::cleanup()
 {
-    vkDeviceWaitIdle(device.logicalDevice);
+    vkDeviceWaitIdle(*device);
 
     delete graphics;
-    device.Destroy();
+    delete device;
     surface.Destroy();
     instance.Destroy();
     window.Destroy();
     glfwTerminate();
 }
 
-void HelloTriangleApplication::FramebufferResizeCallback(GLFWwindow* window, int width, int height)
+void HelloTriangleApplication::FramebufferResizeCallback(GLFWwindow *window, int width, int height)
 {
-    auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+    const auto app = static_cast<HelloTriangleApplication *>(glfwGetWindowUserPointer(window));
     app->graphics->OnWindowResized(window, width, height);
 }

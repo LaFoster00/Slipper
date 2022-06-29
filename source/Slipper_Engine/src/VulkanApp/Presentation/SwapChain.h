@@ -1,22 +1,22 @@
 #pragma once
 
-#include "common_includes.h"
 #include "common_defines.h"
+#include "common_includes.h"
 
 class Device;
 class Surface;
 
 class SwapChain
 {
-public:
+ public:
     SwapChain() = delete;
     SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool createViews);
-	~SwapChain();
+    ~SwapChain();
 
-private:
+ private:
     void CreateImageViews();
 
-public:
+ public:
     const Device &device;
 
     VkSwapchainKHR vkSwapChain;

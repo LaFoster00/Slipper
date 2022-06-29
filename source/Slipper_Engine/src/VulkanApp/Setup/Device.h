@@ -1,9 +1,9 @@
 #pragma once
 
-#include "common_includes.h"
 #include "../Presentation/SwapChain.h"
-#include <string>
+#include "common_includes.h"
 #include <optional>
+#include <string>
 
 class Instance;
 class Surface;
@@ -29,27 +29,30 @@ struct SwapChainSupportDetails
 
 class Device
 {
-public:
-    Device(): deviceProperties(), deviceFeatures()
-	{};
+ public:
+    Device() = delete;
     Device(VkPhysicalDevice physicalDevice);
-    void Destroy();
+    ~Device();
+
+    operator VkDevice() const;
 
     void InitLogicalDevice();
-    void CreateSwapChain(Window *window, Surface *Surface);
 
-    static Device PickPhysicalDevice(const Instance *instance, const Surface *surface, const bool initLogicalDevice);
+    static Device *PickPhysicalDevice(const Instance *instance,
+                                      const Surface *surface,
+                                      const bool initLogicalDevice);
 
     std::string DeviceInfoToString() const;
 
-private:
+    void QuerySwapChainSupport(const Surface *surface);
+
+ private:
     bool IsDeviceSuitable(const Surface *surface);
     uint32_t RateDeviceSuitability() const;
     bool CheckExtensionSupport() const;
     const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *surface);
-    void QuerySwapChainSupport(const Surface *surface);
 
-public:
+ public:
     /* Gets destroyed toghether with its instance. */
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice logicalDevice = VK_NULL_HANDLE;
