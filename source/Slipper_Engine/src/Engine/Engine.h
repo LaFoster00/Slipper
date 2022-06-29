@@ -12,7 +12,4 @@ static const std::vector<const char *> DeviceExtensions = {VK_KHR_SWAPCHAIN_EXTE
 
 static const std::vector<const char *> ValidationLayers = {"VK_LAYER_KHRONOS_validation"};
 
-class Engine
-{
-};
 }  // namespace Engine
