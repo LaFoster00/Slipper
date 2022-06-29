@@ -4,7 +4,7 @@
 
 struct WindowInfo
 {
-public:
+   public:
     const char *name;
     uint32_t width;
     uint32_t height;
@@ -13,7 +13,7 @@ public:
 
 class Window
 {
-public:
+   public:
     GLFWwindow *CreateWindow(WindowInfo createInfo);
 
     bool ShouldClose()
@@ -26,9 +26,9 @@ public:
         glfwDestroyWindow(glfwWindow);
     }
 
-public:
-    GLFWwindow* glfwWindow;
+   public:
+    GLFWwindow *glfwWindow;
 
-private:
+   private:
     WindowInfo info;
 };
