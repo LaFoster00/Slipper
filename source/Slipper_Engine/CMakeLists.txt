@@ -24,7 +24,15 @@ if ("${BUILD_TYPE}" STREQUAL "Debug")
     endif()
 endif()
 
-include_directories(src)
+set(TARGET_INCLUDE_DIRECTORIES
+    src
+    src/Engine
+    src/Filesystem
+    src/Rendering
+    src/Tutorial
+    src/Window
+)
+include_directories(${TARGET_INCLUDE_DIRECTORIES})
 
 file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES "*.h" "*.cpp") 
 
@@ -103,14 +111,6 @@ endif()
 
 #glm
 target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
-
-add_custom_command(TARGET SlipperEngine PRE_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_LIST_DIR}/EngineContent/ ${BUILD_OUTPUT_DIRECTORY}/EngineContent/)
-
-add_custom_command(TARGET SlipperEngine PRE_BUILD
-                COMMAND ${CMAKE_COMMAND} -E remove
-                ${BUILD_OUTPUT_DIRECTORY}/EngineContent/CMakeLists.txt)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
