@@ -1,9 +1,9 @@
 #pragma once
 
-#include "VulkanApp/GraphicsPipeline/GraphicsPipeline.h"
-#include "VulkanApp/Presentation/Surface.h"
-#include "VulkanApp/Setup/Device.h"
-#include "VulkanApp/Setup/Instance.h"
+#include "Rendering/GraphicsPipeline/GraphicsPipeline.h"
+#include "Rendering/Presentation/Surface.h"
+#include "Rendering/Setup/Device.h"
+#include "Rendering/Setup/Instance.h"
 #include "Window/Window.h"
 
 const uint32_t WIDTH = 800;

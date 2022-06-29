@@ -21,7 +21,6 @@ Shader::Shader(Device &device,
 
 void Shader::Destroy()
 {
-    size_t index;
     std::vector<VkPipelineShaderStageCreateInfo> &shaderstages = graphicsPipeline->vkShaderStages;
     for (size_t i = 0; i < shaderstages.size(); i++) {
         if (shaderstages[i].module == shaderModule) {

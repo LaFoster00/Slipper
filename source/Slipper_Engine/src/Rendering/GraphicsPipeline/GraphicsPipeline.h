@@ -4,8 +4,8 @@
 
 #include "RenderPass.h"
 #include "Shader.h"
-#include "VulkanApp/Drawing/CommandPool.h"
-#include "VulkanApp/Drawing/Framebuffer.h"
+#include "Rendering/Drawing/CommandPool.h"
+#include "Rendering/Drawing/Framebuffer.h"
 
 #include <optional>
 #include <vector>

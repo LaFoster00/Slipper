@@ -1,6 +1,6 @@
 #include "HelloTriangleApplication.h"
 
-#include "VulkanApp/GraphicsEngine.h"
+#include "Rendering/GraphicsEngine.h"
 
 void HelloTriangleApplication::initWindow()
 {
