@@ -24,7 +24,8 @@ GraphicsEngine::GraphicsEngine(Device &device, bool setupDefaultAssets) : device
         CreateSyncObjects();
     }
 
-    commandPool = new CommandPool(device, Engine::MaxFramesInFlight);
+    renderCommandPool = new CommandPool(device, Engine::MaxFramesInFlight);
+    memoryCommandPool = new CommandPool(device, 0);
 }
 
 GraphicsEngine::~GraphicsEngine()
@@ -35,7 +36,8 @@ GraphicsEngine::~GraphicsEngine()
     graphicsPipelines.clear();
     swapChains.clear();
 
-    delete commandPool;
+    delete memoryCommandPool;
+    delete renderCommandPool;
 
     for (const auto m_imageAvailableSemaphore : m_imageAvailableSemaphores) {
         vkDestroySemaphore(device.logicalDevice, m_imageAvailableSemaphore, nullptr);
@@ -205,7 +207,7 @@ GraphicsPipeline *GraphicsEngine::SetupSimpleRenderPipelineForRenderPass(Window 
                            device, vkShaderStages.data(), swapChains[0]->vkExtent, RenderPass)));
 
     vertexBuffers.emplace_back(std::make_unique<VertexBuffer>(
-        device, Mesh::DebugTriangleVertices.data(), Mesh::DebugTriangleVertices.size()));
+        device, *memoryCommandPool, Mesh::DebugTriangleVertices.data(), Mesh::DebugTriangleVertices.size()));
 
     return pipeline.first->second.get();
 }
@@ -217,7 +219,7 @@ void GraphicsEngine::SetupSimpleDraw()
 	    constexpr VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-        vkCmdDraw(commandBuffer, static_cast<uint32_t>(this->vertexBuffers[0]->numVertices), 1, 0, 0);
+        vkCmdDraw(commandBuffer, static_cast<uint32_t>(this->vertexBuffers[0]->numVertex), 1, 0, 0);
     });
 }
 
@@ -250,7 +252,7 @@ void GraphicsEngine::DrawFrame()
 
     vkResetFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame]);
 
-    VkCommandBuffer commandBuffer = commandPool->BeginCommandBuffer(currentFrame);
+    VkCommandBuffer commandBuffer = renderCommandPool->BeginCommandBuffer(currentFrame);
     renderPasses[0]->BeginRenderPass(swapChains[0].get(), imageIndex, commandBuffer);
 
     vkCmdBindPipeline(commandBuffer,
@@ -262,7 +264,7 @@ void GraphicsEngine::DrawFrame()
     }
 
     renderPasses[0]->EndRenderPass(commandBuffer);
-    commandPool->EndCommandBuffer(commandBuffer);
+    renderCommandPool->EndCommandBuffer(commandBuffer);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

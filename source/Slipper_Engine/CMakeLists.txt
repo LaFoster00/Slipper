@@ -29,6 +29,7 @@ set(TARGET_INCLUDE_DIRECTORIES
     src/Engine
     src/Filesystem
     src/Rendering
+    src/Rendering/Data
     src/Tutorial
     src/Window
 )

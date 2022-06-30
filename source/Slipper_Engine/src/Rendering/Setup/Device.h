@@ -27,12 +27,30 @@ struct SwapChainSupportDetails
     std::vector<VkPresentModeKHR> presentModes;
 };
 
+// Singleton since there will only be support for a single device
 class Device
 {
  public:
     Device() = delete;
-    Device(VkPhysicalDevice physicalDevice);
-    ~Device();
+
+    static Device &Get()
+    {
+        return *m_instance;
+    }
+
+    static Device &Create(VkPhysicalDevice physicalDevice)
+    {
+        if (!m_instance)
+        {
+            m_instance = new Device(physicalDevice);
+        }
+        return *m_instance;
+    }
+
+    static void Destroy()
+    {
+	    delete m_instance;
+    }
 
     operator VkDevice() const;
 
@@ -49,6 +67,9 @@ class Device
     uint32_t FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const;
 
  private:
+    Device(VkPhysicalDevice physicalDevice);
+    ~Device();
+
     bool IsDeviceSuitable(const Surface *surface);
     uint32_t RateDeviceSuitability() const;
     bool CheckExtensionSupport() const;
@@ -68,4 +89,7 @@ class Device
     VkQueue presentQueue = VK_NULL_HANDLE;
 
     SwapChainSupportDetails swapchainSupportDetails;
+
+private:
+    static Device *m_instance;
 };

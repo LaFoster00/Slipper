@@ -5,7 +5,7 @@
 
 #include <optional>
 
-#include "Rendering/Mesh/Mesh.h"
+#include "Mesh/Mesh.h"
 
 VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device)
 {

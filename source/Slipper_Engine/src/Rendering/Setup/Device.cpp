@@ -7,6 +7,8 @@
 #include <map>
 #include <set>
 
+Device *Device::m_instance = nullptr;
+
 Device::Device(VkPhysicalDevice physicalDevice) : physicalDevice(physicalDevice)
 {
     vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
@@ -119,6 +121,12 @@ Device *Device::PickPhysicalDevice(const Instance *instance,
         devices.begin()->second->InitLogicalDevice();
     }
 
+    for (auto deviceIter = ++devices.begin(); deviceIter != devices.end(); ++deviceIter)
+    {
+        delete deviceIter->second;
+    }
+
+    m_instance = devices.begin()->second;
     return devices.begin()->second;
 }
 

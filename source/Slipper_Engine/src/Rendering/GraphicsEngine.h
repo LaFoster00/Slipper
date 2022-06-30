@@ -69,8 +69,10 @@ class GraphicsEngine
     std::vector<std::unique_ptr<VertexBuffer>> vertexBuffers;
 
     //Render commands
-    CommandPool *commandPool;
+    CommandPool *renderCommandPool;
     std::vector<std::function<void(VkCommandBuffer &)>> repeatedRenderCommands;
+
+    CommandPool *memoryCommandPool;
 
  private:
     bool m_framebufferResized = false;

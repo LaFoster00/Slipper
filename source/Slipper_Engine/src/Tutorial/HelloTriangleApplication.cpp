@@ -42,7 +42,7 @@ void HelloTriangleApplication::cleanup()
     vkDeviceWaitIdle(*device);
 
     delete graphics;
-    delete device;
+    Device::Destroy();
     surface.Destroy();
     instance.Destroy();
     window.Destroy();
