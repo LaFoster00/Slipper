@@ -32,20 +32,33 @@ Buffer::Buffer(Device &Device,
     vkBindBufferMemory(device, vkBuffer, vkBufferMemory, 0);
 }
 
-Buffer::~Buffer()
+Buffer::~Buffer() noexcept
 {
-    vkDestroyBuffer(device, vkBuffer, nullptr);
-    vkFreeMemory(device, vkBufferMemory, nullptr);
+    if (vkBuffer)  // Check if object was moved
+    {
+        vkDestroyBuffer(device, vkBuffer, nullptr);
+        vkFreeMemory(device, vkBufferMemory, nullptr);
+    }
 }
 
-void Buffer::CopyBuffer(Device &device, CommandPool& MemoryCommandPool, const Buffer& srcBuffer, const Buffer& dstBuffer)
+Buffer::Buffer(Buffer &&source) noexcept : device(source.device)
 {
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = MemoryCommandPool;
-    allocInfo.commandBufferCount = 1;
+    LOG("Buffer move constructor called.")
 
+    vkBuffer = source.vkBuffer;
+    source.vkBuffer = VK_NULL_HANDLE;
+
+    vkBufferMemory = source.vkBufferMemory;
+    source.vkBufferMemory = VK_NULL_HANDLE;
+
+    vkBufferSize = source.vkBufferSize;
+}
+
+void Buffer::CopyBuffer(Device &device,
+                        CommandPool &MemoryCommandPool,
+                        const Buffer &srcBuffer,
+                        const Buffer &dstBuffer)
+{
     const VkCommandBuffer commandBuffer = MemoryCommandPool.CreateCommandBuffers(1)[0];
 
     MemoryCommandPool.BeginCommandBuffer(
@@ -69,4 +82,3 @@ void Buffer::CopyBuffer(Device &device, CommandPool& MemoryCommandPool, const Bu
 
     MemoryCommandPool.DestroyCommandBuffers<1>({commandBuffer});
 }
-

@@ -12,6 +12,7 @@
 #include <functional>
 #include <vector>
 
+class Mesh;
 class VertexBuffer;
 class Device;
 class Window;
@@ -36,7 +37,7 @@ class GraphicsEngine
                                                              RenderPass *RenderPass);
     void SetupSimpleDraw();
 
-    void AddRepeatedDrawCommand(std::function<void(VkCommandBuffer &)> command);
+    void AddRepeatedDrawCommand(std::function<void(const VkCommandBuffer &)> command);
 
     void DrawFrame();
 
@@ -66,7 +67,7 @@ class GraphicsEngine
 
     std::unordered_map<RenderPass *, std::unique_ptr<GraphicsPipeline>> graphicsPipelines;
 
-    std::vector<std::unique_ptr<VertexBuffer>> vertexBuffers;
+    std::vector<std::unique_ptr<Mesh>> meshes;
 
     //Render commands
     CommandPool *renderCommandPool;

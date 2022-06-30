@@ -13,11 +13,13 @@ class Buffer
            VkBufferUsageFlags Usage,
            VkMemoryPropertyFlags Properties);
 
-    ~Buffer();
+    ~Buffer() noexcept;
+
+    Buffer(Buffer &&source) noexcept;
 
     static void CopyBuffer(Device &device, CommandPool &MemoryCommandPool, const Buffer &srcBuffer, const Buffer &dstBuffer);
 
-    operator VkBuffer() const
+	operator VkBuffer() const
     {
         return vkBuffer;
     }

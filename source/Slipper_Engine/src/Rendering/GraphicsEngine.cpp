@@ -19,18 +19,18 @@ GraphicsEngine::GraphicsEngine(Device &device, bool setupDefaultAssets) : device
 
     instance = this;
 
+    renderCommandPool = new CommandPool(device, Engine::MaxFramesInFlight);
+    memoryCommandPool = new CommandPool(device, 0);
+
     if (setupDefaultAssets) {
         SetupDefaultAssets();
         CreateSyncObjects();
     }
-
-    renderCommandPool = new CommandPool(device, Engine::MaxFramesInFlight);
-    memoryCommandPool = new CommandPool(device, 0);
 }
 
 GraphicsEngine::~GraphicsEngine()
 {
-    vertexBuffers.clear();
+    meshes.clear();
 
     renderPasses.clear();
     graphicsPipelines.clear();
@@ -155,6 +155,12 @@ void GraphicsEngine::SetupDefaultAssets()
         device, this, "./EngineContent/Shaders/Spir-V/Basic.vert.spv", ShaderType::Vertex);
     shaders.emplace_back(
         device, this, "./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::Fragment);
+
+    meshes.emplace_back(std::make_unique<Mesh>(*memoryCommandPool,
+                                               DebugTriangleVertices.data(),
+                                               DebugTriangleVertices.size(),
+                                               DebugTriangleIndices.data(),
+                                               DebugTriangleIndices.size()));
 }
 
 void GraphicsEngine::CreateSyncObjects()
@@ -206,24 +212,19 @@ GraphicsPipeline *GraphicsEngine::SetupSimpleRenderPipelineForRenderPass(Window 
                        std::make_unique<GraphicsPipeline>(
                            device, vkShaderStages.data(), swapChains[0]->vkExtent, RenderPass)));
 
-    vertexBuffers.emplace_back(std::make_unique<VertexBuffer>(
-        device, *memoryCommandPool, Mesh::DebugTriangleVertices.data(), Mesh::DebugTriangleVertices.size()));
-
     return pipeline.first->second.get();
 }
 
 void GraphicsEngine::SetupSimpleDraw()
 {
-    AddRepeatedDrawCommand([=, this](VkCommandBuffer commandBuffer) {
-	    const VkBuffer vertexBuffers[] = {*this->vertexBuffers[0]};
-	    constexpr VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    AddRepeatedDrawCommand([=, this](const VkCommandBuffer &commandBuffer) {
+        meshes[0]->Bind(commandBuffer);
 
-        vkCmdDraw(commandBuffer, static_cast<uint32_t>(this->vertexBuffers[0]->numVertex), 1, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(meshes[0]->NumIndex()), 1, 0, 0, 0);
     });
 }
 
-void GraphicsEngine::AddRepeatedDrawCommand(std::function<void(VkCommandBuffer &)> command)
+void GraphicsEngine::AddRepeatedDrawCommand(std::function<void(const VkCommandBuffer &)> command)
 {
     repeatedRenderCommands.push_back(command);
 }

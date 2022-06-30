@@ -7,8 +7,9 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-namespace Mesh
-{
+#include "IndexBuffer.h"
+#include "VertexBuffer.h"
+
 struct Vertex
 {
     glm::vec2 pos;
@@ -42,8 +43,35 @@ struct Vertex
     }
 };
 
-const std::vector<Vertex> DebugTriangleVertices = {{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                                                   {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-                                                   {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+const std::vector<Vertex> DebugTriangleVertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                                                   {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+                                                   {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+                                                   {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
 
-}  // namespace Mesh
+const std::vector<VertexIndex> DebugTriangleIndices = {0, 1, 2, 2, 3, 0};
+
+class Mesh
+{
+ public:
+    Mesh(CommandPool &MemoryCommandPool,
+         const Vertex *Vertices,
+         size_t NumVertices,
+         const VertexIndex *Indices,
+         size_t NumIndices);
+
+    void Bind(const VkCommandBuffer &commandBuffer) const;
+
+    size_t NumVertex()const
+    {
+        return vertexBuffer.numVertex;
+    }
+
+    size_t NumIndex() const
+    {
+        return indexBuffer.numIndex;
+    }
+
+ private:
+    VertexBuffer vertexBuffer;
+    IndexBuffer indexBuffer;
+};

@@ -26,8 +26,8 @@ VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device)
 
 VkPipelineVertexInputStateCreateInfo PipelineLayout::SetupVertexInputState()
 {
-	const auto bindingDescription = Mesh::Vertex::GetBindingDescription();
-    const auto attributeDescriptions = Mesh::Vertex::GetAttributeDescriptions();
+	const auto bindingDescription = Vertex::GetBindingDescription();
+    const auto attributeDescriptions = Vertex::GetAttributeDescriptions();
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
