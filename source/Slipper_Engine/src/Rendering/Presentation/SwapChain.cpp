@@ -1,4 +1,6 @@
 #include "SwapChain.h"
+
+#include "common_defines.h"
 #include "../Setup/Device.h"
 
 SwapChain::SwapChain(Device &device, VkSwapchainCreateInfoKHR *createInfo, bool createViews)

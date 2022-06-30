@@ -1,6 +1,8 @@
 #pragma once
 
 #include "common_includes.h"
+#include "GraphicsPipeline/Shader.h"
+#include "Setup/Device.h"
 
 class CommandPool;
 class Device;
@@ -13,13 +15,34 @@ class Buffer
            VkBufferUsageFlags Usage,
            VkMemoryPropertyFlags Properties);
 
-    ~Buffer() noexcept;
+    virtual ~Buffer() noexcept;
 
     Buffer(Buffer &&source) noexcept;
 
-    static void CopyBuffer(Device &device, CommandPool &MemoryCommandPool, const Buffer &srcBuffer, const Buffer &dstBuffer);
+    template<typename DataObject>
+    static void SetBufferData(const DataObject *dataObject, const Buffer &buffer)
+    {
+        void *data;
+        vkMapMemory(Device::Get(), buffer, 0, buffer.vkBufferSize, 0, &data);
+        memcpy(data, dataObject, (size_t)buffer.vkBufferSize);
+        vkUnmapMemory(Device::Get(), buffer);
+    }
 
-	operator VkBuffer() const
+    template<>
+    static void SetBufferData(const ShaderUniform *dataObject, const Buffer &buffer)
+    {
+        void *data;
+        vkMapMemory(Device::Get(), buffer, 0, buffer.vkBufferSize, 0, &data);
+        memcpy(data, dataObject->GetData(), (size_t)buffer.vkBufferSize);
+        vkUnmapMemory(Device::Get(), buffer);
+    }
+
+    static void CopyBuffer(Device &device,
+                           CommandPool &MemoryCommandPool,
+                           const Buffer &srcBuffer,
+                           const Buffer &dstBuffer);
+
+    operator VkBuffer() const
     {
         return vkBuffer;
     }

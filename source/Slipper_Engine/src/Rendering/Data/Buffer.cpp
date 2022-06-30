@@ -4,6 +4,8 @@
 #include "Setup/Device.h"
 #include <array>
 
+#include "common_defines.h"
+
 Buffer::Buffer(Device &Device,
                VkDeviceSize Size,
                VkBufferUsageFlags Usage,

@@ -4,11 +4,13 @@
 #include <algorithm>
 #include <filesystem>
 
+#include "common_defines.h"
 #include "Mesh/Mesh.h"
-#include "Mesh/VertexBuffer.h"
 #include "Presentation/Surface.h"
 #include "Setup/Device.h"
 #include "Window/Window.h"
+#include "glm/gtc/matrix_transform.hpp"
+#include "Mesh/UniformBuffer.h"
 
 GraphicsEngine *GraphicsEngine::instance = nullptr;
 
@@ -51,6 +53,8 @@ GraphicsEngine::~GraphicsEngine()
         vkDestroyFence(device.logicalDevice, m_inFlightFence, nullptr);
     }
 
+    //TODO move this into shader once the descriptor set system is more fleshed out
+    vkDestroyDescriptorSetLayout(device, UniformMVP().GetDescriptorSetLayout(), nullptr);
     for (auto &shader : shaders) {
         shader.Destroy();
     }
@@ -151,10 +155,15 @@ void GraphicsEngine::RecreateSwapChain(SwapChain *SwapChain)
 void GraphicsEngine::SetupDefaultAssets()
 {
     /* Create shader for this pipeline. */
+    shaders.emplace_back(device,
+                         this,
+                         "./EngineContent/Shaders/Spir-V/Basic.vert.spv",
+                         ShaderType::Vertex,
+                         Engine::MaxFramesInFlight,
+                         UniformMVP().GetDataSize(),
+                         UniformMVP().GetDescriptorSetLayout());
     shaders.emplace_back(
-        device, this, "./EngineContent/Shaders/Spir-V/Basic.vert.spv", ShaderType::Vertex);
-    shaders.emplace_back(
-        device, this, "./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::Fragment);
+        device, this, "./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::Fragment, 0, 0, nullptr);
 
     meshes.emplace_back(std::make_unique<Mesh>(*memoryCommandPool,
                                                DebugTriangleVertices.data(),
@@ -210,21 +219,52 @@ GraphicsPipeline *GraphicsEngine::SetupSimpleRenderPipelineForRenderPass(Window 
     auto pipeline = graphicsPipelines.insert(
         std::make_pair(RenderPass,
                        std::make_unique<GraphicsPipeline>(
-                           device, vkShaderStages.data(), swapChains[0]->vkExtent, RenderPass)));
+                           device, vkShaderStages.data(), swapChains[0]->vkExtent, RenderPass, UniformMVP().GetDescriptorSetLayout())));
 
     return pipeline.first->second.get();
 }
 
 void GraphicsEngine::SetupSimpleDraw()
 {
-    AddRepeatedDrawCommand([=, this](const VkCommandBuffer &commandBuffer) {
+    AddRepeatedDrawCommand([=, this](const VkCommandBuffer &commandBuffer, const SwapChain &swapChain) {
         meshes[0]->Bind(commandBuffer);
+
+        static auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime -
+                                                                                startTime)
+                         .count();
+
+        UniformMVP mvp{};
+        mvp.model = glm::rotate(
+            glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        mvp.view = glm::lookAt(
+            glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        mvp.projection = glm::perspective(
+            glm::radians(45.0f), swapChain.vkExtent.width / (float)swapChain.vkExtent.height,
+                                    0.1f,
+                                    10.0f);
+
+        mvp.projection[1][1] *= -1;
+
+        shaders[0].uniformBuffers[currentFrame]->SubmitData(&mvp);
+
+        //Todo this should be part of shader and in a simple bind method
+        vkCmdBindDescriptorSets(commandBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                graphicsPipelines.at(renderPasses[0].get())->vkPipelineLayout,
+                                0,
+                                1,
+                                &shaders[0].GetDescriptorSet(currentFrame),
+                                0,
+                                nullptr);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(meshes[0]->NumIndex()), 1, 0, 0, 0);
     });
 }
 
-void GraphicsEngine::AddRepeatedDrawCommand(std::function<void(const VkCommandBuffer &)> command)
+void GraphicsEngine::AddRepeatedDrawCommand(std::function<void(const VkCommandBuffer &, const SwapChain &)> command)
 {
     repeatedRenderCommands.push_back(command);
 }
@@ -261,7 +301,7 @@ void GraphicsEngine::DrawFrame()
                       graphicsPipelines.at(renderPasses[0].get())->vkGraphicsPipeline);
 
     for (auto &command : repeatedRenderCommands) {
-        command(commandBuffer);
+        command(commandBuffer, *swapChains[0]);
     }
 
     renderPasses[0]->EndRenderPass(commandBuffer);

@@ -15,8 +15,6 @@ class VertexBuffer : public Buffer
     VertexBuffer(CommandPool &MemoryCommandPool, const Vertex *Vertices, size_t NumVertices);
     ~VertexBuffer();
 
-    void SubmitVertexBuffer(CommandPool &MemoryCommandPool);
-
  public:
     size_t numVertex;
 };

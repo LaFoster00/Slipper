@@ -21,18 +21,15 @@ VertexBuffer::VertexBuffer(CommandPool &MemoryCommandPool,
                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    void *data;
-    vkMapMemory(device, stagingBuffer, 0, stagingBuffer.vkBufferSize, 0, &data);
-    memcpy(data, Vertices, (size_t)stagingBuffer.vkBufferSize);
-    vkUnmapMemory(device, stagingBuffer);
+    SetBufferData(Vertices, stagingBuffer);
+    // void *data;
+    // vkMapMemory(device, stagingBuffer, 0, stagingBuffer.vkBufferSize, 0, &data);
+    // memcpy(data, Vertices, (size_t)stagingBuffer.vkBufferSize);
+    // vkUnmapMemory(device, stagingBuffer);
 
     Buffer::CopyBuffer(device, MemoryCommandPool, stagingBuffer, *this);
 }
 
 VertexBuffer::~VertexBuffer()
-{
-}
-
-void VertexBuffer::SubmitVertexBuffer(CommandPool &MemoryCommandPool)
 {
 }

@@ -37,7 +37,7 @@ class GraphicsEngine
                                                              RenderPass *RenderPass);
     void SetupSimpleDraw();
 
-    void AddRepeatedDrawCommand(std::function<void(const VkCommandBuffer &)> command);
+    void AddRepeatedDrawCommand(std::function<void(const VkCommandBuffer &, const SwapChain &)> command);
 
     void DrawFrame();
 
@@ -71,7 +71,7 @@ class GraphicsEngine
 
     //Render commands
     CommandPool *renderCommandPool;
-    std::vector<std::function<void(VkCommandBuffer &)>> repeatedRenderCommands;
+    std::vector<std::function<void(const VkCommandBuffer &, const SwapChain &)>> repeatedRenderCommands;
 
     CommandPool *memoryCommandPool;
 

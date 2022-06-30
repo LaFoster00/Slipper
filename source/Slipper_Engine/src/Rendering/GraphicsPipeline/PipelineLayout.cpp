@@ -5,14 +5,16 @@
 
 #include <optional>
 
+#include "common_defines.h"
 #include "Mesh/Mesh.h"
 
-VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device)
+VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device,
+                                                      VkDescriptorSetLayout descriptorSet)
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;             // Optional
-    pipelineLayoutInfo.pSetLayouts = nullptr;          // Optional
+    pipelineLayoutInfo.setLayoutCount = 1;             // Optional
+    pipelineLayoutInfo.pSetLayouts = &descriptorSet;   // Optional
     pipelineLayoutInfo.pushConstantRangeCount = 0;     // Optional
     pipelineLayoutInfo.pPushConstantRanges = nullptr;  // Optional
 
@@ -26,7 +28,7 @@ VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device)
 
 VkPipelineVertexInputStateCreateInfo PipelineLayout::SetupVertexInputState()
 {
-	const auto bindingDescription = Vertex::GetBindingDescription();
+    const auto bindingDescription = Vertex::GetBindingDescription();
     const auto attributeDescriptions = Vertex::GetAttributeDescriptions();
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -35,7 +37,8 @@ VkPipelineVertexInputStateCreateInfo PipelineLayout::SetupVertexInputState()
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = bindingDescription;
 
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions->size());
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(
+        attributeDescriptions->size());
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions->data();
 
     return vertexInputInfo;
@@ -84,7 +87,7 @@ VkPipelineRasterizationStateCreateInfo PipelineLayout::SetupRasterizationState()
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
     rasterizer.depthBiasConstantFactor = 0.0f;  // Optional
     rasterizer.depthBiasClamp = 0.0f;           // Optional

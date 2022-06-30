@@ -1,14 +1,7 @@
 #pragma once
 
-#include "common_includes.h"
-
 #include "RenderPass.h"
-#include "Shader.h"
-#include "Rendering/Drawing/CommandPool.h"
 #include "Rendering/Drawing/Framebuffer.h"
-
-#include <optional>
-#include <vector>
 
 class Device;
 class Window;
@@ -21,13 +14,15 @@ class GraphicsPipeline
     GraphicsPipeline(Device &device,
                      VkPipelineShaderStageCreateInfo *shaderStages,
                      VkExtent2D extent,
-                     RenderPass *renderPass);
+                     RenderPass *renderPass,
+                     VkDescriptorSetLayout descriptorSet);
     ~GraphicsPipeline();
 
  private:
     void Create(VkPipelineShaderStageCreateInfo *shaderStages,
                 VkExtent2D extent,
-                RenderPass *renderPass);
+                RenderPass *renderPass,
+                VkDescriptorSetLayout descriptorSet);
 
  public:
     Device &device;

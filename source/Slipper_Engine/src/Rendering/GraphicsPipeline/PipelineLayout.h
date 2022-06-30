@@ -13,7 +13,8 @@ class Device;
 class PipelineLayout
 {
  public:
-    static VkPipelineLayout CreatePipelineLayout(Device &device);
+    static VkPipelineLayout CreatePipelineLayout(Device &device,
+                                                 VkDescriptorSetLayout descriptorSet);
 
     static VkPipelineVertexInputStateCreateInfo SetupVertexInputState();
 

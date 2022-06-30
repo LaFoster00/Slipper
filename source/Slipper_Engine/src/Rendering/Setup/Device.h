@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Presentation/SwapChain.h"
+#include "Presentation/SwapChain.h"
 #include "common_includes.h"
 #include <optional>
 #include <string>

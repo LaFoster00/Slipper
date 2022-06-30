@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Framebuffer.h"
-#include "common_defines.h"
 #include "common_includes.h"
 
 class Device;

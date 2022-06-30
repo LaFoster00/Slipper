@@ -17,10 +17,11 @@ IndexBuffer::IndexBuffer(CommandPool &MemoryCommandPool,
                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-    void *data;
-    vkMapMemory(device, stagingBuffer, 0, stagingBuffer.vkBufferSize, 0, &data);
-    memcpy(data, Indices, (size_t)stagingBuffer.vkBufferSize);
-    vkUnmapMemory(device, stagingBuffer);
+    SetBufferData(Indices, stagingBuffer);
+    //void *data; 
+    // vkMapMemory(device, stagingBuffer, 0, stagingBuffer.vkBufferSize, 0, &data);
+    // memcpy(data, Indices, (size_t)stagingBuffer.vkBufferSize);
+    // vkUnmapMemory(device, stagingBuffer);
 
     Buffer::CopyBuffer(Device::Get(), MemoryCommandPool, stagingBuffer, *this);
 }

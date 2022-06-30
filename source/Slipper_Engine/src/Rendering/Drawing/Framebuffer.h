@@ -2,9 +2,6 @@
 
 #include "common_includes.h"
 
-#include <unordered_map>
-#include <vector>
-
 class Device;
 class RenderPass;
 class SwapChain;

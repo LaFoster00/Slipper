@@ -1,5 +1,6 @@
 #include "CommandPool.h"
 
+#include "common_defines.h"
 #include "../GraphicsPipeline/RenderPass.h"
 #include "../Setup/Device.h"
 

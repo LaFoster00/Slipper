@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Drawing/Framebuffer.h"
+#include "Drawing/Framebuffer.h"
 #include "common_includes.h"
 
 #include <memory>

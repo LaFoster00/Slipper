@@ -5,6 +5,8 @@
 
 #include <algorithm>
 
+#include "common_defines.h"
+
 RenderPass::RenderPass(Device &device, VkFormat attachementFormat) : device(device)
 {
     VkAttachmentDescription colorAttachment{};

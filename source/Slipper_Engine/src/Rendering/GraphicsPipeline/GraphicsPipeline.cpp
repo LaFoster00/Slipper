@@ -12,15 +12,17 @@
 GraphicsPipeline::GraphicsPipeline(Device &device,
                                    VkPipelineShaderStageCreateInfo *shaderStages,
                                    VkExtent2D extent,
-                                   RenderPass *renderPass)
+                                   RenderPass *renderPass,
+                                   VkDescriptorSetLayout descriptorSet)
     : device(device)
 {
-    Create(shaderStages, extent, renderPass);
+    Create(shaderStages, extent, renderPass, descriptorSet);
 }
 
 void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages,
                               VkExtent2D extent,
-                              RenderPass *renderPass)
+                              RenderPass *renderPass,
+                              VkDescriptorSetLayout descriptorSet)
 {
     /* Create graphicspipeline */
     VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -51,7 +53,7 @@ void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages,
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = nullptr;  // Optional
 
-    vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device);
+    vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, descriptorSet);
     pipelineInfo.layout = vkPipelineLayout;
 
     pipelineInfo.renderPass = renderPass->vkRenderPass;
