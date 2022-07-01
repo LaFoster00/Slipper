@@ -1,13 +1,14 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <unordered_map>
 
 #include "common_includes.h"
 
-#include <string>
-#include <unordered_map>
-#include <vector>
 
+class RenderPass;
+class GraphicsPipeline;
 class UniformBuffer;
 
 // DO NOT CHANGE NUMBERS WITHOUT CHANGING SHADERTYPENAMES ARRAY!!!
@@ -23,27 +24,30 @@ extern const char *ShaderTypeNames[];
 class Device;
 class GraphicsEngine;
 
-// TODO pack all shader stages into this class for easier handling and make pipeline creation
-// directly dependent on shader
 class Shader
 {
  public:
+    struct ShaderStage
+    {
+        VkShaderModule shaderModule;
+        VkPipelineShaderStageCreateInfo pipelineStageCrateInfo;
+    };
+
     Shader() = delete;
-    Shader(Device &device,
-           GraphicsEngine *graphicsPipeline,
-           std::string_view filepath,
-           ShaderType shaderType,
+    Shader(std::string_view name,
+           std::vector<std::tuple<std::string_view, ShaderType>> &shaderStagesCode,
            size_t uniformBufferCount,
            VkDeviceSize BufferSize,
-           VkDescriptorSetLayout descriptorSetLayout);
-    void Destroy();
+           VkDescriptorSetLayout descriptorSetLayout,
+           std::optional<std::vector<RenderPass *>> RenderPasses = {},
+           std::optional<VkExtent2D> RenderPassesExtent = {});
+    ~Shader();
 
-    std::vector<std::unique_ptr<UniformBuffer>> &CreateUniformBuffers(size_t count,
-                                                                      VkDeviceSize BufferSize);
-    void CreateDescriptorPool(size_t count);
-    void CreateDescriptorSets(size_t count,
-                              VkDescriptorSetLayout descriptorSetLayout,
-                              VkDeviceSize bufferSize);
+    GraphicsPipeline &RegisterForRenderPass(RenderPass *RenderPass, VkExtent2D extent);
+    bool UnregisterFromRenderPass(RenderPass *renderPass);
+    void ChangeResolutionForRenderPass(RenderPass *renderPass, VkExtent2D resolution);
+
+    void Bind(const VkCommandBuffer &commandBuffer, RenderPass *RenderPass, uint32_t currentFrame) const;
 
     [[nodiscard]] UniformBuffer &GetUniformBuffer(size_t index) const
     {
@@ -58,21 +62,34 @@ class Shader
  private:
     void LoadShader(std::string_view filepath, ShaderType shaderType);
 
+    GraphicsPipeline &CreateGraphicsPipeline(RenderPass *RenderPass,
+                                             VkExtent2D &extent,
+                                             VkDescriptorSetLayout descriptorSetLayout);
+
     static VkShaderModule CreateShaderModule(const std::vector<char> &code, Device &device);
-    static VkPipelineShaderStageCreateInfo CreateShaderStage(Shader &shader);
+    static VkPipelineShaderStageCreateInfo CreateShaderStage(const ShaderType &shaderType,
+                                                             const VkShaderModule &shaderModule);
+
+    std::vector<std::unique_ptr<UniformBuffer>> &CreateUniformBuffers(size_t count,
+                                                                      VkDeviceSize BufferSize);
+    void CreateDescriptorPool(size_t count);
+    void CreateDescriptorSets(size_t count,
+                              VkDescriptorSetLayout descriptorSetLayout,
+                              VkDeviceSize bufferSize);
 
  public:
     Device &device;
-    GraphicsEngine *graphicsPipeline;
 
     std::string name;
-    ShaderType shaderType;
-    VkShaderModule shaderModule;
-    VkPipelineShaderStageCreateInfo shaderStage;
 
-    std::vector<std::unique_ptr<UniformBuffer>> uniformBuffers;
+    VkDescriptorSetLayout descriptorSetLayout;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> descriptorSets;
+
+ private:
+    std::unordered_map<ShaderType, ShaderStage> shaderStages;
+    std::vector<std::unique_ptr<UniformBuffer>> uniformBuffers;
+    std::unordered_map<RenderPass *, std::unique_ptr<GraphicsPipeline>> graphicsPipelines;
 };
 
 struct ShaderUniform

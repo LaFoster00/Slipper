@@ -19,13 +19,14 @@ void HelloTriangleApplication::initWindow()
 
 void HelloTriangleApplication::initVulkan()
 {
-    instance.CreateInstance();
-    surface.Create(&instance, window.glfwWindow);
-    device = Device::PickPhysicalDevice(&instance, &surface, true);
+    // Creates instance as well as retrieving it
+    instance = &Instance::Get();
+    surface = new Surface(window.glfwWindow);
+    device = Device::PickPhysicalDevice(surface, true);
     graphics = new GraphicsEngine(*device);
 
-    auto pipeline = graphics->SetupSimpleRenderPipelineForRenderPass(
-        window, surface, graphics->CreateRenderPass());
+    auto pipeline = graphics->SetupDebugRender(
+        window, *surface);
     graphics->SetupSimpleDraw();
 }
 
@@ -43,8 +44,8 @@ void HelloTriangleApplication::cleanup()
 
     delete graphics;
     Device::Destroy();
-    surface.Destroy();
-    instance.Destroy();
+    delete surface;
+    delete instance;
     window.Destroy();
     glfwTerminate();
 }

@@ -6,11 +6,12 @@
 #include <algorithm>
 
 #include "common_defines.h"
+#include "Presentation/SwapChain.h"
 
-RenderPass::RenderPass(Device &device, VkFormat attachementFormat) : device(device)
+RenderPass::RenderPass(Device &device, VkFormat attachmentFormat) : device(device)
 {
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = attachementFormat;
+    colorAttachment.format = attachmentFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -81,13 +82,12 @@ void RenderPass::CreateSwapChainFramebuffers(SwapChain *swapChain)
     for (size_t i = 0; i < swapChain->vkImageViews.size(); i++) {
         VkImageView *attachments = &swapChain->vkImageViews[i];
         size_t attachmentCount = 1;
-        VkExtent2D extent = swapChain->vkExtent;
+        VkExtent2D extent = swapChain->GetResolution();
         swapChainFramebuffers[swapChain].emplace_back(
             std::make_unique<Framebuffer>(&device, this, attachments, attachmentCount, extent));
     }
 }
 
-// TODO: expand for more swap chains after smart pointers
 void RenderPass::BeginRenderPass(SwapChain *swapChain,
                                  uint32_t imageIndex,
                                  VkCommandBuffer commandBuffer)
@@ -98,7 +98,7 @@ void RenderPass::BeginRenderPass(SwapChain *swapChain,
     renderPassInfo.framebuffer = swapChainFramebuffers.at(swapChain)[imageIndex]->vkFramebuffer;
 
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapChain->vkExtent;
+    renderPassInfo.renderArea.extent = swapChain->GetResolution();
 
     VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
     renderPassInfo.clearValueCount = 1;
@@ -110,4 +110,17 @@ void RenderPass::BeginRenderPass(SwapChain *swapChain,
 void RenderPass::EndRenderPass(VkCommandBuffer commandBuffer)
 {
     vkCmdEndRenderPass(commandBuffer);
+}
+
+void RenderPass::RegisterShader(Shader* Shader)
+{
+    registeredShaders.insert(Shader);
+}
+
+void RenderPass::UnregisterShader(Shader* Shader)
+{
+    if (registeredShaders.contains(Shader))
+    {
+        registeredShaders.erase(Shader);
+    }
 }

@@ -20,10 +20,6 @@ Device::~Device()
     vkDestroyDevice(logicalDevice, nullptr);
 }
 
-Device::operator VkDevice() const
-{
-    return logicalDevice;
-}
 
 void Device::InitLogicalDevice()
 {
@@ -69,6 +65,46 @@ void Device::InitLogicalDevice()
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
 }
 
+Device *Device::PickPhysicalDevice(const Surface *surface, const bool initLogicalDevice)
+{
+    static std::map<int, Device *, std::greater<>> devices;
+
+    if (devices.empty()) {
+        std::cout << "\nFetching all physical devices!\n";
+
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(Instance::Get().instance, &deviceCount, nullptr);
+        if (deviceCount == 0) {
+            throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+        }
+
+        std::vector<VkPhysicalDevice> allPhysicalDevices(deviceCount);
+        vkEnumeratePhysicalDevices(
+            Instance::Get().instance, &deviceCount, allPhysicalDevices.data());
+
+        for (const auto &physicalDevice : allPhysicalDevices) {
+            Device *device = new Device(physicalDevice);
+            if (device->IsDeviceSuitable(surface)) {
+                LOG(device->DeviceInfoToString());
+                devices.insert(std::make_pair(device->RateDeviceSuitability(), device));
+            }
+        }
+    }
+
+    ASSERT(devices.empty(), "Failed to find suitable GPU!");
+
+    if (initLogicalDevice && devices.begin()->second->logicalDevice == VK_NULL_HANDLE) {
+        devices.begin()->second->InitLogicalDevice();
+    }
+
+    for (auto deviceIter = ++devices.begin(); deviceIter != devices.end(); ++deviceIter) {
+        delete deviceIter->second;
+    }
+
+    m_instance = devices.begin()->second;
+    return devices.begin()->second;
+}
+
 std::string Device::DeviceInfoToString() const
 {
     std::string info;
@@ -88,85 +124,69 @@ std::string Device::DeviceInfoToString() const
     return info;
 }
 
-Device *Device::PickPhysicalDevice(const Instance *instance,
-                                   const Surface *surface,
-                                   const bool initLogicalDevice)
+VkSurfaceCapabilitiesKHR Device::GetPhysicalDeviceSurfaceCapabilities(const Surface* surface) const
 {
-    static std::map<int, Device *, std::greater<>> devices;
-
-    if (devices.empty()) {
-        std::cout << "\nFetching all physical devices!\n";
-
-        uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(instance->instance, &deviceCount, nullptr);
-        if (deviceCount == 0) {
-            throw std::runtime_error("Failed to find GPUs with Vulkan support!");
-        }
-
-        std::vector<VkPhysicalDevice> allPhysicalDevices(deviceCount);
-        vkEnumeratePhysicalDevices(instance->instance, &deviceCount, allPhysicalDevices.data());
-
-        for (const auto &physicalDevice : allPhysicalDevices) {
-            Device *device = new Device(physicalDevice);
-            if (device->IsDeviceSuitable(surface)) {
-                LOG(device->DeviceInfoToString());
-                devices.insert(std::make_pair(device->RateDeviceSuitability(), device));
-            }
-        }
-    }
-
-    ASSERT(devices.empty(), "Failed to find suitable GPU!");
-
-    if (initLogicalDevice && devices.begin()->second->logicalDevice == VK_NULL_HANDLE) {
-        devices.begin()->second->InitLogicalDevice();
-    }
-
-    for (auto deviceIter = ++devices.begin(); deviceIter != devices.end(); ++deviceIter)
-    {
-        delete deviceIter->second;
-    }
-
-    m_instance = devices.begin()->second;
-    return devices.begin()->second;
+    VkSurfaceCapabilitiesKHR capabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+        physicalDevice, surface->surface, &capabilities);
+    return capabilities;
 }
 
-const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *surface)
+SwapChainSupportDetails Device::QuerySwapChainSupport(const Surface *surface) const
 {
-    if (queueFamilyIndices.isComplete())
-        return &queueFamilyIndices;
+    SwapChainSupportDetails swapchainSupportDetails{};
 
-    QueueFamilyIndices indices;
-    std::optional<uint32_t> graphicsFamily;
+    swapchainSupportDetails.capabilities = GetPhysicalDeviceSurfaceCapabilities(surface);
 
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+    uint32_t formatCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface->surface, &formatCount, nullptr);
 
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(
-        physicalDevice, &queueFamilyCount, queueFamilies.data());
+    if (formatCount != 0) {
+        swapchainSupportDetails.formats.resize(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice,
+                                             surface->surface,
+                                             &formatCount,
+                                             swapchainSupportDetails.formats.data());
+    }
 
-    int i = 0;
-    for (const auto &queueFamily : queueFamilies) {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i;
-            break;
+    uint32_t presentModeCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        physicalDevice, surface->surface, &presentModeCount, nullptr);
+
+    if (presentModeCount != 0) {
+        swapchainSupportDetails.presentModes.resize(presentModeCount);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice,
+                                                  surface->surface,
+                                                  &presentModeCount,
+                                                  swapchainSupportDetails.presentModes.data());
+    }
+
+    return swapchainSupportDetails;
+}
+
+VkExtent2D Device::GetSurfaceResolution(const Surface* surface) const
+{
+	return GetPhysicalDeviceSurfaceCapabilities(surface).currentExtent;
+}
+
+uint32_t Device::FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const
+{
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    for (uint32_t MemoryType = 0; MemoryType < memProperties.memoryTypeCount; MemoryType++) {
+        if (TypeFilter & (1 << MemoryType) &&
+            (memProperties.memoryTypes[MemoryType].propertyFlags & Properties) == Properties) {
+            return MemoryType;
         }
-
-        i++;
     }
 
-    VkBool32 presentSupport = false;
-    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface->surface, &presentSupport);
-    if (presentSupport) {
-        indices.presentFamily = i;
-    }
-
-    queueFamilyIndices = indices;
-    return &queueFamilyIndices;
+    throw std::runtime_error("Failed to find suitable memory type!");
 }
 
 bool Device::IsDeviceSuitable(const Surface *surface)
 {
+    auto swapchainSupportDetails = QuerySwapChainSupport(surface);
     /* Populate the queue family indices. */
     bool deviceTypeSuitable = deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
     if (!deviceTypeSuitable)
@@ -231,46 +251,37 @@ bool Device::CheckExtensionSupport() const
     return requiredExtensions.empty();
 }
 
-void Device::QuerySwapChainSupport(const Surface *surface)
+const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *surface)
 {
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-        physicalDevice, surface->surface, &swapchainSupportDetails.capabilities);
+    if (queueFamilyIndices.isComplete())
+        return &queueFamilyIndices;
 
-    uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface->surface, &formatCount, nullptr);
+    QueueFamilyIndices indices;
+    std::optional<uint32_t> graphicsFamily;
 
-    if (formatCount != 0) {
-        swapchainSupportDetails.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice,
-                                             surface->surface,
-                                             &formatCount,
-                                             swapchainSupportDetails.formats.data());
-    }
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
 
-    uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(
-        physicalDevice, surface->surface, &presentModeCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(
+        physicalDevice, &queueFamilyCount, queueFamilies.data());
 
-    if (presentModeCount != 0) {
-        swapchainSupportDetails.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice,
-                                                  surface->surface,
-                                                  &presentModeCount,
-                                                  swapchainSupportDetails.presentModes.data());
-    }
-}
-
-uint32_t Device::FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const
-{
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-
-    for (uint32_t MemoryType = 0; MemoryType < memProperties.memoryTypeCount; MemoryType++) {
-        if (TypeFilter & (1 << MemoryType) &&
-            (memProperties.memoryTypes[MemoryType].propertyFlags & Properties) == Properties) {
-            return MemoryType;
+    int i = 0;
+    for (const auto &queueFamily : queueFamilies) {
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphicsFamily = i;
+            break;
         }
+
+        i++;
     }
 
-    throw std::runtime_error("Failed to find suitable memory type!");
+    VkBool32 presentSupport = false;
+    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface->surface, &presentSupport);
+    if (presentSupport) {
+        indices.presentFamily = i;
+    }
+
+    queueFamilyIndices = indices;
+    return &queueFamilyIndices;
 }

@@ -5,10 +5,10 @@
 
 #include <optional>
 
-#include "common_defines.h"
 #include "Mesh/Mesh.h"
+#include "common_defines.h"
 
-VkPipelineLayout PipelineLayout::CreatePipelineLayout(Device &device,
+VkPipelineLayout PipelineLayout::CreatePipelineLayout(const Device &device,
                                                       VkDescriptorSetLayout descriptorSet)
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -56,7 +56,7 @@ VkPipelineInputAssemblyStateCreateInfo PipelineLayout::SetupInputAssemblyState()
 
 VkPipelineViewportStateCreateInfo PipelineLayout::SetupViewportState(VkViewport &viewport,
                                                                      VkRect2D &scissor,
-                                                                     VkExtent2D &extent)
+                                                                     const VkExtent2D &extent)
 {
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -146,7 +146,7 @@ VkPipelineColorBlendStateCreateInfo PipelineLayout::SetupColorBlendState(
 }
 
 VkPipelineDynamicStateCreateInfo PipelineLayout::SetupDynamicState(
-    std::optional<std::vector<VkDynamicState>> dynamicStates)
+	const std::optional<std::vector<VkDynamicState>> dynamicStates)
 {
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;

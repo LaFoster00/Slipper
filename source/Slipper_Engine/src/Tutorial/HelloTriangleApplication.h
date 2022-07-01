@@ -41,12 +41,12 @@ class HelloTriangleApplication
 
  private:
     Window window;
-    Instance instance;
-    Surface surface;
-    Device *device;
-    GraphicsEngine *graphics;
+    Instance *instance = nullptr;
+    Surface *surface = nullptr;
+    Device *device = nullptr;
+    GraphicsEngine *graphics = nullptr;
 
-    VkCommandBuffer simpleDrawCommand;
+    VkCommandBuffer simpleDrawCommand = nullptr;
 
-    VkDebugUtilsMessengerEXT debugMessenger;
+    VkDebugUtilsMessengerEXT debugMessenger = nullptr;
 };

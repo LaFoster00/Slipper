@@ -9,11 +9,15 @@ class Window;
 class Surface
 {
  public:
-    void Create(const Instance *instance, GLFWwindow *window);
-    void Destroy();
+    Surface(GLFWwindow *window);
+    ~Surface();
+
+    operator VkSurfaceKHR()
+    {
+        return surface;
+    }
 
  private:
  public:
-    const Instance *instance;
     VkSurfaceKHR surface;
 };

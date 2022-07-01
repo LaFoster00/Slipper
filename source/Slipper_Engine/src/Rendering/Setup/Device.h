@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Presentation/SwapChain.h"
 #include "common_includes.h"
 #include <optional>
 #include <string>
@@ -52,17 +51,21 @@ class Device
 	    delete m_instance;
     }
 
-    operator VkDevice() const;
+    operator VkDevice() const
+    {
+        return logicalDevice;
+    }
 
     void InitLogicalDevice();
 
-    static Device *PickPhysicalDevice(const Instance *instance,
-                                      const Surface *surface,
+    static Device *PickPhysicalDevice(const Surface *surface,
                                       const bool initLogicalDevice);
 
     [[nodiscard]] std::string DeviceInfoToString() const;
 
-    void QuerySwapChainSupport(const Surface *surface);
+    VkSurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *surface) const;
+    SwapChainSupportDetails QuerySwapChainSupport(const Surface *surface) const;
+    VkExtent2D GetSurfaceResolution(const Surface *surface) const;
 
     uint32_t FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const;
 
@@ -87,8 +90,6 @@ class Device
 
     VkQueue graphicsQueue = VK_NULL_HANDLE;
     VkQueue presentQueue = VK_NULL_HANDLE;
-
-    SwapChainSupportDetails swapchainSupportDetails;
 
 private:
     static Device *m_instance;

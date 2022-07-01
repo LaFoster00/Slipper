@@ -13,7 +13,7 @@ class Device;
 class PipelineLayout
 {
  public:
-    static VkPipelineLayout CreatePipelineLayout(Device &device,
+    static VkPipelineLayout CreatePipelineLayout(const Device &device,
                                                  VkDescriptorSetLayout descriptorSet);
 
     static VkPipelineVertexInputStateCreateInfo SetupVertexInputState();
@@ -22,7 +22,7 @@ class PipelineLayout
 
     static VkPipelineViewportStateCreateInfo SetupViewportState(VkViewport &viewport,
                                                                 VkRect2D &scissor,
-                                                                VkExtent2D &extent);
+                                                                const VkExtent2D &extent);
     static VkPipelineRasterizationStateCreateInfo SetupRasterizationState();
 
     static VkPipelineMultisampleStateCreateInfo SetupMultisampleState();

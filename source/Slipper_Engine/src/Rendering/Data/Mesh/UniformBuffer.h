@@ -1,6 +1,5 @@
 #pragma once
 #include "Buffer.h"
-#include "GraphicsPipeline/Shader.h"
 
 class UniformBuffer : public Buffer
 {
@@ -11,7 +10,4 @@ public:
     {
         SetBufferData(uniformData, *this);
     }
-
-public:
-    VkDeviceSize UniformBufferSize;
 };

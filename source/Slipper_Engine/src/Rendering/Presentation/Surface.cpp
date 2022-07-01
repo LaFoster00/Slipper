@@ -1,15 +1,16 @@
 #include "Surface.h"
-#include "../Setup/Device.h"
-#include "../Setup/Instance.h"
 
-void Surface::Create(const Instance *instance, GLFWwindow *window)
+#include "common_defines.h"
+#include "Setup/Device.h"
+#include "Setup/Instance.h"
+
+Surface::Surface(GLFWwindow *window)
 {
-    this->instance = instance;
-    VK_ASSERT(glfwCreateWindowSurface(instance->instance, window, nullptr, &surface),
+    VK_ASSERT(glfwCreateWindowSurface(Instance::Get(), window, nullptr, &surface),
               "Failed to create window suface!");
 }
 
-void Surface::Destroy()
+Surface::~Surface()
 {
-    vkDestroySurfaceKHR(instance->instance, surface, nullptr);
+    vkDestroySurfaceKHR(Instance::Get(), surface, nullptr);
 }

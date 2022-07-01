@@ -3,7 +3,9 @@
 #include <cstring>
 #include <iostream>
 
-void Instance::CreateInstance()
+Instance *Instance::m_instance = nullptr;
+
+Instance::Instance()
 {
     ASSERT(Engine::EnableValidationLayers && !CheckValidationLayerSupport(),
            "Validation layers requested, but not available!")

@@ -1,34 +1,49 @@
 #include "GraphicsPipeline.h"
 
-#include "../../Window/Window.h"
-#include "../Presentation/Surface.h"
-#include "../Setup/Device.h"
+#include "Window/Window.h"
+#include "Setup/Device.h"
 #include "PipelineLayout.h"
 #include "common_defines.h"
 
 #include <algorithm>
-#include <limits>
 
-GraphicsPipeline::GraphicsPipeline(Device &device,
-                                   VkPipelineShaderStageCreateInfo *shaderStages,
+GraphicsPipeline::GraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> &shaderStages,
                                    VkExtent2D extent,
                                    RenderPass *renderPass,
-                                   VkDescriptorSetLayout descriptorSet)
-    : device(device)
+                                   const VkDescriptorSetLayout descriptorSet)
+    : device(Device::Get()), m_renderPass(renderPass), m_shaderStages(shaderStages)
 {
-    Create(shaderStages, extent, renderPass, descriptorSet);
+    vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, descriptorSet);
+    Create(extent);
 }
 
-void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages,
-                              VkExtent2D extent,
-                              RenderPass *renderPass,
-                              VkDescriptorSetLayout descriptorSet)
+GraphicsPipeline::~GraphicsPipeline()
+{
+    vkDestroyPipeline(device.logicalDevice, vkGraphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(device.logicalDevice, vkPipelineLayout, nullptr);
+}
+
+void GraphicsPipeline::Bind(const VkCommandBuffer &commandBuffer) const
+{
+    vkCmdBindPipeline(commandBuffer,
+                      VK_PIPELINE_BIND_POINT_GRAPHICS,
+                      vkGraphicsPipeline);
+}
+
+void GraphicsPipeline::ChangeResolution(const VkExtent2D& resolution)
+{
+    vkDestroyPipeline(device, vkGraphicsPipeline, nullptr);
+
+    Create(resolution);
+}
+
+void GraphicsPipeline::Create(VkExtent2D extent)
 {
     /* Create graphicspipeline */
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 2;
-    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.stageCount = static_cast<uint32_t>(m_shaderStages.size());
+    pipelineInfo.pStages = m_shaderStages.data();
 
     auto vertexInput = PipelineLayout::SetupVertexInputState();
     pipelineInfo.pVertexInputState = &vertexInput;
@@ -53,10 +68,9 @@ void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages,
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = nullptr;  // Optional
 
-    vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, descriptorSet);
     pipelineInfo.layout = vkPipelineLayout;
 
-    pipelineInfo.renderPass = renderPass->vkRenderPass;
+    pipelineInfo.renderPass = m_renderPass->vkRenderPass;
     pipelineInfo.subpass = 0;
 
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;  // Optional
@@ -66,10 +80,4 @@ void GraphicsPipeline::Create(VkPipelineShaderStageCreateInfo *shaderStages,
         vkCreateGraphicsPipelines(
             device.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkGraphicsPipeline),
         "Failed to create graphics pipeline!");
-}
-
-GraphicsPipeline::~GraphicsPipeline()
-{
-    vkDestroyPipeline(device.logicalDevice, vkGraphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(device.logicalDevice, vkPipelineLayout, nullptr);
 }

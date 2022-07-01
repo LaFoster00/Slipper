@@ -31,10 +31,9 @@ class GraphicsEngine
 
     void SetupDefaultAssets();
     void CreateSyncObjects();
-    RenderPass *CreateRenderPass();
-    GraphicsPipeline *SetupSimpleRenderPipelineForRenderPass(Window &window,
-                                                             Surface &surface,
-                                                             RenderPass *RenderPass);
+    RenderPass *CreateRenderPass(const VkFormat attachmentFormat);
+    Shader *SetupDebugRender(Window &window,
+                                                             Surface &surface);
     void SetupSimpleDraw();
 
     void AddRepeatedDrawCommand(std::function<void(const VkCommandBuffer &, const SwapChain &)> command);
@@ -44,11 +43,6 @@ class GraphicsEngine
     void OnWindowResized(GLFWwindow *window, int width, int height);
 
  private:
-    VkSurfaceFormatKHR ChooseSwapSurfaceFormat();
-    VkPresentModeKHR ChooseSwapPresentMode();
-    VkExtent2D ChooseSwapExtent(Window &window);
-
- private:
     static GraphicsEngine *instance;
 
  public:
@@ -56,16 +50,13 @@ class GraphicsEngine
 
     uint32_t currentFrame = 0;
 
-    std::vector<Shader> shaders;
-    std::vector<VkPipelineShaderStageCreateInfo> vkShaderStages;
+    std::vector<std::unique_ptr<Shader>> shaders;
 
     std::vector<std::unique_ptr<SwapChain>> swapChains;
     std::unordered_map<SwapChain *, std::tuple<Window &, Surface &, std::vector<RenderPass *>>>
         swapChainDependencies;
 
     std::vector<std::unique_ptr<RenderPass>> renderPasses;
-
-    std::unordered_map<RenderPass *, std::unique_ptr<GraphicsPipeline>> graphicsPipelines;
 
     std::vector<std::unique_ptr<Mesh>> meshes;
 

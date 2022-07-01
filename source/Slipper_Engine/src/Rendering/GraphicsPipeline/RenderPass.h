@@ -5,8 +5,10 @@
 
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
+class Shader;
 class Device;
 class SwapChain;
 class GraphicsPipeline;
@@ -15,7 +17,7 @@ class RenderPass
 {
  public:
     RenderPass() = delete;
-    RenderPass(Device &device, VkFormat attachementFormat);
+    RenderPass(Device &device, VkFormat attachmentFormat);
     ~RenderPass();
 
     void DestroyAllFrameBuffers();
@@ -26,6 +28,9 @@ class RenderPass
     void BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCommandBuffer commandBuffer);
     void EndRenderPass(VkCommandBuffer commandBuffer);
 
+    void RegisterShader(Shader *Shader);
+    void UnregisterShader(Shader *Shader);
+
  public:
     Device &device;
 
@@ -33,4 +38,6 @@ class RenderPass
 
     std::unordered_map<SwapChain *, std::vector<std::unique_ptr<Framebuffer>>>
         swapChainFramebuffers;
+
+    std::unordered_set<Shader *> registeredShaders;
 };
