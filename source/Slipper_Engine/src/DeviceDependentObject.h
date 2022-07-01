@@ -1,10 +1,12 @@
 #pragma once
-#include "Setup/Device.h"
+
+class Device;
 
 class DeviceDependentObject
 {
+public:
     DeviceDependentObject();
 
 public:
-    Device &Device;
+    Device &device;
 };

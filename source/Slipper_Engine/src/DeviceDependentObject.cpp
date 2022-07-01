@@ -1,6 +1,8 @@
 #include "DeviceDependentObject.h"
 
-DeviceDependentObject::DeviceDependentObject() : Device(Device::Get())
+#include "Setup/Device.h"
+
+DeviceDependentObject::DeviceDependentObject() : device(Device::Get())
 {
 
 }
