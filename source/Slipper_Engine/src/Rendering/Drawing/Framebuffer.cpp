@@ -1,17 +1,17 @@
 #include "Framebuffer.h"
 
-#include "../GraphicsPipeline/RenderPass.h"
-#include "../Setup/Device.h"
 #include "common_defines.h"
+#include "GraphicsPipeline/RenderPass.h"
+#include "Setup/Device.h"
+
 #include <algorithm>
 
-Framebuffer::Framebuffer(Device *device,
-                         RenderPass *renderPass,
+Framebuffer::Framebuffer(RenderPass *renderPass,
                          VkImageView *attachments,
                          size_t attachmentCount,
                          VkExtent2D extent)
+    : DeviceDependentObject()
 {
-    this->device = device;
     Create(renderPass, attachments, attachmentCount, extent);
 }
 
@@ -29,13 +29,11 @@ void Framebuffer::Create(RenderPass *renderPass,
     framebufferInfo.height = extent.height;
     framebufferInfo.layers = 1;
 
-    VK_ASSERT(
-        vkCreateFramebuffer(device->logicalDevice, &framebufferInfo, nullptr, &vkFramebuffer),
-        "Failed to create framebuffer!")
+    VK_ASSERT(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer),
+              "Failed to create framebuffer!")
 }
 
 Framebuffer::~Framebuffer()
 {
-    const Device *deviceptr = device;
-    vkDestroyFramebuffer(device->logicalDevice, vkFramebuffer, nullptr);
+    vkDestroyFramebuffer(device, vkFramebuffer, nullptr);
 }

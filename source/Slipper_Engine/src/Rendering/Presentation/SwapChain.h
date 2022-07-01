@@ -1,17 +1,18 @@
 #pragma once
 
 #include "common_includes.h"
+#include "DeviceDependentObject.h"
 #include "Setup/Device.h"
 
 class Window;
 class Device;
 class Surface;
 
-class SwapChain
+class SwapChain : DeviceDependentObject
 {
  public:
     SwapChain() = delete;
-    SwapChain(Window &window, Surface &surface, bool createViews);
+    SwapChain(Surface &surface);
     ~SwapChain();
 
     [[nodiscard]] const VkExtent2D &GetResolution() const
@@ -29,14 +30,17 @@ class SwapChain
         return vkSwapChain;
 	}
 
+    void Recreate();
+
  private:
+    void Create(VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
     void CreateImageViews();
     VkSurfaceFormatKHR ChooseSurfaceFormat();
-    VkPresentModeKHR ChoosePresentMode();
-    VkExtent2D ChoseExtent(Window &window, const Surface &surface);
+    VkPresentModeKHR ChoosePresentMode() const;
+    VkExtent2D ChoseExtent(const Surface &surface) const;
 
  public:
-	Device &device;
+    Surface &surface;
 	SwapChainSupportDetails swapChainSupport;
 
     VkSwapchainKHR vkSwapChain;

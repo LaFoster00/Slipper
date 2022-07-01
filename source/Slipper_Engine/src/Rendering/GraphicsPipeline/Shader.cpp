@@ -1,10 +1,10 @@
 #include "Shader.h"
 
-#include "common_defines.h"
 #include "File.h"
 #include "GraphicsPipeline.h"
 #include "Mesh/UniformBuffer.h"
 #include "Setup/Device.h"
+#include "common_defines.h"
 
 const char *ShaderTypeNames[]{"Vertex", "Fragment", "Compute"};
 
@@ -47,6 +47,7 @@ Shader::~Shader()
     }
 }
 
+// TODO Introduce surface dependency since this is not only dependent on render pass
 GraphicsPipeline &Shader::RegisterForRenderPass(RenderPass *RenderPass, VkExtent2D extent)
 {
     RenderPass->RegisterShader(this);
@@ -63,6 +64,8 @@ bool Shader::UnregisterFromRenderPass(RenderPass *renderPass)
     return false;
 }
 
+// TODO change this to swap chain dependency instead of resolution, shader should be able to be
+// bound to multiple render passes and swapchains
 void Shader::ChangeResolutionForRenderPass(RenderPass *renderPass, VkExtent2D resolution)
 {
     if (graphicsPipelines.contains(renderPass)) {
@@ -116,10 +119,9 @@ GraphicsPipeline &Shader::CreateGraphicsPipeline(RenderPass *RenderPass,
         createInfos.push_back(shaderStage.pipelineStageCrateInfo);
     }
     return *graphicsPipelines
-                .emplace(std::make_pair(
-                    RenderPass,
-                    std::make_unique<GraphicsPipeline>(
-                        createInfos, extent, RenderPass, descriptorSetLayout)))
+                .emplace(std::make_pair(RenderPass,
+                                        std::make_unique<GraphicsPipeline>(
+                                            createInfos, extent, RenderPass, descriptorSetLayout)))
                 .first->second;
 }
 
@@ -167,7 +169,7 @@ std::vector<std::unique_ptr<UniformBuffer>> &Shader::CreateUniformBuffers(size_t
                                                                           VkDeviceSize BufferSize)
 {
     for (int i = 0; i < count; ++i) {
-    	uniformBuffers.emplace_back(std::make_unique<UniformBuffer>(BufferSize));
+        uniformBuffers.emplace_back(std::make_unique<UniformBuffer>(BufferSize));
     }
 
     return uniformBuffers;

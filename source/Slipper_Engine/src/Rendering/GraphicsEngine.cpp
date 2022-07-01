@@ -8,13 +8,12 @@
 #include "Mesh/UniformBuffer.h"
 #include "Presentation/Surface.h"
 #include "Setup/Device.h"
-#include "Window/Window.h"
 #include "common_defines.h"
 #include "glm/gtc/matrix_transform.hpp"
 
 GraphicsEngine *GraphicsEngine::instance = nullptr;
 
-GraphicsEngine::GraphicsEngine(Device &device, bool setupDefaultAssets) : device(device)
+GraphicsEngine::GraphicsEngine(bool setupDefaultAssets) : DeviceDependentObject()
 {
     if (instance != nullptr)
         return;
@@ -35,7 +34,6 @@ GraphicsEngine::~GraphicsEngine()
     meshes.clear();
 
     renderPasses.clear();
-    swapChains.clear();
 
     delete memoryCommandPool;
     delete renderCommandPool;
@@ -55,59 +53,6 @@ GraphicsEngine::~GraphicsEngine()
     // TODO move this into shader once the descriptor set system is more fleshed out
     vkDestroyDescriptorSetLayout(device, UniformMVP().GetDescriptorSetLayout(), nullptr);
     shaders.clear();
-}
-
-SwapChain *GraphicsEngine::CreateSwapChain(Window &window, Surface &surface)
-{
-    // Create new swap chain for this device and insert it into the mapping
-    const auto newSwapDependency = swapChainDependencies.insert(std::make_pair(
-        swapChains.emplace_back(std::make_unique<SwapChain>(window, surface, true)).get(),
-        std::tuple<Window &, Surface &, std::vector<RenderPass *>>(window, surface, {})));
-    return newSwapDependency.first->first;
-}
-
-void GraphicsEngine::CleanupSwapChain(SwapChain *SwapChain)
-{
-    for (auto &renderPass : renderPasses) {
-        renderPass->DestroySwapChainFramebuffers(SwapChain);
-    }
-
-    for (auto swapChainIt = swapChains.begin(); swapChainIt != swapChains.end(); ++swapChainIt) {
-        if (swapChainIt->get() == SwapChain) {
-            swapChains.erase(swapChainIt);
-            break;
-        }
-    }
-
-    swapChainDependencies.erase(SwapChain);
-}
-
-void GraphicsEngine::RecreateSwapChain(SwapChain *SwapChain)
-{
-    int width = 0, height = 0;
-    auto [windowDep, surfaceDep, renderPassesDep] = swapChainDependencies.at(SwapChain);
-    glfwGetFramebufferSize(windowDep.glfwWindow, &width, &height);
-    while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(windowDep.glfwWindow, &width, &height);
-        glfwWaitEvents();
-    }
-
-    vkDeviceWaitIdle(device.logicalDevice);
-
-    CleanupSwapChain(SwapChain);
-
-    auto newSwapChain = CreateSwapChain(windowDep, surfaceDep);
-
-    for (const auto renderPass : renderPassesDep) {
-        /* Create frambuffers for this swap chain */
-        renderPass->CreateSwapChainFramebuffers(newSwapChain);
-        std::get<2>(swapChainDependencies.at(newSwapChain)).push_back(renderPass);
-
-        for (const auto renderPassShader : renderPass->registeredShaders){
-            renderPassShader->ChangeResolutionForRenderPass(renderPass,
-                                                            newSwapChain->GetResolution());
-        }
-    }
 }
 
 void GraphicsEngine::SetupDefaultAssets()
@@ -162,15 +107,12 @@ RenderPass *GraphicsEngine::CreateRenderPass(const VkFormat attachmentFormat)
     return renderPasses.emplace_back(std::make_unique<RenderPass>(device, attachmentFormat)).get();
 }
 
-Shader *GraphicsEngine::SetupDebugRender(Window &window, Surface &surface)
+Shader *GraphicsEngine::SetupDebugRender(Surface &surface)
 {
-    const auto SwapChain = CreateSwapChain(window, surface);
-    const auto renderPass = CreateRenderPass(SwapChain->GetFormat());
-
-    /* Create renderpass for this pipeline */
-    renderPass->CreateSwapChainFramebuffers(SwapChain);
-    std::get<2>(swapChainDependencies.at(SwapChain)).push_back(renderPass);
-    shaders[0]->RegisterForRenderPass(renderPass, SwapChain->GetResolution());
+    surfaces.insert(&surface);
+    const auto renderPass = CreateRenderPass(surface.swapChain->GetFormat());
+    surface.RegisterRenderPass(*renderPass);
+    shaders[0]->RegisterForRenderPass(renderPass, surface.GetResolution());
     return shaders[0].get();
 }
 
@@ -216,9 +158,10 @@ void GraphicsEngine::DrawFrame()
 {
     vkWaitForFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
+    Surface &CurrentSurface = **surfaces.begin();
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device.logicalDevice,
-                                            swapChains[0]->vkSwapChain,
+                                            *CurrentSurface.swapChain,
                                             UINT64_MAX,
                                             m_imageAvailableSemaphores[currentFrame],
                                             VK_NULL_HANDLE,
@@ -226,7 +169,7 @@ void GraphicsEngine::DrawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
         m_framebufferResized) {
-        RecreateSwapChain(swapChains[0].get());
+        CurrentSurface.RecreateSwapChain();
         m_framebufferResized = false;
         return;
     }
@@ -236,13 +179,13 @@ void GraphicsEngine::DrawFrame()
 
     vkResetFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame]);
 
-    VkCommandBuffer commandBuffer = renderCommandPool->BeginCommandBuffer(currentFrame);
-    renderPasses[0]->BeginRenderPass(swapChains[0].get(), imageIndex, commandBuffer);
+    const VkCommandBuffer commandBuffer = renderCommandPool->BeginCommandBuffer(currentFrame);
+    renderPasses[0]->BeginRenderPass(CurrentSurface.swapChain.get(), imageIndex, commandBuffer);
 
     shaders[0]->Bind(commandBuffer, renderPasses[0].get(), currentFrame);
 
     for (auto &command : repeatedRenderCommands) {
-        command(commandBuffer, *swapChains[0]);
+        command(commandBuffer, *CurrentSurface.swapChain);
     }
 
     renderPasses[0]->EndRenderPass(commandBuffer);
@@ -271,7 +214,7 @@ void GraphicsEngine::DrawFrame()
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR presentSwapChains[] = {swapChains[0]->vkSwapChain};
+    VkSwapchainKHR presentSwapChains[] = {*CurrentSurface.swapChain};
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = presentSwapChains;
     presentInfo.pImageIndices = &imageIndex;
@@ -280,7 +223,7 @@ void GraphicsEngine::DrawFrame()
     result = vkQueuePresentKHR(device.presentQueue, &presentInfo);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        RecreateSwapChain(swapChains[0].get());
+        CurrentSurface.RecreateSwapChain();
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to acquire swap chain image!");

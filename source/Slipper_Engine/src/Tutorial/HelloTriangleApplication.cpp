@@ -12,27 +12,27 @@ void HelloTriangleApplication::initWindow()
     windowCreateInfo.height = HEIGHT;
     windowCreateInfo.resizable = true;
 
-    window.CreateWindow(windowCreateInfo);
-    glfwSetWindowUserPointer(window.glfwWindow, this);
-    glfwSetFramebufferSizeCallback(window.glfwWindow, FramebufferResizeCallback);
+    window = new Window(windowCreateInfo);
+    glfwSetWindowUserPointer(*window, this);
+    glfwSetFramebufferSizeCallback(*window, FramebufferResizeCallback);
 }
 
 void HelloTriangleApplication::initVulkan()
 {
     // Creates instance as well as retrieving it
     instance = &Instance::Get();
-    surface = new Surface(window.glfwWindow);
+    surface = new Surface(*window);
     device = Device::PickPhysicalDevice(surface, true);
+    surface->CreateSwapChain();
     graphics = new GraphicsEngine(*device);
 
-    auto pipeline = graphics->SetupDebugRender(
-        window, *surface);
+    auto pipeline = graphics->SetupDebugRender(*surface);
     graphics->SetupSimpleDraw();
 }
 
 void HelloTriangleApplication::mainLoop()
 {
-    while (!window.ShouldClose()) {
+    while (!window->ShouldClose()) {
         glfwPollEvents();
         graphics->DrawFrame();
     }
@@ -43,10 +43,11 @@ void HelloTriangleApplication::cleanup()
     vkDeviceWaitIdle(*device);
 
     delete graphics;
+    surface->DestroySwapChain();
     Device::Destroy();
     delete surface;
     delete instance;
-    window.Destroy();
+    delete window;
     glfwTerminate();
 }
 

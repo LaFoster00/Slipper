@@ -1,6 +1,6 @@
 #include "Window.h"
 
-GLFWwindow *Window::CreateWindow(WindowInfo createInfo)
+Window::Window(WindowInfo createInfo)
 {
     info = createInfo;
 
@@ -8,6 +8,4 @@ GLFWwindow *Window::CreateWindow(WindowInfo createInfo)
     glfwWindowHint(GLFW_RESIZABLE, createInfo.resizable);
 
     glfwWindow = glfwCreateWindow(info.width, info.height, info.name, nullptr, nullptr);
-
-    return glfwWindow;
 }

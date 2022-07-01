@@ -1,16 +1,16 @@
 #pragma once
 
 #include "common_includes.h"
+#include "DeviceDependentObject.h"
 
 class Device;
 class RenderPass;
 class SwapChain;
 
-class Framebuffer
+class Framebuffer : DeviceDependentObject
 {
  public:
-    Framebuffer(Device *device,
-                RenderPass *renderPass,
+    Framebuffer(RenderPass *renderPass,
                 VkImageView *attachments,
                 size_t attachmentCount,
                 VkExtent2D extent);
@@ -23,6 +23,5 @@ class Framebuffer
                 VkExtent2D extent);
 
  public:
-    const Device *device;
     VkFramebuffer vkFramebuffer;
 };

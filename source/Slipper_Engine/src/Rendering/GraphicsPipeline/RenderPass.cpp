@@ -84,7 +84,7 @@ void RenderPass::CreateSwapChainFramebuffers(SwapChain *swapChain)
         size_t attachmentCount = 1;
         VkExtent2D extent = swapChain->GetResolution();
         swapChainFramebuffers[swapChain].emplace_back(
-            std::make_unique<Framebuffer>(&device, this, attachments, attachmentCount, extent));
+            std::make_unique<Framebuffer>(this, attachments, attachmentCount, extent));
     }
 }
 

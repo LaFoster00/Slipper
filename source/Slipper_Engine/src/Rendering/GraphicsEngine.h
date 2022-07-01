@@ -18,25 +18,21 @@ class Device;
 class Window;
 class Surface;
 
-class GraphicsEngine
+class GraphicsEngine : DeviceDependentObject
 {
  public:
     GraphicsEngine() = delete;
-    GraphicsEngine(Device &device, bool setupDefaultAssets = true);
+    GraphicsEngine(bool setupDefaultAssets = true);
     ~GraphicsEngine();
-
-    SwapChain *CreateSwapChain(Window &window, Surface &surface);
-    void CleanupSwapChain(SwapChain *SwapChain);
-    void RecreateSwapChain(SwapChain *SwapChain);
 
     void SetupDefaultAssets();
     void CreateSyncObjects();
     RenderPass *CreateRenderPass(const VkFormat attachmentFormat);
-    Shader *SetupDebugRender(Window &window,
-                                                             Surface &surface);
+    Shader *SetupDebugRender(Surface &surface);
     void SetupSimpleDraw();
 
-    void AddRepeatedDrawCommand(std::function<void(const VkCommandBuffer &, const SwapChain &)> command);
+    void AddRepeatedDrawCommand(
+        std::function<void(const VkCommandBuffer &, const SwapChain &)> command);
 
     void DrawFrame();
 
@@ -46,23 +42,17 @@ class GraphicsEngine
     static GraphicsEngine *instance;
 
  public:
-    Device &device;
-
     uint32_t currentFrame = 0;
 
+    std::unordered_set<Surface *> surfaces;
     std::vector<std::unique_ptr<Shader>> shaders;
-
-    std::vector<std::unique_ptr<SwapChain>> swapChains;
-    std::unordered_map<SwapChain *, std::tuple<Window &, Surface &, std::vector<RenderPass *>>>
-        swapChainDependencies;
-
     std::vector<std::unique_ptr<RenderPass>> renderPasses;
-
     std::vector<std::unique_ptr<Mesh>> meshes;
 
-    //Render commands
+    // Render commands
     CommandPool *renderCommandPool;
-    std::vector<std::function<void(const VkCommandBuffer &, const SwapChain &)>> repeatedRenderCommands;
+    std::vector<std::function<void(const VkCommandBuffer &, const SwapChain &)>>
+        repeatedRenderCommands;
 
     CommandPool *memoryCommandPool;
 

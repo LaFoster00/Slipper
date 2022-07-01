@@ -31,5 +31,5 @@ private:
 
  private:
     const RenderPass *m_renderPass;
-    const std::vector<VkPipelineShaderStageCreateInfo> &m_shaderStages;
+    const std::vector<VkPipelineShaderStageCreateInfo> m_shaderStages;
 };
