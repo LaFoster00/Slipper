@@ -10,17 +10,17 @@ class CommandPool
 {
  public:
     CommandPool() = delete;
-    CommandPool(Device &device, int32_t BufferCount);
+    CommandPool(Device &Device, int32_t BufferCount);
     ~CommandPool();
 
-    VkCommandBuffer BeginCommandBuffer(uint32_t bufferIndex,
-                                       bool resetCommandBuffer = true,
-                                       VkCommandBufferUsageFlags flags = 0);
-    VkCommandBuffer BeginCommandBuffer(VkCommandBuffer commandBuffer,
-                                       bool resetCommandBuffer = true,
-                                       VkCommandBufferUsageFlags flags = 0);
-    void EndCommandBuffer(VkCommandBuffer commandBuffer);
-    void EndCommandBuffer(uint32_t bufferIndex);
+    VkCommandBuffer BeginCommandBuffer(uint32_t BufferIndex,
+                                       bool ResetCommandBuffer = true,
+                                       VkCommandBufferUsageFlags Flags = 0) const;
+    VkCommandBuffer BeginCommandBuffer(VkCommandBuffer CommandBuffer,
+                                       bool ResetCommandBuffer = true,
+                                       VkCommandBufferUsageFlags Flags = 0);
+	void EndCommandBuffer(VkCommandBuffer CommandBuffer) const;
+    void EndCommandBuffer(uint32_t BufferIndex) const;
 
     operator VkCommandPool() const
     {
@@ -35,11 +35,11 @@ class CommandPool
         vkFreeCommandBuffers(
             device, vkCommandPool, static_cast<int32_t>(Count), CommandBuffers.data());
 
-        for (auto commandBuffer : CommandBuffers) {
-            auto bufferLoc = std::find(vkCommandBuffers.begin(), vkCommandBuffers.end(), commandBuffer);
-            if (bufferLoc != vkCommandBuffers.end())
+        for (auto command_buffer : CommandBuffers) {
+            auto buffer_loc = std::find(vkCommandBuffers.begin(), vkCommandBuffers.end(), command_buffer);
+            if (buffer_loc != vkCommandBuffers.end())
             {
-                vkCommandBuffers.erase(bufferLoc);
+                vkCommandBuffers.erase(buffer_loc);
             }
         }
     }

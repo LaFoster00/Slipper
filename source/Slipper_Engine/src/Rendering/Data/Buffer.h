@@ -17,30 +17,30 @@ class Buffer
 
     virtual ~Buffer() noexcept;
 
-    Buffer(Buffer &&source) noexcept;
+    Buffer(Buffer &&Source) noexcept;
 
-    template<typename DataObject>
-    static void SetBufferData(const DataObject *dataObject, const Buffer &buffer)
+    template<typename TDataObject>
+    static void SetBufferData(const TDataObject *DataObject, const Buffer &Buffer)
     {
         void *data;
-        vkMapMemory(Device::Get(), buffer, 0, buffer.vkBufferSize, 0, &data);
-        memcpy(data, dataObject, (size_t)buffer.vkBufferSize);
-        vkUnmapMemory(Device::Get(), buffer);
+        vkMapMemory(Device::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
+        memcpy(data, DataObject, static_cast<size_t>(Buffer.vkBufferSize));
+        vkUnmapMemory(Device::Get(), Buffer);
     }
 
     template<>
-    static void SetBufferData(const ShaderUniform *dataObject, const Buffer &buffer)
+    static void SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer)
     {
         void *data;
-        vkMapMemory(Device::Get(), buffer, 0, buffer.vkBufferSize, 0, &data);
-        memcpy(data, dataObject->GetData(), (size_t)buffer.vkBufferSize);
-        vkUnmapMemory(Device::Get(), buffer);
+        vkMapMemory(Device::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
+        memcpy(data, DataObject->GetData(), Buffer.vkBufferSize);
+        vkUnmapMemory(Device::Get(), Buffer);
     }
 
-    static void CopyBuffer(Device &device,
+    static void CopyBuffer(const Device &Device,
                            CommandPool &MemoryCommandPool,
-                           const Buffer &srcBuffer,
-                           const Buffer &dstBuffer);
+                           const Buffer &SrcBuffer,
+                           const Buffer &DstBuffer);
 
     operator VkBuffer() const
     {

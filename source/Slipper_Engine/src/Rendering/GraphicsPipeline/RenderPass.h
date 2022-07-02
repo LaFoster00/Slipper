@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Drawing/Framebuffer.h"
 #include "common_includes.h"
 
 #include <memory>
@@ -8,24 +7,27 @@
 #include <unordered_set>
 #include <vector>
 
+#include "DeviceDependentObject.h"
+
+class Framebuffer;
 class Shader;
 class Device;
 class SwapChain;
 class GraphicsPipeline;
 
-class RenderPass
+class RenderPass : DeviceDependentObject
 {
  public:
     RenderPass() = delete;
-    RenderPass(Device &device, VkFormat attachmentFormat);
+    RenderPass(VkFormat AttachmentFormat);
     ~RenderPass();
 
     void DestroyAllFrameBuffers();
     bool DestroySwapChainFramebuffers(SwapChain *SwapChain);
 
-    void CreateSwapChainFramebuffers(SwapChain *swapChain);
+    void CreateSwapChainFramebuffers(SwapChain *SwapChain);
 
-    void BeginRenderPass(SwapChain *swapChain, uint32_t imageIndex, VkCommandBuffer commandBuffer);
+    void BeginRenderPass(SwapChain *SwapChain, uint32_t ImageIndex, VkCommandBuffer CommandBuffer);
     void EndRenderPass(VkCommandBuffer commandBuffer);
 
     void RegisterShader(Shader *Shader);
@@ -37,8 +39,6 @@ class RenderPass
     }
 
  public:
-    Device &device;
-
     VkRenderPass vkRenderPass;
 
     std::unordered_map<SwapChain *, std::vector<std::unique_ptr<Framebuffer>>>
@@ -46,6 +46,6 @@ class RenderPass
 
     std::unordered_set<Shader *> registeredShaders;
 
-private:
+ private:
     SwapChain *m_activeSwapChain;
 };

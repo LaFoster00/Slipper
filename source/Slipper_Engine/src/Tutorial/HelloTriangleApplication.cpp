@@ -2,7 +2,7 @@
 
 #include "Rendering/GraphicsEngine.h"
 
-void HelloTriangleApplication::initWindow()
+void HelloTriangleApplication::InitWindow()
 {
     glfwInit();
 
@@ -17,7 +17,7 @@ void HelloTriangleApplication::initWindow()
     glfwSetFramebufferSizeCallback(*window, FramebufferResizeCallback);
 }
 
-void HelloTriangleApplication::initVulkan()
+void HelloTriangleApplication::InitVulkan()
 {
     // Creates instance as well as retrieving it
     instance = &Instance::Get();
@@ -29,7 +29,7 @@ void HelloTriangleApplication::initVulkan()
     auto pipeline = graphics->SetupDebugRender(*surface);
 }
 
-void HelloTriangleApplication::mainLoop()
+void HelloTriangleApplication::MainLoop()
 {
     while (!window->ShouldClose()) {
         glfwPollEvents();
@@ -37,7 +37,7 @@ void HelloTriangleApplication::mainLoop()
     }
 }
 
-void HelloTriangleApplication::cleanup()
+void HelloTriangleApplication::Cleanup()
 {
     vkDeviceWaitIdle(*device);
 
@@ -50,8 +50,8 @@ void HelloTriangleApplication::cleanup()
     glfwTerminate();
 }
 
-void HelloTriangleApplication::FramebufferResizeCallback(GLFWwindow *window, int width, int height)
+void HelloTriangleApplication::FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height)
 {
-    const auto app = static_cast<HelloTriangleApplication *>(glfwGetWindowUserPointer(window));
-    app->graphics->OnWindowResized(window, width, height);
+    const auto app = static_cast<HelloTriangleApplication *>(glfwGetWindowUserPointer(Window));
+    app->graphics->OnWindowResized();
 }

@@ -6,38 +6,38 @@
 #include "Rendering/Setup/Instance.h"
 #include "Window/Window.h"
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+constexpr uint32_t WIDTH = 800;
+constexpr uint32_t HEIGHT = 600;
 
-constexpr bool printCreationDetails = true;
+constexpr bool PRINT_CREATION_DETAILS = true;
 
 class GraphicsEngine;
 
 class HelloTriangleApplication
 {
  public:
-    void run()
+    void Run()
     {
-        initWindow();
-        initVulkan();
-        mainLoop();
-        cleanup();
+        InitWindow();
+        InitVulkan();
+        MainLoop();
+        Cleanup();
     }
 
  private:
 #pragma region MainFunctions
 
-    void initWindow();
+    void InitWindow();
 
-    void initVulkan();
+    void InitVulkan();
 
-    void mainLoop();
+    void MainLoop();
 
-    void cleanup();
+    void Cleanup();
 
 #pragma endregion MainFunctions
 
-    static void FramebufferResizeCallback(GLFWwindow *window, int width, int height);
+    static void FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height);
 
  private:
     Window *window = nullptr;

@@ -13,7 +13,7 @@ struct QueueFamilyIndices
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
 
-    bool isComplete()
+    bool IsComplete() const
     {
         return graphicsFamily.has_value() && presentFamily.has_value();
     }
@@ -37,18 +37,17 @@ class Device
         return *m_instance;
     }
 
-    static Device &Create(VkPhysicalDevice physicalDevice)
+    static Device &Create(const VkPhysicalDevice PhysicalDevice)
     {
-        if (!m_instance)
-        {
-            m_instance = new Device(physicalDevice);
+        if (!m_instance) {
+            m_instance = new Device(PhysicalDevice);
         }
         return *m_instance;
     }
 
     static void Destroy()
     {
-	    delete m_instance;
+        delete m_instance;
     }
 
     operator VkDevice() const
@@ -58,25 +57,24 @@ class Device
 
     void InitLogicalDevice();
 
-    static Device *PickPhysicalDevice(const Surface *surface,
-                                      const bool initLogicalDevice);
+    static Device *PickPhysicalDevice(const Surface *Surface, bool InitLogicalDevice);
 
     [[nodiscard]] std::string DeviceInfoToString() const;
 
-    VkSurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *surface) const;
-    SwapChainSupportDetails QuerySwapChainSupport(const Surface *surface) const;
-    VkExtent2D GetSurfaceResolution(const Surface *surface) const;
+    VkSurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const;
+    SwapChainSupportDetails QuerySwapChainSupport(const Surface *Surface) const;
+    VkExtent2D GetSurfaceResolution(const Surface *Surface) const;
 
     uint32_t FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const;
 
  private:
-    Device(VkPhysicalDevice physicalDevice);
+    Device(VkPhysicalDevice PhysicalDevice);
     ~Device();
 
-    bool IsDeviceSuitable(const Surface *surface);
+    bool IsDeviceSuitable(const Surface *Surface);
     uint32_t RateDeviceSuitability() const;
     bool CheckExtensionSupport() const;
-    const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *surface);
+    const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *Surface);
 
  public:
     /* Gets destroyed toghether with its instance. */
@@ -91,6 +89,6 @@ class Device
     VkQueue graphicsQueue = VK_NULL_HANDLE;
     VkQueue presentQueue = VK_NULL_HANDLE;
 
-private:
+ private:
     static Device *m_instance;
 };

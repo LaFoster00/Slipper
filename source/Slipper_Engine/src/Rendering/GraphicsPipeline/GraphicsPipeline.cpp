@@ -7,14 +7,14 @@
 
 #include <algorithm>
 
-GraphicsPipeline::GraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> &shaderStages,
-                                   VkExtent2D extent,
-                                   RenderPass *renderPass,
+GraphicsPipeline::GraphicsPipeline(const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
+                                   const VkExtent2D Extent,
+                                   const RenderPass *RenderPass,
                                    const VkDescriptorSetLayout descriptorSet)
-    : device(Device::Get()), m_renderPass(renderPass), m_shaderStages(shaderStages)
+    : device(Device::Get()), m_renderPass(RenderPass), m_shaderStages(ShaderStages)
 {
     vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, descriptorSet);
-    Create(extent);
+    Create(Extent);
 }
 
 GraphicsPipeline::~GraphicsPipeline()
@@ -23,61 +23,61 @@ GraphicsPipeline::~GraphicsPipeline()
     vkDestroyPipelineLayout(device.logicalDevice, vkPipelineLayout, nullptr);
 }
 
-void GraphicsPipeline::Bind(const VkCommandBuffer &commandBuffer) const
+void GraphicsPipeline::Bind(const VkCommandBuffer &CommandBuffer) const
 {
-    vkCmdBindPipeline(commandBuffer,
+    vkCmdBindPipeline(CommandBuffer,
                       VK_PIPELINE_BIND_POINT_GRAPHICS,
                       vkGraphicsPipeline);
 }
 
-void GraphicsPipeline::ChangeResolution(const VkExtent2D& resolution)
+void GraphicsPipeline::ChangeResolution(const VkExtent2D& Resolution)
 {
     vkDestroyPipeline(device, vkGraphicsPipeline, nullptr);
 
-    Create(resolution);
+    Create(Resolution);
 }
 
-void GraphicsPipeline::Create(VkExtent2D extent)
+void GraphicsPipeline::Create(VkExtent2D Extent)
 {
     /* Create graphicspipeline */
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = static_cast<uint32_t>(m_shaderStages.size());
-    pipelineInfo.pStages = m_shaderStages.data();
+    VkGraphicsPipelineCreateInfo pipeline_info{};
+    pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline_info.stageCount = static_cast<uint32_t>(m_shaderStages.size());
+    pipeline_info.pStages = m_shaderStages.data();
 
-    auto vertexInput = PipelineLayout::SetupVertexInputState();
-    pipelineInfo.pVertexInputState = &vertexInput;
+    auto vertex_input = PipelineLayout::SetupVertexInputState();
+    pipeline_info.pVertexInputState = &vertex_input;
 
-    auto inputAssembly = PipelineLayout::SetupInputAssemblyState();
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    auto input_assembly = PipelineLayout::SetupInputAssemblyState();
+    pipeline_info.pInputAssemblyState = &input_assembly;
 
     VkViewport viewport{};
     VkRect2D scissor{};
-    auto viewportState = PipelineLayout::SetupViewportState(viewport, scissor, extent);
-    pipelineInfo.pViewportState = &viewportState;
+    auto viewport_state = PipelineLayout::SetupViewportState(viewport, scissor, Extent);
+    pipeline_info.pViewportState = &viewport_state;
 
     auto rasterizer = PipelineLayout::SetupRasterizationState();
-    pipelineInfo.pRasterizationState = &rasterizer;
+    pipeline_info.pRasterizationState = &rasterizer;
 
     auto multisampling = PipelineLayout::SetupMultisampleState();
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = nullptr;  // Optional
+    pipeline_info.pMultisampleState = &multisampling;
+    pipeline_info.pDepthStencilState = nullptr;  // Optional
 
-    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-    auto colorBlending = PipelineLayout::SetupColorBlendState(colorBlendAttachment);
-    pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.pDynamicState = nullptr;  // Optional
+    VkPipelineColorBlendAttachmentState color_blend_attachment{};
+    auto color_blending = PipelineLayout::SetupColorBlendState(color_blend_attachment);
+    pipeline_info.pColorBlendState = &color_blending;
+    pipeline_info.pDynamicState = nullptr;  // Optional
 
-    pipelineInfo.layout = vkPipelineLayout;
+    pipeline_info.layout = vkPipelineLayout;
 
-    pipelineInfo.renderPass = m_renderPass->vkRenderPass;
-    pipelineInfo.subpass = 0;
+    pipeline_info.renderPass = m_renderPass->vkRenderPass;
+    pipeline_info.subpass = 0;
 
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;  // Optional
-    pipelineInfo.basePipelineIndex = -1;               // Optional
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;  // Optional
+    pipeline_info.basePipelineIndex = -1;               // Optional
 
     VK_ASSERT(
         vkCreateGraphicsPipelines(
-            device.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkGraphicsPipeline),
+            device.logicalDevice, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &vkGraphicsPipeline),
         "Failed to create graphics pipeline!");
 }

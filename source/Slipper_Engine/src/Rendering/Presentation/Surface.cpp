@@ -7,9 +7,9 @@
 #include "Window.h"
 #include "common_defines.h"
 
-Surface::Surface(Window &window) : window(window)
+Surface::Surface(const Window &Window) : window(Window)
 {
-    VK_ASSERT(glfwCreateWindowSurface(Instance::Get(), window, nullptr, &surface),
+    VK_ASSERT(glfwCreateWindowSurface(Instance::Get(), Window, nullptr, &surface),
               "Failed to create window suface!")
 }
 
@@ -18,13 +18,13 @@ Surface::~Surface()
     vkDestroySurfaceKHR(Instance::Get(), surface, nullptr);
 }
 
-void Surface::CleanupSwapChain(bool destroySwapChain)
+void Surface::CleanupSwapChain(const bool DestroySwapChain)
 {
-    for (const auto &renderPass : renderPasses) {
-        renderPass->DestroySwapChainFramebuffers(swapChain.get());
+    for (const auto &render_pass : renderPasses) {
+        render_pass->DestroySwapChainFramebuffers(swapChain.get());
     }
 
-    if (destroySwapChain) {
+    if (DestroySwapChain) {
         swapChain.reset();
     }
 
@@ -45,7 +45,7 @@ void Surface::DestroyDeviceDependencies()
 void Surface::RecreateSwapChain()
 {
     int width = 0, height = 0;
-    auto previousRenderPasses = renderPasses;
+    const auto previous_render_passes = renderPasses;
     glfwGetFramebufferSize(window, &width, &height);
     while (width == 0 || height == 0) {
         glfwGetFramebufferSize(window, &width, &height);
@@ -58,20 +58,20 @@ void Surface::RecreateSwapChain()
 
     swapChain->Recreate();
 
-    for (const auto renderPass : previousRenderPasses) {
+    for (const auto render_pass : previous_render_passes) {
         /* Create frambuffers for this swap chain */
-        renderPass->CreateSwapChainFramebuffers(swapChain.get());
-        renderPasses.push_back(renderPass);
+        render_pass->CreateSwapChainFramebuffers(swapChain.get());
+        renderPasses.push_back(render_pass);
 
-        for (const auto renderPassShader : renderPass->registeredShaders) {
-            renderPassShader->ChangeResolutionForRenderPass(renderPass,
+        for (const auto render_pass_shader : render_pass->registeredShaders) {
+            render_pass_shader->ChangeResolutionForRenderPass(render_pass,
                                                             swapChain->GetResolution());
         }
     }
 }
 
-void Surface::RegisterRenderPass(RenderPass& renderPass)
+void Surface::RegisterRenderPass(RenderPass& RenderPass)
 {
-    renderPasses.push_back(&renderPass);
-    renderPass.CreateSwapChainFramebuffers(swapChain.get());
+    renderPasses.push_back(&RenderPass);
+    RenderPass.CreateSwapChainFramebuffers(swapChain.get());
 }

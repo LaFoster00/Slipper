@@ -8,10 +8,10 @@ EXTERNC
 {
     SLIPPER_FUNCTION int main(int argc, char *argv[])
     {
-        HelloTriangleApplication app;
-
-        try {
-            app.run();
+	    try
+	    {
+		    HelloTriangleApplication app;
+		    app.Run();
         }
         catch (const std::exception &e) {
             std::cerr << e.what() << std::endl;

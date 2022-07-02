@@ -1,11 +1,11 @@
 #include "Window.h"
 
-Window::Window(WindowInfo createInfo)
+Window::Window(WindowInfo CreateInfo)
 {
-    info = createInfo;
+    m_info = CreateInfo;
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, createInfo.resizable);
+    glfwWindowHint(GLFW_RESIZABLE, CreateInfo.resizable);
 
-    glfwWindow = glfwCreateWindow(info.width, info.height, info.name, nullptr, nullptr);
+    glfwWindow = glfwCreateWindow(m_info.width, m_info.height, m_info.name, nullptr, nullptr);
 }

@@ -17,38 +17,38 @@ struct Vertex
 
     static VkVertexInputBindingDescription *GetBindingDescription()
     {
-        static VkVertexInputBindingDescription BindingDescription{};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(Vertex);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        static VkVertexInputBindingDescription binding_description{};
+        binding_description.binding = 0;
+        binding_description.stride = sizeof(Vertex);
+        binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-        return &BindingDescription;
+        return &binding_description;
     }
 
     static std::array<VkVertexInputAttributeDescription, 2> *GetAttributeDescriptions()
     {
-        static std::array<VkVertexInputAttributeDescription, 2> AttributeDescriptions{};
+        static std::array<VkVertexInputAttributeDescription, 2> attribute_descriptions{};
 
-        AttributeDescriptions[0].binding = 0;
-        AttributeDescriptions[0].location = 0;
-        AttributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptions[0].offset = offsetof(Vertex, pos);
+        attribute_descriptions[0].binding = 0;
+        attribute_descriptions[0].location = 0;
+        attribute_descriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+        attribute_descriptions[0].offset = offsetof(Vertex, pos);
 
-        AttributeDescriptions[1].binding = 0;
-        AttributeDescriptions[1].location = 1;
-        AttributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[1].offset = offsetof(Vertex, color);
+        attribute_descriptions[1].binding = 0;
+        attribute_descriptions[1].location = 1;
+        attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attribute_descriptions[1].offset = offsetof(Vertex, color);
 
-        return &AttributeDescriptions;
+        return &attribute_descriptions;
     }
 };
 
-const std::vector<Vertex> DebugTriangleVertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+const std::vector<Vertex> DEBUG_TRIANGLE_VERTICES = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
                                                    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
                                                    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
                                                    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
 
-const std::vector<VertexIndex> DebugTriangleIndices = {0, 1, 2, 2, 3, 0};
+const std::vector<VertexIndex> DEBUG_TRIANGLE_INDICES = {0, 1, 2, 2, 3, 0};
 
 class Mesh
 {
@@ -59,19 +59,19 @@ class Mesh
          const VertexIndex *Indices,
          size_t NumIndices);
 
-    void Bind(const VkCommandBuffer &commandBuffer) const;
+    void Bind(const VkCommandBuffer &CommandBuffer) const;
 
     size_t NumVertex()const
     {
-        return vertexBuffer.numVertex;
+        return m_vertexBuffer.numVertex;
     }
 
     size_t NumIndex() const
     {
-        return indexBuffer.numIndex;
+        return m_indexBuffer.numIndex;
     }
 
  private:
-    VertexBuffer vertexBuffer;
-    IndexBuffer indexBuffer;
+    VertexBuffer m_vertexBuffer;
+    IndexBuffer m_indexBuffer;
 };

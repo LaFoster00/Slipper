@@ -4,19 +4,19 @@
 
 Mesh::Mesh(CommandPool &MemoryCommandPool,
            const Vertex *Vertices,
-           size_t NumVertices,
+           const size_t NumVertices,
            const VertexIndex *Indices,
-           size_t NumIndices)
-    : vertexBuffer(MemoryCommandPool, Vertices, NumVertices),
-      indexBuffer(MemoryCommandPool, Indices, NumIndices)
+           const size_t NumIndices)
+    : m_vertexBuffer(MemoryCommandPool, Vertices, NumVertices),
+      m_indexBuffer(MemoryCommandPool, Indices, NumIndices)
 {
 }
 
-void Mesh::Bind(const VkCommandBuffer &commandBuffer) const
+void Mesh::Bind(const VkCommandBuffer &CommandBuffer) const
 {
-    const VkBuffer vertexBuffers[1] = {vertexBuffer};
-    const VkDeviceSize offsets[1] = {0};
+    const VkBuffer vertex_buffers[1] = {m_vertexBuffer};
+    constexpr VkDeviceSize offsets[1] = {0};
 
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindVertexBuffers(CommandBuffer, 0, 1, vertex_buffers, offsets);
+    vkCmdBindIndexBuffer(CommandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 }

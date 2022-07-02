@@ -20,7 +20,7 @@ class Surface;
 class GraphicsEngine : DeviceDependentObject
 {
  public:
-    static void SetSetupDefaultAssets(bool value = true);
+    static void SetSetupDefaultAssets(bool Value = true);
 
     static GraphicsEngine &Get()
     {
@@ -39,16 +39,16 @@ class GraphicsEngine : DeviceDependentObject
 
     void SetupDefaultAssets();
     void CreateSyncObjects();
-    RenderPass *CreateRenderPass(const VkFormat attachmentFormat);
-    Shader *SetupDebugRender(Surface &surface);
+    RenderPass *CreateRenderPass(const VkFormat AttachmentFormat);
+    Shader *SetupDebugRender(Surface &Surface);
     void SetupSimpleDraw();
 
     void AddRepeatedDrawCommand(
-        std::function<void(const VkCommandBuffer &, const RenderPass &)> command);
+        std::function<void(const VkCommandBuffer &, const RenderPass &)> Command);
 
     void DrawFrame();
 
-    void OnWindowResized(GLFWwindow *window, int width, int height);
+    void OnWindowResized();
 
  private:
     GraphicsEngine();

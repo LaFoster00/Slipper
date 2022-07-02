@@ -14,13 +14,13 @@ struct WindowInfo
 class Window
 {
  public:
-    Window(WindowInfo createInfo);
+    Window(WindowInfo CreateInfo);
     ~Window()
     {
         glfwDestroyWindow(glfwWindow);
     }
 
-    bool ShouldClose()
+    bool ShouldClose() const
     {
         return glfwWindowShouldClose(glfwWindow);
     }
@@ -34,5 +34,5 @@ class Window
     GLFWwindow *glfwWindow;
 
  private:
-    WindowInfo info;
+    WindowInfo m_info;
 };

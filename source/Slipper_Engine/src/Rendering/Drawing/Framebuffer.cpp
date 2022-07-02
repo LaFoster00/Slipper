@@ -6,30 +6,29 @@
 
 #include <algorithm>
 
-Framebuffer::Framebuffer(RenderPass *renderPass,
-                         VkImageView *attachments,
-                         size_t attachmentCount,
-                         VkExtent2D extent)
-    : DeviceDependentObject()
+Framebuffer::Framebuffer(const RenderPass *RenderPass,
+                         const VkImageView *Attachments,
+                         const size_t AttachmentCount,
+                         const VkExtent2D Extent)
 {
-    Create(renderPass, attachments, attachmentCount, extent);
+    Create(RenderPass, Attachments, AttachmentCount, Extent);
 }
 
-void Framebuffer::Create(RenderPass *renderPass,
-                         VkImageView *attachments,
-                         size_t attachmentCount,
-                         VkExtent2D extent)
+void Framebuffer::Create(const RenderPass *RenderPass,
+                         const VkImageView *Attachments,
+                         const size_t AttachmentCount,
+                         const VkExtent2D Extent)
 {
-    VkFramebufferCreateInfo framebufferInfo{};
-    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = renderPass->vkRenderPass;
-    framebufferInfo.attachmentCount = 1;
-    framebufferInfo.pAttachments = attachments;
-    framebufferInfo.width = extent.width;
-    framebufferInfo.height = extent.height;
-    framebufferInfo.layers = 1;
+    VkFramebufferCreateInfo framebuffer_info{};
+    framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebuffer_info.renderPass = RenderPass->vkRenderPass;
+    framebuffer_info.attachmentCount = AttachmentCount;
+    framebuffer_info.pAttachments = Attachments;
+    framebuffer_info.width = Extent.width;
+    framebuffer_info.height = Extent.height;
+    framebuffer_info.layers = 1;
 
-    VK_ASSERT(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer),
+    VK_ASSERT(vkCreateFramebuffer(device, &framebuffer_info, nullptr, &vkFramebuffer),
               "Failed to create framebuffer!")
 }
 

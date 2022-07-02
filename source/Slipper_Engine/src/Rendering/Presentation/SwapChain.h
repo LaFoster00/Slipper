@@ -12,7 +12,7 @@ class SwapChain : DeviceDependentObject
 {
  public:
     SwapChain() = delete;
-    SwapChain(Surface &surface);
+    SwapChain(Surface &Surface);
     ~SwapChain();
 
     [[nodiscard]] const VkExtent2D &GetResolution() const
@@ -37,7 +37,7 @@ class SwapChain : DeviceDependentObject
     void CreateImageViews();
     VkSurfaceFormatKHR ChooseSurfaceFormat();
     VkPresentModeKHR ChoosePresentMode() const;
-    VkExtent2D ChoseExtent(const Surface &surface) const;
+    VkExtent2D ChoseExtent(const Surface &Surface) const;
 
  public:
     Surface &surface;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common_includes.h"
 #include "DeviceDependentObject.h"
+#include "common_includes.h"
 
 class Device;
 class RenderPass;
@@ -10,17 +10,17 @@ class SwapChain;
 class Framebuffer : DeviceDependentObject
 {
  public:
-    Framebuffer(RenderPass *renderPass,
-                VkImageView *attachments,
-                size_t attachmentCount,
-                VkExtent2D extent);
+    Framebuffer(const RenderPass *RenderPass,
+                const VkImageView *Attachments,
+                size_t AttachmentCount,
+                VkExtent2D Extent);
     ~Framebuffer();
 
  private:
-    void Create(RenderPass *renderPass,
-                VkImageView *attachments,
-                size_t attachmentCount,
-                VkExtent2D extent);
+    void Create(const RenderPass *RenderPass,
+                const VkImageView *Attachments,
+                size_t AttachmentCount,
+                VkExtent2D Extent);
 
  public:
     VkFramebuffer vkFramebuffer;

@@ -8,33 +8,33 @@
 #include "common_defines.h"
 #include "Presentation/SwapChain.h"
 
-RenderPass::RenderPass(Device &device, VkFormat attachmentFormat) : device(device)
+RenderPass::RenderPass(VkFormat AttachmentFormat)
 {
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = attachmentFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    VkAttachmentDescription color_attachment{};
+    color_attachment.format = AttachmentFormat;
+    color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    VkAttachmentReference color_attachment_ref{};
+    color_attachment_ref.attachment = 0;
+    color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
+    subpass.pColorAttachments = &color_attachment_ref;
 
-    VkRenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
+    VkRenderPassCreateInfo render_pass_info{};
+    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    render_pass_info.attachmentCount = 1;
+    render_pass_info.pAttachments = &color_attachment;
+    render_pass_info.subpassCount = 1;
+    render_pass_info.pSubpasses = &subpass;
 
     VkSubpassDependency dependency{};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -44,17 +44,17 @@ RenderPass::RenderPass(Device &device, VkFormat attachmentFormat) : device(devic
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
+    render_pass_info.dependencyCount = 1;
+    render_pass_info.pDependencies = &dependency;
 
-    VK_ASSERT(vkCreateRenderPass(device.logicalDevice, &renderPassInfo, nullptr, &vkRenderPass),
+    VK_ASSERT(vkCreateRenderPass(device, &render_pass_info, nullptr, &vkRenderPass),
               "Failed to create render pass")
 }
 
 RenderPass::~RenderPass()
 {
     DestroyAllFrameBuffers();
-    vkDestroyRenderPass(device.logicalDevice, vkRenderPass, nullptr);
+    vkDestroyRenderPass(device, vkRenderPass, nullptr);
 }
 
 void RenderPass::DestroyAllFrameBuffers()
@@ -72,41 +72,41 @@ bool RenderPass::DestroySwapChainFramebuffers(SwapChain *SwapChain)
     return false;
 }
 
-void RenderPass::CreateSwapChainFramebuffers(SwapChain *swapChain)
+void RenderPass::CreateSwapChainFramebuffers(SwapChain *SwapChain)
 {
-    if (swapChainFramebuffers.contains(swapChain)) {
+    if (swapChainFramebuffers.contains(SwapChain)) {
         ASSERT(1,
                "Swapchain allready has Framebuffers for this swap chain. Clean them up before "
                "creating new ones!")
     }
-    for (size_t i = 0; i < swapChain->vkImageViews.size(); i++) {
-        VkImageView *attachments = &swapChain->vkImageViews[i];
-        size_t attachmentCount = 1;
-        VkExtent2D extent = swapChain->GetResolution();
-        swapChainFramebuffers[swapChain].emplace_back(
-            std::make_unique<Framebuffer>(this, attachments, attachmentCount, extent));
+    for (size_t i = 0; i < SwapChain->vkImageViews.size(); i++) {
+        VkImageView *attachments = &SwapChain->vkImageViews[i];
+        size_t attachment_count = 1;
+        VkExtent2D extent = SwapChain->GetResolution();
+        swapChainFramebuffers[SwapChain].emplace_back(
+            std::make_unique<Framebuffer>(this, attachments, attachment_count, extent));
     }
 }
 
-void RenderPass::BeginRenderPass(SwapChain *swapChain,
-                                 uint32_t imageIndex,
-                                 VkCommandBuffer commandBuffer)
+void RenderPass::BeginRenderPass(SwapChain *SwapChain,
+                                 const uint32_t ImageIndex,
+                                 const VkCommandBuffer CommandBuffer)
 {
-    m_activeSwapChain = swapChain;
+    m_activeSwapChain = SwapChain;
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = vkRenderPass;
-    renderPassInfo.framebuffer = swapChainFramebuffers.at(swapChain)[imageIndex]->vkFramebuffer;
+    renderPassInfo.framebuffer = swapChainFramebuffers.at(SwapChain)[ImageIndex]->vkFramebuffer;
 
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapChain->GetResolution();
+    renderPassInfo.renderArea.extent = SwapChain->GetResolution();
 
     VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
 
-    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(CommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void RenderPass::EndRenderPass(VkCommandBuffer commandBuffer)

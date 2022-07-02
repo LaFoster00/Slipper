@@ -8,40 +8,40 @@
 #include "Mesh/Mesh.h"
 #include "common_defines.h"
 
-VkPipelineLayout PipelineLayout::CreatePipelineLayout(const Device &device,
-                                                      VkDescriptorSetLayout descriptorSet)
+VkPipelineLayout PipelineLayout::CreatePipelineLayout(const Device &Device,
+                                                      const VkDescriptorSetLayout DescriptorSet)
 {
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;             // Optional
-    pipelineLayoutInfo.pSetLayouts = &descriptorSet;   // Optional
-    pipelineLayoutInfo.pushConstantRangeCount = 0;     // Optional
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;  // Optional
+    VkPipelineLayoutCreateInfo pipeline_layout_info{};
+    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_info.setLayoutCount = 1;             // Optional
+    pipeline_layout_info.pSetLayouts = &DescriptorSet;   // Optional
+    pipeline_layout_info.pushConstantRangeCount = 0;     // Optional
+    pipeline_layout_info.pPushConstantRanges = nullptr;  // Optional
 
-    VkPipelineLayout pipelineLayout;
+    VkPipelineLayout pipeline_layout;
     VK_ASSERT(vkCreatePipelineLayout(
-                  device.logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout),
+                  Device.logicalDevice, &pipeline_layout_info, nullptr, &pipeline_layout),
               "Failed to create pipeline layout!");
 
-    return pipelineLayout;
+    return pipeline_layout;
 }
 
 VkPipelineVertexInputStateCreateInfo PipelineLayout::SetupVertexInputState()
 {
-    const auto bindingDescription = Vertex::GetBindingDescription();
-    const auto attributeDescriptions = Vertex::GetAttributeDescriptions();
+	const auto binding_description = Vertex::GetBindingDescription();
+	const auto attribute_descriptions = Vertex::GetAttributeDescriptions();
 
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    VkPipelineVertexInputStateCreateInfo vertex_input_info{};
+    vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-    vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = bindingDescription;
+    vertex_input_info.vertexBindingDescriptionCount = 1;
+    vertex_input_info.pVertexBindingDescriptions = binding_description;
 
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(
-        attributeDescriptions->size());
-    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions->data();
+    vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(
+        attribute_descriptions->size());
+    vertex_input_info.pVertexAttributeDescriptions = attribute_descriptions->data();
 
-    return vertexInputInfo;
+    return vertex_input_info;
 }
 
 VkPipelineInputAssemblyStateCreateInfo PipelineLayout::SetupInputAssemblyState()
@@ -54,28 +54,28 @@ VkPipelineInputAssemblyStateCreateInfo PipelineLayout::SetupInputAssemblyState()
     return inputAssembly;
 }
 
-VkPipelineViewportStateCreateInfo PipelineLayout::SetupViewportState(VkViewport &viewport,
-                                                                     VkRect2D &scissor,
-                                                                     const VkExtent2D &extent)
+VkPipelineViewportStateCreateInfo PipelineLayout::SetupViewportState(VkViewport &Viewport,
+                                                                     VkRect2D &Scissor,
+                                                                     const VkExtent2D &Extent)
 {
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)extent.width;
-    viewport.height = (float)extent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    Viewport.x = 0.0f;
+    Viewport.y = 0.0f;
+    Viewport.width = static_cast<float>(Extent.width);
+    Viewport.height = static_cast<float>(Extent.height);
+    Viewport.minDepth = 0.0f;
+    Viewport.maxDepth = 1.0f;
 
-    scissor.offset = {0, 0};
-    scissor.extent = extent;
+    Scissor.offset = {0, 0};
+    Scissor.extent = Extent;
 
-    VkPipelineViewportStateCreateInfo viewportState{};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
-    viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
+    VkPipelineViewportStateCreateInfo viewport_state{};
+    viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport_state.viewportCount = 1;
+    viewport_state.pViewports = &Viewport;
+    viewport_state.scissorCount = 1;
+    viewport_state.pScissors = &Scissor;
 
-    return viewportState;
+    return viewport_state;
 }
 
 VkPipelineRasterizationStateCreateInfo PipelineLayout::SetupRasterizationState()
@@ -117,47 +117,47 @@ VkPipelineDepthStencilStateCreateInfo PipelineLayout::SetupDepthStencilState()
 
 /* Pass in empty colorblendattachementstate */
 VkPipelineColorBlendStateCreateInfo PipelineLayout::SetupColorBlendState(
-    VkPipelineColorBlendAttachmentState &colorBlendAttachment)
+    VkPipelineColorBlendAttachmentState &ColorBlendAttachment)
 {
     /* Blending needs to be setup on a per framebuffer basis! Only one used currently therefore
      * hardcoded. */
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+    ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
                                           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;   // Optional
-    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;  // Optional
-    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;              // Optional
-    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;   // Optional
-    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;  // Optional
-    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;              // Optional
+    ColorBlendAttachment.blendEnable = VK_FALSE;
+    ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;   // Optional
+    ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;  // Optional
+    ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;              // Optional
+    ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;   // Optional
+    ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;  // Optional
+    ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;              // Optional
 
-    VkPipelineColorBlendStateCreateInfo colorBlending{};
-    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlending.logicOpEnable = VK_FALSE;
-    colorBlending.logicOp = VK_LOGIC_OP_COPY;  // Optional
-    colorBlending.attachmentCount = 1;
-    colorBlending.pAttachments = &colorBlendAttachment;
-    colorBlending.blendConstants[0] = 0.0f;  // Optional
-    colorBlending.blendConstants[1] = 0.0f;  // Optional
-    colorBlending.blendConstants[2] = 0.0f;  // Optional
-    colorBlending.blendConstants[3] = 0.0f;  // Optional
+    VkPipelineColorBlendStateCreateInfo color_blending{};
+    color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blending.logicOpEnable = VK_FALSE;
+    color_blending.logicOp = VK_LOGIC_OP_COPY;  // Optional
+    color_blending.attachmentCount = 1;
+    color_blending.pAttachments = &ColorBlendAttachment;
+    color_blending.blendConstants[0] = 0.0f;  // Optional
+    color_blending.blendConstants[1] = 0.0f;  // Optional
+    color_blending.blendConstants[2] = 0.0f;  // Optional
+    color_blending.blendConstants[3] = 0.0f;  // Optional
 
-    return colorBlending;
+    return color_blending;
 }
 
 VkPipelineDynamicStateCreateInfo PipelineLayout::SetupDynamicState(
-	const std::optional<std::vector<VkDynamicState>> dynamicStates)
+	const std::optional<std::vector<VkDynamicState>> DynamicStates)
 {
-    VkPipelineDynamicStateCreateInfo dynamicState{};
-    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    if (dynamicStates.has_value()) {
-        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.value().size());
-        dynamicState.pDynamicStates = dynamicStates.value().data();
+    VkPipelineDynamicStateCreateInfo dynamic_state{};
+    dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    if (DynamicStates.has_value()) {
+        dynamic_state.dynamicStateCount = static_cast<uint32_t>(DynamicStates.value().size());
+        dynamic_state.pDynamicStates = DynamicStates.value().data();
     }
     else {
-        dynamicState.dynamicStateCount = 0;
-        dynamicState.pDynamicStates = nullptr;
+        dynamic_state.dynamicStateCount = 0;
+        dynamic_state.pDynamicStates = nullptr;
     }
 
-    return dynamicState;
+    return dynamic_state;
 }

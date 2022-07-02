@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "common_includes.h"
 #include "DeviceDependentObject.h"
 #include "SwapChain.h"
+#include "common_includes.h"
 
 class RenderPass;
 class SwapChain;
@@ -15,10 +15,10 @@ class Window;
 class Surface
 {
  public:
-    Surface(Window &window);
+	explicit Surface(const Window &Window);
     ~Surface();
 
-    operator VkSurfaceKHR()
+    operator VkSurfaceKHR() const
     {
         return surface;
     }
@@ -35,12 +35,11 @@ class Surface
     void DestroyDeviceDependencies();
 
     void RecreateSwapChain();
-    void RegisterRenderPass(RenderPass &renderPass);
-
-private:
-    void CleanupSwapChain(bool destroySwapChain);
+    void RegisterRenderPass(RenderPass &RenderPass);
 
  private:
+    void CleanupSwapChain(bool DestroySwapChain);
+    
  public:
     Device *device;
 

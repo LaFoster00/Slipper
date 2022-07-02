@@ -11,17 +11,17 @@ class GraphicsPipeline
 {
  public:
     GraphicsPipeline() = delete;
-    GraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> &shaderStages,
-                     VkExtent2D extent,
-                     RenderPass *renderPass,
+    GraphicsPipeline(const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
+                     VkExtent2D Extent,
+                     const RenderPass *RenderPass,
                      VkDescriptorSetLayout descriptorSet);
     ~GraphicsPipeline();
 
-    void Bind(const VkCommandBuffer &commandBuffer) const;
-    void ChangeResolution(const VkExtent2D &resolution);
+    void Bind(const VkCommandBuffer &CommandBuffer) const;
+    void ChangeResolution(const VkExtent2D &Resolution);
 
-private:
-    void Create(VkExtent2D extent);
+ private:
+    void Create(VkExtent2D Extent);
 
  public:
     Device &device;

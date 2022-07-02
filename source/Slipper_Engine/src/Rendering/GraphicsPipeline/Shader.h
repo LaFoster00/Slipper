@@ -4,9 +4,8 @@
 #include <optional>
 #include <unordered_map>
 
-#include "common_includes.h"
 #include "GraphicsEngine.h"
-
+#include "common_includes.h"
 
 class RenderPass;
 class GraphicsPipeline;
@@ -35,58 +34,60 @@ class Shader
     };
 
     Shader() = delete;
-    Shader(std::string_view name,
-           std::vector<std::tuple<std::string_view, ShaderType>> &shaderStagesCode,
+    Shader(std::string_view Name,
+           std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
            VkDeviceSize BufferSize,
-           VkDescriptorSetLayout descriptorSetLayout,
+           VkDescriptorSetLayout DescriptorSetLayout,
            std::optional<std::vector<RenderPass *>> RenderPasses = {},
            std::optional<VkExtent2D> RenderPassesExtent = {});
     ~Shader();
 
-    GraphicsPipeline &RegisterForRenderPass(RenderPass *RenderPass, VkExtent2D extent);
-    bool UnregisterFromRenderPass(RenderPass *renderPass);
-    void ChangeResolutionForRenderPass(RenderPass *renderPass, VkExtent2D resolution);
+    GraphicsPipeline &RegisterForRenderPass(RenderPass *RenderPass, VkExtent2D Extent);
+    bool UnregisterFromRenderPass(RenderPass *RenderPass);
+    void ChangeResolutionForRenderPass(RenderPass *RenderPass, VkExtent2D Resolution);
 
     /* Binds the shaders pipeline and its descriptor sets
-     * Current frame is optional and will be fetched from the currentFrame of the GraphicsEngine if empty.
+     * Current frame is optional and will be fetched from the currentFrame of the GraphicsEngine if
+     * empty.
      */
-    void Bind(const VkCommandBuffer &commandBuffer,
-              const RenderPass *renderPass,
-              std::optional<uint32_t> currentFrame = {}) const;
+    void Bind(const VkCommandBuffer &CommandBuffer,
+              const RenderPass *RenderPass,
+              std::optional<uint32_t> CurrentFrame = {}) const;
 
-    [[nodiscard]] UniformBuffer &GetUniformBuffer(std::optional<uint32_t> index = {}) const
+    [[nodiscard]] UniformBuffer &GetUniformBuffer(const std::optional<uint32_t> Index = {}) const
     {
-        if (index.has_value()) {
-            return *uniformBuffers[index.value()];
+        if (Index.has_value()) {
+            return *uniformBuffers[Index.value()];
         }
         return *uniformBuffers[GraphicsEngine::Get().currentFrame];
     }
 
-    [[nodiscard]] const VkDescriptorSet &GetDescriptorSet(std::optional<uint32_t> index = {}) const
+    [[nodiscard]] const VkDescriptorSet &GetDescriptorSet(
+        const std::optional<uint32_t> Index = {}) const
     {
-        if (index.has_value()) {
-            return descriptorSets[index.value()];
+        if (Index.has_value()) {
+            return descriptorSets[Index.value()];
         }
         return descriptorSets[GraphicsEngine::Get().currentFrame];
     }
 
  private:
-    void LoadShader(std::string_view filepath, ShaderType shaderType);
+    void LoadShader(std::string_view Filepath, ShaderType ShaderType);
 
     GraphicsPipeline &CreateGraphicsPipeline(RenderPass *RenderPass,
-                                             VkExtent2D &extent,
-                                             VkDescriptorSetLayout descriptorSetLayout);
+                                             VkExtent2D &Extent,
+                                             VkDescriptorSetLayout DescriptorSetLayout);
 
-    static VkShaderModule CreateShaderModule(const std::vector<char> &code, Device &device);
-    static VkPipelineShaderStageCreateInfo CreateShaderStage(const ShaderType &shaderType,
-                                                             const VkShaderModule &shaderModule);
+    static VkShaderModule CreateShaderModule(const std::vector<char> &Code);
+    static VkPipelineShaderStageCreateInfo CreateShaderStage(const ShaderType &ShaderType,
+                                                             const VkShaderModule &ShaderModule);
 
-    std::vector<std::unique_ptr<UniformBuffer>> &CreateUniformBuffers(size_t count,
+    std::vector<std::unique_ptr<UniformBuffer>> &CreateUniformBuffers(size_t Count,
                                                                       VkDeviceSize BufferSize);
-    void CreateDescriptorPool(size_t count);
-    void CreateDescriptorSets(size_t count,
-                              VkDescriptorSetLayout descriptorSetLayout,
-                              VkDeviceSize bufferSize);
+    void CreateDescriptorPool(size_t Count);
+    void CreateDescriptorSets(size_t Count,
+                              VkDescriptorSetLayout DescriptorSetLayout,
+                              VkDeviceSize BufferSize);
 
  public:
     Device &device;

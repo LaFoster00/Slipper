@@ -13,16 +13,16 @@ class Device;
 class PipelineLayout
 {
  public:
-    static VkPipelineLayout CreatePipelineLayout(const Device &device,
-                                                 VkDescriptorSetLayout descriptorSet);
+    static VkPipelineLayout CreatePipelineLayout(const Device &Device,
+                                                 VkDescriptorSetLayout DescriptorSet);
 
     static VkPipelineVertexInputStateCreateInfo SetupVertexInputState();
 
     static VkPipelineInputAssemblyStateCreateInfo SetupInputAssemblyState();
 
-    static VkPipelineViewportStateCreateInfo SetupViewportState(VkViewport &viewport,
-                                                                VkRect2D &scissor,
-                                                                const VkExtent2D &extent);
+    static VkPipelineViewportStateCreateInfo SetupViewportState(VkViewport &Viewport,
+                                                                VkRect2D &Scissor,
+                                                                const VkExtent2D &Extent);
     static VkPipelineRasterizationStateCreateInfo SetupRasterizationState();
 
     static VkPipelineMultisampleStateCreateInfo SetupMultisampleState();
@@ -30,8 +30,8 @@ class PipelineLayout
     static VkPipelineDepthStencilStateCreateInfo SetupDepthStencilState();
 
     static VkPipelineColorBlendStateCreateInfo SetupColorBlendState(
-        VkPipelineColorBlendAttachmentState &colorBlendAttachment);
+        VkPipelineColorBlendAttachmentState &ColorBlendAttachment);
 
     static VkPipelineDynamicStateCreateInfo SetupDynamicState(
-        std::optional<std::vector<VkDynamicState>> dynamicStates);
+        std::optional<std::vector<VkDynamicState>> DynamicStates);
 };

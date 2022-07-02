@@ -7,31 +7,31 @@
 #include "common_defines.h"
 
 Buffer::Buffer(Device &Device,
-               VkDeviceSize Size,
-               VkBufferUsageFlags Usage,
-               VkMemoryPropertyFlags Properties)
+               const VkDeviceSize Size,
+               const VkBufferUsageFlags Usage,
+               const VkMemoryPropertyFlags Properties)
     : vkBufferSize(Size), device(Device)
 {
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = vkBufferSize;
-    bufferInfo.usage = Usage;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VkBufferCreateInfo buffer_info{};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = vkBufferSize;
+    buffer_info.usage = Usage;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VK_ASSERT(vkCreateBuffer(device, &bufferInfo, nullptr, &vkBuffer),
+    VK_ASSERT(vkCreateBuffer(Device, &buffer_info, nullptr, &vkBuffer),
               "Failed to create vertex Buffer!")
 
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, vkBuffer, &memRequirements);
+    VkMemoryRequirements mem_requirements;
+    vkGetBufferMemoryRequirements(Device, vkBuffer, &mem_requirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = device.FindMemoryType(memRequirements.memoryTypeBits, Properties);
+    allocInfo.allocationSize = mem_requirements.size;
+    allocInfo.memoryTypeIndex = Device.FindMemoryType(mem_requirements.memoryTypeBits, Properties);
 
-    VK_ASSERT(vkAllocateMemory(device, &allocInfo, nullptr, &vkBufferMemory),
+    VK_ASSERT(vkAllocateMemory(Device, &allocInfo, nullptr, &vkBufferMemory),
               "Failed to allocate vertex Buffer memory!")
-    vkBindBufferMemory(device, vkBuffer, vkBufferMemory, 0);
+    vkBindBufferMemory(Device, vkBuffer, vkBufferMemory, 0);
 }
 
 Buffer::~Buffer() noexcept
@@ -43,44 +43,44 @@ Buffer::~Buffer() noexcept
     }
 }
 
-Buffer::Buffer(Buffer &&source) noexcept : device(source.device)
+Buffer::Buffer(Buffer &&Source) noexcept : device(Source.device)
 {
     LOG("Buffer move constructor called.")
 
-    vkBuffer = source.vkBuffer;
-    source.vkBuffer = VK_NULL_HANDLE;
+    vkBuffer = Source.vkBuffer;
+    Source.vkBuffer = VK_NULL_HANDLE;
 
-    vkBufferMemory = source.vkBufferMemory;
-    source.vkBufferMemory = VK_NULL_HANDLE;
+    vkBufferMemory = Source.vkBufferMemory;
+    Source.vkBufferMemory = VK_NULL_HANDLE;
 
-    vkBufferSize = source.vkBufferSize;
+    vkBufferSize = Source.vkBufferSize;
 }
 
-void Buffer::CopyBuffer(Device &device,
+void Buffer::CopyBuffer(const Device &Device,
                         CommandPool &MemoryCommandPool,
-                        const Buffer &srcBuffer,
-                        const Buffer &dstBuffer)
+                        const Buffer &SrcBuffer,
+                        const Buffer &DstBuffer)
 {
-    const VkCommandBuffer commandBuffer = MemoryCommandPool.CreateCommandBuffers(1)[0];
+    const VkCommandBuffer command_buffer = MemoryCommandPool.CreateCommandBuffers(1)[0];
 
     MemoryCommandPool.BeginCommandBuffer(
-        commandBuffer, true, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+        command_buffer, true, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-    VkBufferCopy copyRegion{};
-    copyRegion.srcOffset = 0;
-    copyRegion.dstOffset = 0;
-    copyRegion.size = srcBuffer.vkBufferSize;
-    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+    VkBufferCopy copy_region{};
+    copy_region.srcOffset = 0;
+    copy_region.dstOffset = 0;
+    copy_region.size = SrcBuffer.vkBufferSize;
+    vkCmdCopyBuffer(command_buffer, SrcBuffer, DstBuffer, 1, &copy_region);
 
-    MemoryCommandPool.EndCommandBuffer(commandBuffer);
+    MemoryCommandPool.EndCommandBuffer(command_buffer);
 
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
+    VkSubmitInfo submit_info{};
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &command_buffer;
 
-    vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(device.graphicsQueue);
+    vkQueueSubmit(Device.graphicsQueue, 1, &submit_info, VK_NULL_HANDLE);
+    vkQueueWaitIdle(Device.graphicsQueue);
 
-    MemoryCommandPool.DestroyCommandBuffers<1>({commandBuffer});
+    MemoryCommandPool.DestroyCommandBuffers<1>({command_buffer});
 }

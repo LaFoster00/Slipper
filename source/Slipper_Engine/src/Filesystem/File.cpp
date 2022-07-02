@@ -9,31 +9,31 @@
 namespace File
 {
 // Mark relative path with "./"
-std::vector<char> ReadBinaryFile(std::string_view filepath)
+std::vector<char> read_binary_file(const std::string_view Filepath)
 {
-    std::string finalPath(filepath);
-    if (*filepath.begin() == '.') {
-        finalPath = Path::MakeEngineRelativePathAbsolute(filepath);
+    std::string final_path(Filepath);
+    if (*Filepath.begin() == '.') {
+        final_path = Path::make_engine_relative_path_absolute(Filepath);
     }
-    std::ifstream file(finalPath.data(), std::ios::ate | std::ios::binary);
+    std::ifstream file(final_path.data(), std::ios::ate | std::ios::binary);
 
     ASSERT(!file.is_open(), "Failed to open file!")
 
-    const size_t fileSize = (size_t)file.tellg();
-    std::vector<char> buffer(fileSize);
+    const size_t file_size = (size_t)file.tellg();
+    std::vector<char> buffer(file_size);
     file.seekg(0);
-    file.read(buffer.data(), fileSize);
+    file.read(buffer.data(), file_size);
     file.close();
 
     return buffer;
 }
 
 /* Needs further refinement! */
-std::string GetFileNameFromPath(std::string_view filepath)
+std::string get_file_name_from_path(const std::string_view Filepath)
 {
-    std::string fp(filepath);
-    if (*filepath.begin() == '.') {
-        std::replace(fp.begin(), fp.end(), '\\', '/');
+    std::string fp(Filepath);
+    if (*Filepath.begin() == '.') {
+        std::ranges::replace(fp, '\\', '/');
     }
     fp = fp.substr(fp.find_last_of('/') + 1);
     return fp.substr(0, fp.find_last_of('.'));
