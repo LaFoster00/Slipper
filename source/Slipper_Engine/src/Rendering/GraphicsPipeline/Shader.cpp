@@ -10,7 +10,6 @@ const char *ShaderTypeNames[]{"Vertex", "Fragment", "Compute"};
 
 Shader::Shader(std::string_view name,
                std::vector<std::tuple<std::string_view, ShaderType>> &shaderStagesCode,
-               size_t uniformBufferCount,
                VkDeviceSize BufferSize,
                VkDescriptorSetLayout descriptorSetLayout,
                std::optional<std::vector<RenderPass *>> RenderPasses,
@@ -21,10 +20,10 @@ Shader::Shader(std::string_view name,
         LoadShader(filepath, shaderType);
     }
 
-    if (uniformBufferCount > 0) {
-        CreateUniformBuffers(uniformBufferCount, BufferSize);
-        CreateDescriptorPool(uniformBufferCount);
-        CreateDescriptorSets(uniformBufferCount, descriptorSetLayout, BufferSize);
+    if (BufferSize > 0) {
+        CreateUniformBuffers(Engine::MaxFramesInFlight, BufferSize);
+        CreateDescriptorPool(Engine::MaxFramesInFlight);
+        CreateDescriptorSets(Engine::MaxFramesInFlight, descriptorSetLayout, BufferSize);
     }
 
     if (RenderPasses.has_value()) {
@@ -74,15 +73,15 @@ void Shader::ChangeResolutionForRenderPass(RenderPass *renderPass, VkExtent2D re
 }
 
 void Shader::Bind(const VkCommandBuffer &commandBuffer,
-                  RenderPass *RenderPass,
-                  uint32_t currentFrame) const
+                  const RenderPass *renderPass,
+                  std::optional<uint32_t> currentFrame) const
 {
-    if (graphicsPipelines.contains(RenderPass)) {
-        graphicsPipelines.at(RenderPass)->Bind(commandBuffer);
+    if (graphicsPipelines.contains(renderPass)) {
+        graphicsPipelines.at(renderPass)->Bind(commandBuffer);
 
         vkCmdBindDescriptorSets(commandBuffer,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                graphicsPipelines.at(RenderPass)->vkPipelineLayout,
+                                graphicsPipelines.at(renderPass)->vkPipelineLayout,
                                 0,
                                 1,
                                 &GetDescriptorSet(currentFrame),
@@ -90,7 +89,7 @@ void Shader::Bind(const VkCommandBuffer &commandBuffer,
                                 nullptr);
     }
     else {
-        ASSERT(1, "RenderPass is not registered for this shader.")
+        ASSERT(1, "renderPass is not registered for this shader.")
     }
 }
 

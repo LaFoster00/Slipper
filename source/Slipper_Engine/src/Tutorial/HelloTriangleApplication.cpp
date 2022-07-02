@@ -24,10 +24,9 @@ void HelloTriangleApplication::initVulkan()
     surface = new Surface(*window);
     device = Device::PickPhysicalDevice(surface, true);
     surface->CreateSwapChain();
-    graphics = new GraphicsEngine(*device);
+    graphics = &GraphicsEngine::Get();
 
     auto pipeline = graphics->SetupDebugRender(*surface);
-    graphics->SetupSimpleDraw();
 }
 
 void HelloTriangleApplication::mainLoop()
@@ -42,8 +41,8 @@ void HelloTriangleApplication::cleanup()
 {
     vkDeviceWaitIdle(*device);
 
-    delete graphics;
-    surface->DestroySwapChain();
+    GraphicsEngine::Destroy();
+    surface->DestroyDeviceDependencies();
     Device::Destroy();
     delete surface;
     delete instance;

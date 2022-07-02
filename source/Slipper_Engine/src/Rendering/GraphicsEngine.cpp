@@ -4,16 +4,22 @@
 #include <algorithm>
 #include <filesystem>
 
+#include "common_defines.h"
+
 #include "Mesh/Mesh.h"
 #include "Mesh/UniformBuffer.h"
 #include "Presentation/Surface.h"
 #include "Setup/Device.h"
-#include "common_defines.h"
+#include "Drawing/CommandPool.h"
+#include "GraphicsPipeline/RenderPass.h"
+
 #include "glm/gtc/matrix_transform.hpp"
 
-GraphicsEngine *GraphicsEngine::instance = nullptr;
 
-GraphicsEngine::GraphicsEngine(bool setupDefaultAssets) : DeviceDependentObject()
+GraphicsEngine *GraphicsEngine::instance = nullptr;
+bool GraphicsEngine::bSetupDefaultAssets = true;
+
+GraphicsEngine::GraphicsEngine() : DeviceDependentObject()
 {
     if (instance != nullptr)
         return;
@@ -23,10 +29,15 @@ GraphicsEngine::GraphicsEngine(bool setupDefaultAssets) : DeviceDependentObject(
     renderCommandPool = new CommandPool(device, Engine::MaxFramesInFlight);
     memoryCommandPool = new CommandPool(device, 0);
 
-    if (setupDefaultAssets) {
+    if (bSetupDefaultAssets) {
         SetupDefaultAssets();
         CreateSyncObjects();
     }
+}
+
+void GraphicsEngine::SetSetupDefaultAssets(bool value)
+{
+    bSetupDefaultAssets = value;
 }
 
 GraphicsEngine::~GraphicsEngine()
@@ -64,7 +75,6 @@ void GraphicsEngine::SetupDefaultAssets()
 
     shaders.emplace_back(std::make_unique<Shader>("BasicVertex",
                                                   shaderStages,
-                                                  Engine::MaxFramesInFlight,
                                                   UniformMVP().GetDataSize(),
                                                   UniformMVP().GetDescriptorSetLayout()));
 
@@ -113,14 +123,18 @@ Shader *GraphicsEngine::SetupDebugRender(Surface &surface)
     const auto renderPass = CreateRenderPass(surface.swapChain->GetFormat());
     surface.RegisterRenderPass(*renderPass);
     shaders[0]->RegisterForRenderPass(renderPass, surface.GetResolution());
+    SetupSimpleDraw();
     return shaders[0].get();
 }
 
 void GraphicsEngine::SetupSimpleDraw()
 {
     AddRepeatedDrawCommand([=, this](const VkCommandBuffer &commandBuffer,
-                                     const SwapChain &swapChain) {
-        meshes[0]->Bind(commandBuffer);
+                                     const RenderPass &renderPass) {
+        auto debugShader = *renderPass.registeredShaders.begin();
+        debugShader->Bind(commandBuffer, &renderPass);
+
+    	meshes[0]->Bind(commandBuffer);
 
         static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -134,22 +148,23 @@ void GraphicsEngine::SetupSimpleDraw()
             glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         mvp.view = glm::lookAt(
             glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        mvp.projection = glm::perspective(glm::radians(45.0f),
-                                          swapChain.GetResolution().width /
-                                              (float)swapChain.GetResolution().height,
-                                          0.1f,
-                                          10.0f);
+        mvp.projection = glm::perspective(
+            glm::radians(45.0f),
+            renderPass.GetActiveSwapChain()->GetResolution().width /
+                (float)renderPass.GetActiveSwapChain()->GetResolution().height,
+            0.1f,
+            10.0f);
 
         mvp.projection[1][1] *= -1;
 
-        shaders[0]->GetUniformBuffer(currentFrame).SubmitData(&mvp);
+        debugShader->GetUniformBuffer().SubmitData(&mvp);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(meshes[0]->NumIndex()), 1, 0, 0, 0);
     });
 }
 
 void GraphicsEngine::AddRepeatedDrawCommand(
-    std::function<void(const VkCommandBuffer &, const SwapChain &)> command)
+	const std::function<void(const VkCommandBuffer &, const RenderPass &)> command)
 {
     repeatedRenderCommands.push_back(command);
 }
@@ -159,6 +174,7 @@ void GraphicsEngine::DrawFrame()
     vkWaitForFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     Surface &CurrentSurface = **surfaces.begin();
+    RenderPass &CurrentRenderPass = *CurrentSurface.renderPasses[0];
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device.logicalDevice,
                                             *CurrentSurface.swapChain,
@@ -179,16 +195,18 @@ void GraphicsEngine::DrawFrame()
 
     vkResetFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame]);
 
-    const VkCommandBuffer commandBuffer = renderCommandPool->BeginCommandBuffer(currentFrame);
-    renderPasses[0]->BeginRenderPass(CurrentSurface.swapChain.get(), imageIndex, commandBuffer);
+	VkCommandBuffer commandBuffer = renderCommandPool->BeginCommandBuffer(currentFrame);
 
-    shaders[0]->Bind(commandBuffer, renderPasses[0].get(), currentFrame);
+    for (const auto renderPass : CurrentSurface.renderPasses) {
+        CurrentRenderPass.BeginRenderPass(
+            CurrentSurface.swapChain.get(), imageIndex, commandBuffer);
 
-    for (auto &command : repeatedRenderCommands) {
-        command(commandBuffer, *CurrentSurface.swapChain);
+        for (auto &command : repeatedRenderCommands) {
+            command(commandBuffer, *renderPass);
+        }
+
+        CurrentRenderPass.EndRenderPass(commandBuffer);
     }
-
-    renderPasses[0]->EndRenderPass(commandBuffer);
     renderCommandPool->EndCommandBuffer(commandBuffer);
 
     VkSubmitInfo submitInfo{};

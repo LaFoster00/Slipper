@@ -31,6 +31,11 @@ class RenderPass
     void RegisterShader(Shader *Shader);
     void UnregisterShader(Shader *Shader);
 
+    [[nodiscard]] SwapChain *GetActiveSwapChain() const
+    {
+        return m_activeSwapChain;
+    }
+
  public:
     Device &device;
 
@@ -40,4 +45,7 @@ class RenderPass
         swapChainFramebuffers;
 
     std::unordered_set<Shader *> registeredShaders;
+
+private:
+    SwapChain *m_activeSwapChain;
 };

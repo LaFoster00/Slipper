@@ -92,6 +92,8 @@ void RenderPass::BeginRenderPass(SwapChain *swapChain,
                                  uint32_t imageIndex,
                                  VkCommandBuffer commandBuffer)
 {
+    m_activeSwapChain = swapChain;
+
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = vkRenderPass;
@@ -109,6 +111,7 @@ void RenderPass::BeginRenderPass(SwapChain *swapChain,
 
 void RenderPass::EndRenderPass(VkCommandBuffer commandBuffer)
 {
+    m_activeSwapChain = nullptr;
     vkCmdEndRenderPass(commandBuffer);
 }
 

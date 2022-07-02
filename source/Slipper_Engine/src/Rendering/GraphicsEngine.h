@@ -2,16 +2,15 @@
 
 #include "common_includes.h"
 
-#include "Drawing/CommandPool.h"
-#include "Drawing/Framebuffer.h"
-#include "GraphicsPipeline/GraphicsPipeline.h"
-#include "GraphicsPipeline/RenderPass.h"
-#include "GraphicsPipeline/Shader.h"
-#include "Presentation/SwapChain.h"
-
 #include <functional>
+#include <unordered_set>
 #include <vector>
 
+#include "DeviceDependentObject.h"
+
+class CommandPool;
+class Shader;
+class RenderPass;
 class Mesh;
 class VertexBuffer;
 class Device;
@@ -21,9 +20,22 @@ class Surface;
 class GraphicsEngine : DeviceDependentObject
 {
  public:
-    GraphicsEngine() = delete;
-    GraphicsEngine(bool setupDefaultAssets = true);
-    ~GraphicsEngine();
+    static void SetSetupDefaultAssets(bool value = true);
+
+    static GraphicsEngine &Get()
+    {
+        if (!instance)
+        {
+            instance = new GraphicsEngine();
+        }
+        return *instance;
+    }
+
+    static void Destroy()
+    {
+        delete instance;
+        instance = nullptr;
+    }
 
     void SetupDefaultAssets();
     void CreateSyncObjects();
@@ -32,17 +44,18 @@ class GraphicsEngine : DeviceDependentObject
     void SetupSimpleDraw();
 
     void AddRepeatedDrawCommand(
-        std::function<void(const VkCommandBuffer &, const SwapChain &)> command);
+        std::function<void(const VkCommandBuffer &, const RenderPass &)> command);
 
     void DrawFrame();
 
     void OnWindowResized(GLFWwindow *window, int width, int height);
 
  private:
-    static GraphicsEngine *instance;
+    GraphicsEngine();
+    ~GraphicsEngine();
 
  public:
-    uint32_t currentFrame = 0;
+	uint32_t currentFrame = 0;
 
     std::unordered_set<Surface *> surfaces;
     std::vector<std::unique_ptr<Shader>> shaders;
@@ -51,12 +64,15 @@ class GraphicsEngine : DeviceDependentObject
 
     // Render commands
     CommandPool *renderCommandPool;
-    std::vector<std::function<void(const VkCommandBuffer &, const SwapChain &)>>
+    std::vector<std::function<void(const VkCommandBuffer &, const RenderPass &)>>
         repeatedRenderCommands;
 
     CommandPool *memoryCommandPool;
 
  private:
+    static GraphicsEngine *instance;
+    static bool bSetupDefaultAssets;
+
     bool m_framebufferResized = false;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;

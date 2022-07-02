@@ -32,7 +32,7 @@ class Surface
     void CreateSwapChain();
 
     // ONLY CALL BEFORE DEVICE IS DESTROYED
-    void DestroySwapChain();
+    void DestroyDeviceDependencies();
 
     void RecreateSwapChain();
     void RegisterRenderPass(RenderPass &renderPass);

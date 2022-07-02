@@ -40,7 +40,7 @@ class HelloTriangleApplication
     static void FramebufferResizeCallback(GLFWwindow *window, int width, int height);
 
  private:
-    Window *window;
+    Window *window = nullptr;
     Instance *instance = nullptr;
     Surface *surface = nullptr;
     Device *device = nullptr;

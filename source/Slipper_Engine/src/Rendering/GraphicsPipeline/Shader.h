@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "common_includes.h"
+#include "GraphicsEngine.h"
 
 
 class RenderPass;
@@ -36,7 +37,6 @@ class Shader
     Shader() = delete;
     Shader(std::string_view name,
            std::vector<std::tuple<std::string_view, ShaderType>> &shaderStagesCode,
-           size_t uniformBufferCount,
            VkDeviceSize BufferSize,
            VkDescriptorSetLayout descriptorSetLayout,
            std::optional<std::vector<RenderPass *>> RenderPasses = {},
@@ -47,16 +47,27 @@ class Shader
     bool UnregisterFromRenderPass(RenderPass *renderPass);
     void ChangeResolutionForRenderPass(RenderPass *renderPass, VkExtent2D resolution);
 
-    void Bind(const VkCommandBuffer &commandBuffer, RenderPass *RenderPass, uint32_t currentFrame) const;
+    /* Binds the shaders pipeline and its descriptor sets
+     * Current frame is optional and will be fetched from the currentFrame of the GraphicsEngine if empty.
+     */
+    void Bind(const VkCommandBuffer &commandBuffer,
+              const RenderPass *renderPass,
+              std::optional<uint32_t> currentFrame = {}) const;
 
-    [[nodiscard]] UniformBuffer &GetUniformBuffer(size_t index) const
+    [[nodiscard]] UniformBuffer &GetUniformBuffer(std::optional<uint32_t> index = {}) const
     {
-        return *uniformBuffers[index];
+        if (index.has_value()) {
+            return *uniformBuffers[index.value()];
+        }
+        return *uniformBuffers[GraphicsEngine::Get().currentFrame];
     }
 
-    [[nodiscard]] const VkDescriptorSet &GetDescriptorSet(size_t index) const
+    [[nodiscard]] const VkDescriptorSet &GetDescriptorSet(std::optional<uint32_t> index = {}) const
     {
-        return descriptorSets[index];
+        if (index.has_value()) {
+            return descriptorSets[index.value()];
+        }
+        return descriptorSets[GraphicsEngine::Get().currentFrame];
     }
 
  private:
@@ -89,7 +100,7 @@ class Shader
  private:
     std::unordered_map<ShaderType, ShaderStage> shaderStages;
     std::vector<std::unique_ptr<UniformBuffer>> uniformBuffers;
-    std::unordered_map<RenderPass *, std::unique_ptr<GraphicsPipeline>> graphicsPipelines;
+    std::unordered_map<const RenderPass *, std::unique_ptr<GraphicsPipeline>> graphicsPipelines;
 };
 
 struct ShaderUniform

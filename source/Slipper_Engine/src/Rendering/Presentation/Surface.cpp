@@ -37,7 +37,7 @@ void Surface::CreateSwapChain()
     swapChain = std::make_unique<SwapChain>(*this);
 }
 
-void Surface::DestroySwapChain()
+void Surface::DestroyDeviceDependencies()
 {
     swapChain.reset();
 }
