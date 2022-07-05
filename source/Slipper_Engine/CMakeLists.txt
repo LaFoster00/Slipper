@@ -80,19 +80,6 @@ set_property(TARGET SlipperEngine PROPERTY CXX_STANDARD 20)
 
 
 #Libs
-#include Vulkan
-find_package(Vulkan)
-if(NOT ${Vulkan_FOUND})
-    message( FATAL_ERROR "Vulkan was not found!")
-endif()
-include_directories(SlipperEngine ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(SlipperEngine ${Vulkan_LIBRARIES})
-
-
-#glfw
-target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/include")
-target_link_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
-
 if(LINUX)
     target_link_libraries(SlipperEngine glfw3 dl pthread X11)
 else()
@@ -109,9 +96,25 @@ else()
     #endif()
 endif()
 
+#include Vulkan
+find_package(Vulkan)
+if(NOT ${Vulkan_FOUND})
+    message( FATAL_ERROR "Vulkan was not found!")
+endif()
+include_directories(SlipperEngine ${Vulkan_INCLUDE_DIRS})
+target_link_libraries(SlipperEngine ${Vulkan_LIBRARIES})
+
+
+#glfw
+target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/include")
+target_link_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
+
 
 #glm
 target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
+
+#stb
+target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/stb")
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

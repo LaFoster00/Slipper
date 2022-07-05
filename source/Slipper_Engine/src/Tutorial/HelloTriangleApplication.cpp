@@ -26,7 +26,7 @@ void HelloTriangleApplication::InitVulkan()
     surface->CreateSwapChain();
     graphics = &GraphicsEngine::Get();
 
-    auto pipeline = graphics->SetupDebugRender(*surface);
+    graphics->SetupDebugRender(*surface);
 }
 
 void HelloTriangleApplication::MainLoop()

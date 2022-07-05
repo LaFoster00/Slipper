@@ -1,14 +1,11 @@
 #include "Mesh.h"
 
-#include "Setup/Device.h"
-
-Mesh::Mesh(CommandPool &MemoryCommandPool,
-           const Vertex *Vertices,
+Mesh::Mesh(const Vertex *Vertices,
            const size_t NumVertices,
            const VertexIndex *Indices,
            const size_t NumIndices)
-    : m_vertexBuffer(MemoryCommandPool, Vertices, NumVertices),
-      m_indexBuffer(MemoryCommandPool, Indices, NumIndices)
+    : m_vertexBuffer(Vertices, NumVertices),
+      m_indexBuffer(Indices, NumIndices)
 {
 }
 

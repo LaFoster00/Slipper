@@ -28,7 +28,7 @@ if (GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     endif()
 endif()
 
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/bimg/makefile")
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/glfw/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 

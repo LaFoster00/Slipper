@@ -1,26 +1,27 @@
 #pragma once
 
-#include "common_includes.h"
+#include "DeviceDependentObject.h"
 #include "GraphicsPipeline/Shader.h"
 #include "Setup/Device.h"
+#include "common_includes.h"
 
+struct ShaderUniform;
 class CommandPool;
-class Device;
 
-class Buffer
+class Buffer : DeviceDependentObject
 {
  public:
-    Buffer(Device &Device,
-           VkDeviceSize Size,
-           VkBufferUsageFlags Usage,
-           VkMemoryPropertyFlags Properties);
+    Buffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
 
     virtual ~Buffer() noexcept;
 
     Buffer(Buffer &&Source) noexcept;
 
+    /* Sets the buffers data to that of the supplied pointer based on the size specified during creation. */
     template<typename TDataObject>
-    static void SetBufferData(const TDataObject *DataObject, const Buffer &Buffer)
+	static void SetBufferData(const TDataObject DataObject,
+                              const Buffer &Buffer)
+	requires std::is_pointer_v<TDataObject>
     {
         void *data;
         vkMapMemory(Device::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
@@ -28,18 +29,7 @@ class Buffer
         vkUnmapMemory(Device::Get(), Buffer);
     }
 
-    template<>
-    static void SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer)
-    {
-        void *data;
-        vkMapMemory(Device::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
-        memcpy(data, DataObject->GetData(), Buffer.vkBufferSize);
-        vkUnmapMemory(Device::Get(), Buffer);
-    }
-
-    static void CopyBuffer(const Device &Device,
-                           CommandPool &MemoryCommandPool,
-                           const Buffer &SrcBuffer,
+    static void CopyBuffer(const Buffer &SrcBuffer,
                            const Buffer &DstBuffer);
 
     operator VkBuffer() const
@@ -56,6 +46,6 @@ class Buffer
     VkBuffer vkBuffer;
     VkDeviceMemory vkBufferMemory;
     VkDeviceSize vkBufferSize;
-
-    Device &device;
 };
+
+template<> void Buffer::SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer);

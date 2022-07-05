@@ -1,13 +1,14 @@
 #pragma once
 
+
 #include "common_includes.h"
+#include "DeviceDependentObject.h"
 
 #include <functional>
 #include <unordered_set>
 #include <vector>
 
-#include "DeviceDependentObject.h"
-
+class Texture;
 class CommandPool;
 class Shader;
 class RenderPass;
@@ -40,7 +41,7 @@ class GraphicsEngine : DeviceDependentObject
     void SetupDefaultAssets();
     void CreateSyncObjects();
     RenderPass *CreateRenderPass(const VkFormat AttachmentFormat);
-    Shader *SetupDebugRender(Surface &Surface);
+    void SetupDebugRender(Surface &Surface);
     void SetupSimpleDraw();
 
     void AddRepeatedDrawCommand(
@@ -59,6 +60,7 @@ class GraphicsEngine : DeviceDependentObject
 
     std::unordered_set<Surface *> surfaces;
     std::vector<std::unique_ptr<Shader>> shaders;
+    std::vector<std::unique_ptr<Texture>> textures;
     std::vector<std::unique_ptr<RenderPass>> renderPasses;
     std::vector<std::unique_ptr<Mesh>> meshes;
 

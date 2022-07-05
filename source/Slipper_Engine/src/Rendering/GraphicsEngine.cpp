@@ -1,20 +1,20 @@
 
 #include "GraphicsEngine.h"
 
-#include <algorithm>
-#include <filesystem>
-
-#include "common_defines.h"
-
+#include "Drawing/CommandPool.h"
+#include "GraphicsPipeline/RenderPass.h"
 #include "Mesh/Mesh.h"
 #include "Mesh/UniformBuffer.h"
 #include "Presentation/Surface.h"
 #include "Setup/Device.h"
-#include "Drawing/CommandPool.h"
-#include "GraphicsPipeline/RenderPass.h"
+#include "Texture/Texture2D.h"
+#include "common_defines.h"
 
 #include "glm/gtc/matrix_transform.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
+#include <filesystem>
 
 GraphicsEngine *GraphicsEngine::instance = nullptr;
 bool GraphicsEngine::bSetupDefaultAssets = true;
@@ -26,8 +26,14 @@ GraphicsEngine::GraphicsEngine() : DeviceDependentObject()
 
     instance = this;
 
-    renderCommandPool = new CommandPool(device, Engine::MAX_FRAMES_IN_FLIGHT);
-    memoryCommandPool = new CommandPool(device, 0);
+    renderCommandPool = new CommandPool(device.graphicsQueue,
+                                        device.queueFamilyIndices.graphicsFamily.value(),
+                                        Engine::MAX_FRAMES_IN_FLIGHT);
+
+    memoryCommandPool = new CommandPool(
+        device.transferQueue ? device.transferQueue : device.graphicsQueue,
+        device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
+                               device.queueFamilyIndices.graphicsFamily.value());
 
     if (bSetupDefaultAssets) {
         SetupDefaultAssets();
@@ -78,8 +84,7 @@ void GraphicsEngine::SetupDefaultAssets()
                                                   UniformMVP().GetDataSize(),
                                                   UniformMVP().GetDescriptorSetLayout()));
 
-    meshes.emplace_back(std::make_unique<Mesh>(*memoryCommandPool,
-                                               DEBUG_TRIANGLE_VERTICES.data(),
+    meshes.emplace_back(std::make_unique<Mesh>(DEBUG_TRIANGLE_VERTICES.data(),
                                                DEBUG_TRIANGLE_VERTICES.size(),
                                                DEBUG_TRIANGLE_INDICES.data(),
                                                DEBUG_TRIANGLE_INDICES.size()));
@@ -117,31 +122,35 @@ RenderPass *GraphicsEngine::CreateRenderPass(const VkFormat AttachmentFormat)
     return renderPasses.emplace_back(std::make_unique<RenderPass>(AttachmentFormat)).get();
 }
 
-Shader *GraphicsEngine::SetupDebugRender(Surface &Surface)
+void GraphicsEngine::SetupDebugRender(Surface &Surface)
 {
     surfaces.insert(&Surface);
+
     const auto render_pass = CreateRenderPass(Surface.swapChain->GetFormat());
+
     Surface.RegisterRenderPass(*render_pass);
     shaders[0]->RegisterForRenderPass(render_pass, Surface.GetResolution());
+
+    textures.emplace_back(Texture2D::LoadTexture("./EngineContent/Images/Slippers.jpg"));
+
     SetupSimpleDraw();
-    return shaders[0].get();
 }
 
 void GraphicsEngine::SetupSimpleDraw()
 {
     AddRepeatedDrawCommand([=, this](const VkCommandBuffer &CommandBuffer,
                                      const RenderPass &RenderPass) {
-	    const auto debug_shader = *RenderPass.registeredShaders.begin();
+        const auto debug_shader = *RenderPass.registeredShaders.begin();
         debug_shader->Bind(CommandBuffer, &RenderPass);
 
-    	meshes[0]->Bind(CommandBuffer);
+        meshes[0]->Bind(CommandBuffer);
 
         static auto start_time = std::chrono::high_resolution_clock::now();
 
-	    const auto current_time = std::chrono::high_resolution_clock::now();
-	    const float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time -
-                                                                                start_time)
-                         .count();
+        const auto current_time = std::chrono::high_resolution_clock::now();
+        const float time = std::chrono::duration<float, std::chrono::seconds::period>(
+                               current_time - start_time)
+                               .count();
 
         UniformMVP mvp{};
         mvp.model = glm::rotate(
@@ -164,7 +173,7 @@ void GraphicsEngine::SetupSimpleDraw()
 }
 
 void GraphicsEngine::AddRepeatedDrawCommand(
-	const std::function<void(const VkCommandBuffer &, const RenderPass &)> Command)
+    const std::function<void(const VkCommandBuffer &, const RenderPass &)> Command)
 {
     repeatedRenderCommands.push_back(Command);
 }
@@ -195,7 +204,8 @@ void GraphicsEngine::DrawFrame()
 
     vkResetFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame]);
 
-    const VkCommandBuffer command_buffer = renderCommandPool->BeginCommandBuffer(currentFrame);
+    const VkCommandBuffer command_buffer = renderCommandPool->vkCommandBuffers[currentFrame];
+    renderCommandPool->BeginCommandBuffer(command_buffer);
 
     for (const auto render_pass : current_surface.renderPasses) {
         current_render_pass.BeginRenderPass(
@@ -225,6 +235,9 @@ void GraphicsEngine::DrawFrame()
 
     VK_ASSERT(vkQueueSubmit(device.graphicsQueue, 1, &submit_info, m_inFlightFences[currentFrame]),
               "Failed to submit draw command buffer!");
+
+    renderCommandPool->ClearSingleUseCommands();
+    memoryCommandPool->ClearSingleUseCommands();
 
     VkPresentInfoKHR present_info{};
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

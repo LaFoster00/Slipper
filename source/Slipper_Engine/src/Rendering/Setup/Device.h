@@ -12,6 +12,7 @@ struct QueueFamilyIndices
 {
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
+    std::optional<uint32_t> transferFamily;
 
     bool IsComplete() const
     {
@@ -88,6 +89,7 @@ class Device
 
     VkQueue graphicsQueue = VK_NULL_HANDLE;
     VkQueue presentQueue = VK_NULL_HANDLE;
+    VkQueue transferQueue = VK_NULL_HANDLE;
 
  private:
     static Device *m_instance;

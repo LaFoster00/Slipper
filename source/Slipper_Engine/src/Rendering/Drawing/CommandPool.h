@@ -1,54 +1,125 @@
 #pragma once
 
-#include "Framebuffer.h"
+#include <optional>
+
+#include "DeviceDependentObject.h"
+#include "Setup/Device.h"
 #include "common_includes.h"
 
-class Device;
+struct SingleUseCommandBuffer;
 class RenderPass;
 
-class CommandPool
+class CommandPool : DeviceDependentObject
 {
+    friend SingleUseCommandBuffer;
+
  public:
-    CommandPool() = delete;
-    CommandPool(Device &Device, int32_t BufferCount);
+    explicit CommandPool(VkQueue Queue, uint32_t QueueFamilyIndex, int32_t BufferCount = 0);
     ~CommandPool();
 
-    VkCommandBuffer BeginCommandBuffer(uint32_t BufferIndex,
-                                       bool ResetCommandBuffer = true,
-                                       VkCommandBufferUsageFlags Flags = 0) const;
-    VkCommandBuffer BeginCommandBuffer(VkCommandBuffer CommandBuffer,
-                                       bool ResetCommandBuffer = true,
-                                       VkCommandBufferUsageFlags Flags = 0);
-	void EndCommandBuffer(VkCommandBuffer CommandBuffer) const;
-    void EndCommandBuffer(uint32_t BufferIndex) const;
+    std::vector<VkCommandBuffer> &CreateCommandBuffers(
+        int32_t BufferCount, int32_t *NewCommandBufferStartIndex = nullptr);
+    void DestroyCommandBuffers(const std::vector<VkCommandBuffer> &CommandBuffers);
+
+    void BeginCommandBuffer(VkCommandBuffer CommandBuffer,
+                            bool ResetCommandBuffer = true,
+                            bool SingleUseBuffer = false,
+                            VkCommandBufferUsageFlags Flags = 0);
+    void EndCommandBuffer(VkCommandBuffer CommandBuffer) const;
+
+    void ClearSingleUseCommands();
 
     operator VkCommandPool() const
     {
         return vkCommandPool;
     }
 
-    std::vector<VkCommandBuffer> &CreateCommandBuffers(int32_t BufferCount);
-
-    template<size_t Count>
-    void DestroyCommandBuffers(std::array<VkCommandBuffer, Count> CommandBuffers)
+    VkQueue GetQueue() const
     {
-        vkFreeCommandBuffers(
-            device, vkCommandPool, static_cast<int32_t>(Count), CommandBuffers.data());
-
-        for (auto command_buffer : CommandBuffers) {
-            auto buffer_loc = std::find(vkCommandBuffers.begin(), vkCommandBuffers.end(), command_buffer);
-            if (buffer_loc != vkCommandBuffers.end())
-            {
-                vkCommandBuffers.erase(buffer_loc);
-            }
-        }
+        return m_queue;
     }
 
  private:
+    VkCommandBuffer CreateSingleUseCommandBuffer();
+    void DestroySingleUseCommandBuffer(VkCommandBuffer CommandBuffer);
 
  public:
-    Device &device;
-
     VkCommandPool vkCommandPool;
     std::vector<VkCommandBuffer> vkCommandBuffers;
+
+ private:
+    std::vector<VkCommandBuffer> m_singleUseVkCommandBuffers;
+
+    VkQueue m_queue;
+};
+
+/* Creates new command buffer in pool and disposes it after going out of scope.
+ * Move compatible
+ * Begin and end buffer will be called automatically
+ */
+struct SingleUseCommandBuffer
+{
+    std::optional<VkCommandBuffer> buffer = {};
+
+    explicit SingleUseCommandBuffer(
+        CommandPool &CommandPool,
+        const VkCommandBufferUsageFlags Flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        const bool SubmitOnDestruct = true)
+        : m_commandPool(CommandPool), m_submit(SubmitOnDestruct)
+    {
+        int32_t buffer_index = 0;
+        buffer = m_commandPool.CreateSingleUseCommandBuffer();
+        m_commandPool.BeginCommandBuffer(buffer.value(), true, true, Flags);
+    }
+
+    ~SingleUseCommandBuffer() noexcept
+    {
+        Submit();
+
+        if (buffer.has_value())
+			m_commandPool.DestroySingleUseCommandBuffer(buffer.value());
+    }
+
+    SingleUseCommandBuffer(const SingleUseCommandBuffer &Other) = delete;
+
+    SingleUseCommandBuffer(SingleUseCommandBuffer &&Other) noexcept
+        : m_commandPool(Other.m_commandPool)
+    {
+        buffer = Other.buffer;
+        Other.buffer.reset();
+    }
+
+    /* If called before destruction will not be called again on destruction. */
+    void Submit()
+    {
+        if (!m_submitted && buffer.has_value()) {
+            m_commandPool.EndCommandBuffer(buffer.value());
+            if (m_submit) {
+                VkSubmitInfo submit_info{};
+                submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                submit_info.commandBufferCount = 1;
+                submit_info.pCommandBuffers = &buffer.value();
+
+                vkQueueSubmit(m_commandPool.GetQueue(), 1, &submit_info, VK_NULL_HANDLE);
+                vkQueueWaitIdle(m_commandPool.GetQueue());
+            }
+
+            m_submitted = true;
+        }
+    }
+
+    [[nodiscard]] VkCommandBuffer &Get()
+    {
+        return buffer.value();
+    }
+
+    [[nodiscard]] operator VkCommandBuffer() const
+    {
+        return buffer.value();
+    }
+
+ private:
+    CommandPool &m_commandPool;
+    bool m_submit;
+    bool m_submitted = false;
 };

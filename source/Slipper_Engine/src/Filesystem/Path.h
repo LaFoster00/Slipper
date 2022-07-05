@@ -1,12 +1,6 @@
 #pragma once
 
 #include "common_defines.h"
-#include <algorithm>
-
-#ifdef WINDOWS
-#    define NOMINMAX
-#    include "windows.h"
-#endif
 
 namespace Path
 {

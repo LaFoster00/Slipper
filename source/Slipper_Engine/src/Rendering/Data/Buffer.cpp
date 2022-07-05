@@ -6,11 +6,10 @@
 
 #include "common_defines.h"
 
-Buffer::Buffer(Device &Device,
-               const VkDeviceSize Size,
+Buffer::Buffer(const VkDeviceSize Size,
                const VkBufferUsageFlags Usage,
                const VkMemoryPropertyFlags Properties)
-    : vkBufferSize(Size), device(Device)
+    : vkBufferSize(Size)
 {
     VkBufferCreateInfo buffer_info{};
     buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -18,20 +17,20 @@ Buffer::Buffer(Device &Device,
     buffer_info.usage = Usage;
     buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VK_ASSERT(vkCreateBuffer(Device, &buffer_info, nullptr, &vkBuffer),
+    VK_ASSERT(vkCreateBuffer(device, &buffer_info, nullptr, &vkBuffer),
               "Failed to create vertex Buffer!")
 
     VkMemoryRequirements mem_requirements;
-    vkGetBufferMemoryRequirements(Device, vkBuffer, &mem_requirements);
+    vkGetBufferMemoryRequirements(device, vkBuffer, &mem_requirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = mem_requirements.size;
-    allocInfo.memoryTypeIndex = Device.FindMemoryType(mem_requirements.memoryTypeBits, Properties);
+    allocInfo.memoryTypeIndex = device.FindMemoryType(mem_requirements.memoryTypeBits, Properties);
 
-    VK_ASSERT(vkAllocateMemory(Device, &allocInfo, nullptr, &vkBufferMemory),
+    VK_ASSERT(vkAllocateMemory(device, &allocInfo, nullptr, &vkBufferMemory),
               "Failed to allocate vertex Buffer memory!")
-    vkBindBufferMemory(Device, vkBuffer, vkBufferMemory, 0);
+    vkBindBufferMemory(device, vkBuffer, vkBufferMemory, 0);
 }
 
 Buffer::~Buffer() noexcept
@@ -43,9 +42,11 @@ Buffer::~Buffer() noexcept
     }
 }
 
-Buffer::Buffer(Buffer &&Source) noexcept : device(Source.device)
+Buffer::Buffer(Buffer &&Source) noexcept
 {
     LOG("Buffer move constructor called.")
+
+    device = Source.device;
 
     vkBuffer = Source.vkBuffer;
     Source.vkBuffer = VK_NULL_HANDLE;
@@ -56,31 +57,22 @@ Buffer::Buffer(Buffer &&Source) noexcept : device(Source.device)
     vkBufferSize = Source.vkBufferSize;
 }
 
-void Buffer::CopyBuffer(const Device &Device,
-                        CommandPool &MemoryCommandPool,
-                        const Buffer &SrcBuffer,
-                        const Buffer &DstBuffer)
+void Buffer::CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer)
 {
-    const VkCommandBuffer command_buffer = MemoryCommandPool.CreateCommandBuffers(1)[0];
-
-    MemoryCommandPool.BeginCommandBuffer(
-        command_buffer, true, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    auto &memory_command_pool = *GraphicsEngine::Get().memoryCommandPool;
+    const SingleUseCommandBuffer command_buffer(memory_command_pool);
 
     VkBufferCopy copy_region{};
     copy_region.srcOffset = 0;
     copy_region.dstOffset = 0;
     copy_region.size = SrcBuffer.vkBufferSize;
     vkCmdCopyBuffer(command_buffer, SrcBuffer, DstBuffer, 1, &copy_region);
+}
 
-    MemoryCommandPool.EndCommandBuffer(command_buffer);
-
-    VkSubmitInfo submit_info{};
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffer;
-
-    vkQueueSubmit(Device.graphicsQueue, 1, &submit_info, VK_NULL_HANDLE);
-    vkQueueWaitIdle(Device.graphicsQueue);
-
-    MemoryCommandPool.DestroyCommandBuffers<1>({command_buffer});
+template<> void Buffer::SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer)
+{
+    void *data;
+    vkMapMemory(Device::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
+    memcpy(data, DataObject->GetData(), Buffer.vkBufferSize);
+    vkUnmapMemory(Device::Get(), Buffer);
 }

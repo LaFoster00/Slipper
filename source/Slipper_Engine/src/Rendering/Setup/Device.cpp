@@ -24,13 +24,14 @@ void Device::InitLogicalDevice()
 {
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
     std::set<uint32_t> unique_queue_families = {queueFamilyIndices.graphicsFamily.value(),
-                                                queueFamilyIndices.presentFamily.value()};
+                                                queueFamilyIndices.presentFamily.value(),
+                                                queueFamilyIndices.transferFamily.value()};
 
     float queue_priority = 1.0f;
     for (uint32_t queueFamily : unique_queue_families) {
         VkDeviceQueueCreateInfo queueCreateInfo{};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+        queueCreateInfo.queueFamilyIndex = queueFamily;
         queueCreateInfo.queueCount = 1;
 
         queueCreateInfo.pQueuePriorities = &queue_priority;
@@ -62,6 +63,11 @@ void Device::InitLogicalDevice()
 
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
+    if (queueFamilyIndices.transferFamily.has_value())
+    {
+        vkGetDeviceQueue(
+            logicalDevice, queueFamilyIndices.transferFamily.value(), 0, &transferQueue);
+    }
 }
 
 Device *Device::PickPhysicalDevice(const Surface *Surface, const bool InitLogicalDevice)
@@ -272,6 +278,18 @@ const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface
     vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, Surface->surface, &present_support);
     if (present_support) {
         indices.presentFamily = i;
+    }
+
+    i = 0;
+    for (const auto &queue_family : queueFamilies)
+    {
+        if ((queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0 && queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT)
+        {
+            indices.transferFamily = i;
+            break;
+        }
+
+        ++i;
     }
 
     queueFamilyIndices = indices;

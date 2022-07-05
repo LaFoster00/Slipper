@@ -53,8 +53,7 @@ const std::vector<VertexIndex> DEBUG_TRIANGLE_INDICES = {0, 1, 2, 2, 3, 0};
 class Mesh
 {
  public:
-    Mesh(CommandPool &MemoryCommandPool,
-         const Vertex *Vertices,
+    Mesh(const Vertex *Vertices,
          size_t NumVertices,
          const VertexIndex *Indices,
          size_t NumIndices);
