@@ -47,10 +47,8 @@ Texture::~Texture()
 }
 
 // TODO Format will be used for depth buffer, do not remove
-void Texture::TransitionImageLayout(VkFormat Format, const VkImageLayout NewLayout)
+SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format, const VkImageLayout NewLayout)
 {
-    const SingleUseCommandBuffer command_buffer(*GraphicsEngine::Get().renderCommandPool);
-
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout = layout;
@@ -67,12 +65,15 @@ void Texture::TransitionImageLayout(VkFormat Format, const VkImageLayout NewLayo
     VkPipelineStageFlags source_stage;
     VkPipelineStageFlags destination_stage;
 
+    CommandPool *command_pool;
     if (layout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
         source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+        command_pool = GraphicsEngine::Get().memoryCommandPool;
     }
     else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
              NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
@@ -81,22 +82,24 @@ void Texture::TransitionImageLayout(VkFormat Format, const VkImageLayout NewLayo
 
         source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        command_pool = GraphicsEngine::Get().renderCommandPool;
     }
     else {
         throw std::invalid_argument("unsupported layout transition!");
     }
 
+    SingleUseCommandBuffer command_buffer(*command_pool);
     vkCmdPipelineBarrier(
         command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
     layout = NewLayout;
+    return command_buffer;
 }
 
 void Texture::CopyBuffer(const Buffer &Buffer, const bool TransitionToShaderUse)
 {
-    TransitionImageLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-	SingleUseCommandBuffer command_buffer(*GraphicsEngine::Get().memoryCommandPool);
+    SingleUseCommandBuffer command_buffer = TransitionImageLayout(
+        VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	VkBufferImageCopy region{};
 	region.bufferOffset = 0;

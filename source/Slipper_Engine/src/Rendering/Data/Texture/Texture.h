@@ -5,6 +5,7 @@
 #include <string>
 
 #include "DeviceDependentObject.h"
+#include "Drawing/CommandPool.h"
 
 
 class Buffer;
@@ -15,7 +16,7 @@ class Texture : DeviceDependentObject
     Texture(VkImageType Type, VkExtent3D Extent, VkFormat Format);
     virtual ~Texture();
 
-    void TransitionImageLayout(VkFormat Format, VkImageLayout NewLayout);
+    SingleUseCommandBuffer TransitionImageLayout(VkFormat Format, VkImageLayout NewLayout);
 
     void CopyBuffer(const Buffer &Buffer, bool TransitionToShaderUse = true);
 
