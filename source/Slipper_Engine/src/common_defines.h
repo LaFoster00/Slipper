@@ -2,11 +2,10 @@
 #include <iostream>
 #include <stdexcept>
 
-#ifdef __GNUC__
-#    define LINUX
+#ifdef LINUX
 #    define SLIPPER_FUNCTION __attribute__((dllexport))
-#elif _MSC_VER
-#    define WINDOWS
+#    define MAX_PATH PATH_MAX
+#elif WINDOWS
 #    define SLIPPER_FUNCTION _declspec(dllexport)
 #endif
 

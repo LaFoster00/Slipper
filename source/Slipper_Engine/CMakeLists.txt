@@ -32,6 +32,7 @@ set(TARGET_INCLUDE_DIRECTORIES
     src/Rendering/Data
     src/Tutorial
     src/Window
+    src/Platform
 )
 include_directories(${TARGET_INCLUDE_DIRECTORIES})
 

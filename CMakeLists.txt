@@ -6,8 +6,10 @@ enable_testing()
 
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE CACHE BOOL "Is Linux Platform")
+    add_compile_definitions(LINUX)
 elseif(NOT APPLE)
     set(LINUX FALSE CACHE BOOL "Not Linux Platform")
+    add_compile_definitions(WINDOWS)
 endif()
 
 

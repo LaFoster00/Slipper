@@ -5,6 +5,8 @@
 #include "Setup/Device.h"
 #include "common_includes.h"
 
+#include <cstring>
+
 struct ShaderUniform;
 class CommandPool;
 
@@ -17,11 +19,11 @@ class Buffer : DeviceDependentObject
 
     Buffer(Buffer &&Source) noexcept;
 
-    /* Sets the buffers data to that of the supplied pointer based on the size specified during creation. */
+    /* Sets the buffers data to that of the supplied pointer based on the size specified during
+     * creation. */
     template<typename TDataObject>
-	static void SetBufferData(const TDataObject DataObject,
-                              const Buffer &Buffer)
-	requires std::is_pointer_v<TDataObject>
+    static void SetBufferData(const TDataObject DataObject,
+                              const Buffer &Buffer) requires std::is_pointer_v<TDataObject>
     {
         void *data;
         vkMapMemory(Device::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
@@ -29,8 +31,9 @@ class Buffer : DeviceDependentObject
         vkUnmapMemory(Device::Get(), Buffer);
     }
 
-    static void CopyBuffer(const Buffer &SrcBuffer,
-                           const Buffer &DstBuffer);
+    void SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer);
+
+    static void CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer);
 
     operator VkBuffer() const
     {
@@ -47,5 +50,3 @@ class Buffer : DeviceDependentObject
     VkDeviceMemory vkBufferMemory;
     VkDeviceSize vkBufferSize;
 };
-
-template<> void Buffer::SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer);

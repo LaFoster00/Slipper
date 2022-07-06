@@ -3,11 +3,11 @@
 
 class UniformBuffer : public Buffer
 {
-public:
-	explicit UniformBuffer(VkDeviceSize SizeUniformObject);
+ public:
+    explicit UniformBuffer(VkDeviceSize SizeUniformObject);
 
     void SubmitData(const ShaderUniform *UniformData)
     {
-        SetBufferData(UniformData, *this);
+        Buffer::SetBufferData(UniformData, *this);
     }
 };

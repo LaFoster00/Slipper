@@ -4,6 +4,8 @@
 #include "Setup/Device.h"
 #include "common_defines.h"
 
+#include <algorithm>
+
 CommandPool::CommandPool(const VkQueue Queue,
                          const uint32_t QueueFamilyIndex,
                          const int32_t BufferCount)

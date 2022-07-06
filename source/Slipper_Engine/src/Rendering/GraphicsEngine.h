@@ -1,10 +1,10 @@
 #pragma once
 
-
-#include "common_includes.h"
 #include "DeviceDependentObject.h"
+#include "common_includes.h"
 
 #include <functional>
+#include <memory>
 #include <unordered_set>
 #include <vector>
 
@@ -25,8 +25,7 @@ class GraphicsEngine : DeviceDependentObject
 
     static GraphicsEngine &Get()
     {
-        if (!instance)
-        {
+        if (!instance) {
             instance = new GraphicsEngine();
         }
         return *instance;
@@ -56,7 +55,7 @@ class GraphicsEngine : DeviceDependentObject
     ~GraphicsEngine();
 
  public:
-	uint32_t currentFrame = 0;
+    uint32_t currentFrame = 0;
 
     std::unordered_set<Surface *> surfaces;
     std::vector<std::unique_ptr<Shader>> shaders;
