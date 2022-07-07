@@ -57,21 +57,23 @@ message(STATUS "Configuring SLIPPER_ENGINE Lib")
 set(OUTPUT_LIB OFF CACHE INTERNAL "")
 add_subdirectory(source/Slipper_Engine)
 
-message(STATUS "Configuring SLIPPER_EDITOR")
-if (BUILD_TYPE STREQUAL "Release")
-    message(STATUS "Configuring Editor In Release Config")    
-    add_custom_target(
-        BuildEditor ALL
-        COMMAND dotnet build --configuration Release
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/source/Slipper_Editor
-    )
-elseif(BUILD_TYPE STREQUAL "Debug")
-    message(STATUS "Configuring Editor In Debug Config")
-    add_custom_target(
-        BuildEditor ALL
-        COMMAND dotnet build --configuration Debug
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/source/Slipper_Editor
-    )
+option(BUILD_EDITOR OFF)
+if(BUILD_EDITOR)
+    message(STATUS "Configuring SLIPPER_EDITOR")
+    if (BUILD_TYPE STREQUAL "Release")
+        message(STATUS "Configuring Editor In Release Config")
+        add_custom_target(
+                BuildEditor ALL
+                COMMAND dotnet build --configuration Release
+                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/source/Slipper_Editor
+        )
+    elseif(BUILD_TYPE STREQUAL "Debug")
+        message(STATUS "Configuring Editor In Debug Config")
+        add_custom_target(
+                BuildEditor ALL
+                COMMAND dotnet build --configuration Debug
+                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/source/Slipper_Editor
+        )
+    endif()
 endif()
-
 
