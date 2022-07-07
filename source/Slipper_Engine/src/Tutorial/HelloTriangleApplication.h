@@ -37,16 +37,12 @@ class HelloTriangleApplication
 
 #pragma endregion MainFunctions
 
-    static void FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height);
-
  private:
     Window *window = nullptr;
     Instance *instance = nullptr;
     Surface *surface = nullptr;
     Device *device = nullptr;
     GraphicsEngine *graphics = nullptr;
-
-    VkCommandBuffer simpleDrawCommand = nullptr;
 
     VkDebugUtilsMessengerEXT debugMessenger = nullptr;
 };

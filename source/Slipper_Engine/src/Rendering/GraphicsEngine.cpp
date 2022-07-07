@@ -192,10 +192,8 @@ void GraphicsEngine::DrawFrame()
                                             VK_NULL_HANDLE,
                                             &image_index);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
-        m_framebufferResized) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         current_surface.RecreateSwapChain();
-        m_framebufferResized = false;
         return;
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -253,11 +251,13 @@ void GraphicsEngine::DrawFrame()
 
     result = vkQueuePresentKHR(device.presentQueue, &present_info);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
+        m_framebufferResized) {
+        m_framebufferResized = false;
         current_surface.RecreateSwapChain();
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        throw std::runtime_error("Failed to acquire swap chain image!");
+        throw std::runtime_error("Failed to present swap chain image!");
     }
 
     currentFrame = (currentFrame + 1) % Engine::MAX_FRAMES_IN_FLIGHT;

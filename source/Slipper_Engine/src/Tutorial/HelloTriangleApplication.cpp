@@ -13,8 +13,6 @@ void HelloTriangleApplication::InitWindow()
     windowCreateInfo.resizable = true;
 
     window = new Window(windowCreateInfo);
-    glfwSetWindowUserPointer(*window, this);
-    glfwSetFramebufferSizeCallback(*window, FramebufferResizeCallback);
 }
 
 void HelloTriangleApplication::InitVulkan()
@@ -48,10 +46,4 @@ void HelloTriangleApplication::Cleanup()
     delete instance;
     delete window;
     glfwTerminate();
-}
-
-void HelloTriangleApplication::FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height)
-{
-    const auto app = static_cast<HelloTriangleApplication *>(glfwGetWindowUserPointer(Window));
-    app->graphics->OnWindowResized();
 }

@@ -30,6 +30,9 @@ class Window
         return glfwWindow;
     }
 
+ private:
+    static void FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height);
+
  public:
     GLFWwindow *glfwWindow;
 

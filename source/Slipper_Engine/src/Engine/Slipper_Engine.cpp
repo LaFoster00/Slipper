@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Tutorial/HelloTriangleApplication.h"
+#include "common_defines.h"
 
 EXTERNC
 {

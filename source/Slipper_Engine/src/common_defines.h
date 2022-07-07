@@ -7,6 +7,8 @@
 #    define MAX_PATH PATH_MAX
 #elif WINDOWS
 #    define SLIPPER_FUNCTION _declspec(dllexport)
+#else
+#    define SLIPPER_FUNCTION
 #endif
 
 #define VK_ASSERT(func, message)                                                            \
