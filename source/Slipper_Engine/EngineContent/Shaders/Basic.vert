@@ -18,5 +18,5 @@ void main() {
     gl_Position = mvp.proj * mvp.view * mvp.model * vec4(inPosition, 0.0, 1.0);
     fragColor = inColor;
     fragTexCoord = inTexCoord;
-    debugPrintfEXT("Hello World");
+    debugPrintfEXT("Hello World %d", gl_VertexIndex);
 }

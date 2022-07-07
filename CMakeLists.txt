@@ -54,7 +54,8 @@ endif()
 
 #Slipper
 message(STATUS "Configuring SLIPPER_ENGINE Lib")
-set(OUTPUT_LIB OFF CACHE INTERNAL "")
+set(OUTPUT_LIB OFF)
+set(PRINTF_IN_SHADERS OFF)
 add_subdirectory(source/Slipper_Engine)
 
 option(BUILD_EDITOR OFF)
