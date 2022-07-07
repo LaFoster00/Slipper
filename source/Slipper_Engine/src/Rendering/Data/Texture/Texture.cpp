@@ -4,15 +4,23 @@
 #include "Drawing/CommandPool.h"
 #include "Path.h"
 
-Texture::Texture(const VkImageType Type, const VkExtent3D Extent, const VkFormat Format)
-    : type(Type), extent(Extent), format(Format)
+Texture::Texture(const VkImageType Type,
+                 const VkExtent3D Extent,
+                 const VkFormat Format,
+                 const VkImageAspectFlags ImageAspect,
+                 uint32_t ArrayLayers)
+    : type(Type),
+      extent(Extent),
+      format(Format),
+      imageAspect(ImageAspect),
+      arrayLayerCount(ArrayLayers)
 {
     VkImageCreateInfo image_info{};
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_info.imageType = type;
     image_info.extent = extent;
     image_info.mipLevels = 1;
-    image_info.arrayLayers = 1;
+    image_info.arrayLayers = arrayLayerCount;
     image_info.format = format;
     image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -38,16 +46,20 @@ Texture::Texture(const VkImageType Type, const VkExtent3D Extent, const VkFormat
               "Failed to allocate image memory!")
 
     vkBindImageMemory(device, texture, textureMemory, 0);
+
+    textureView = CreateImageView(texture, type, format, imageAspect, arrayLayerCount);
 }
 
 Texture::~Texture()
 {
+    vkDestroyImageView(device, textureView, nullptr);
     vkDestroyImage(device, texture, nullptr);
     vkFreeMemory(device, textureMemory, nullptr);
 }
 
 // TODO Format will be used for depth buffer, do not remove
-SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format, const VkImageLayout NewLayout)
+SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
+                                                      const VkImageLayout NewLayout)
 {
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -56,11 +68,11 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format, const VkI
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = texture;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.aspectMask = imageAspect;
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.levelCount = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.layerCount = arrayLayerCount;
 
     VkPipelineStageFlags source_stage;
     VkPipelineStageFlags destination_stage;
@@ -101,30 +113,74 @@ void Texture::CopyBuffer(const Buffer &Buffer, const bool TransitionToShaderUse)
     SingleUseCommandBuffer command_buffer = TransitionImageLayout(
         VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	VkBufferImageCopy region{};
-	region.bufferOffset = 0;
-	region.bufferRowLength = 0;
-	region.bufferImageHeight = 0;
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
 
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.mipLevel = 0;
-	region.imageSubresource.baseArrayLayer = 0;
-	region.imageSubresource.layerCount = 1;
+    region.imageSubresource.aspectMask = imageAspect;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = arrayLayerCount;
 
-	region.imageOffset = {0, 0, 0};
-	region.imageExtent = extent;
+    region.imageOffset = {0, 0, 0};
+    region.imageExtent = extent;
 
-	vkCmdCopyBufferToImage(command_buffer,
-	                       Buffer,
-	                       this->texture,
-	                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                       1,
-	                       &region);
+    vkCmdCopyBufferToImage(
+        command_buffer, Buffer, this->texture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
     command_buffer.Submit();
-
 
     if (TransitionToShaderUse) {
         TransitionImageLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
+}
+
+VkImageView Texture::CreateImageView(VkImage image,
+                                     VkImageType Type,
+                                     VkFormat Format,
+                                     VkImageAspectFlags ImageAspect,
+                                     uint32_t ArrayLayerCount)
+{
+    VkImageViewCreateInfo view_info{};
+    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    view_info.image = image;
+    if (ArrayLayerCount < 2) {
+        switch (Type) {
+            case VK_IMAGE_TYPE_1D:
+                view_info.viewType = VK_IMAGE_VIEW_TYPE_1D;
+                break;
+            case VK_IMAGE_TYPE_2D:
+                view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+                break;
+            case VK_IMAGE_TYPE_3D:
+                view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+                break;
+        }
+    }
+    else {
+        switch (Type) {
+            case VK_IMAGE_TYPE_1D:
+                view_info.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+                break;
+            case VK_IMAGE_TYPE_2D:
+                view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+                break;
+            case VK_IMAGE_TYPE_3D:
+                view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+                break;
+        }
+    }
+    view_info.format = Format;
+    view_info.subresourceRange.aspectMask = ImageAspect;
+    view_info.subresourceRange.baseMipLevel = 0;
+    view_info.subresourceRange.levelCount = 1;
+    view_info.subresourceRange.baseArrayLayer = 0;
+    view_info.subresourceRange.layerCount = ArrayLayerCount;
+
+    VkImageView image_view;
+    VK_ASSERT(vkCreateImageView(Device::Get(), &view_info, nullptr, &image_view),
+              "Failed to create texture image view!")
+
+    return image_view;
 }

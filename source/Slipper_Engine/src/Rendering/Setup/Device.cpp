@@ -38,7 +38,9 @@ void Device::InitLogicalDevice()
         queue_create_infos.push_back(queueCreateInfo);
     }
 
+    // All features are checked for support during device selection
     VkPhysicalDeviceFeatures device_features{};
+    device_features.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -63,8 +65,7 @@ void Device::InitLogicalDevice()
 
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
-    if (queueFamilyIndices.transferFamily.has_value())
-    {
+    if (queueFamilyIndices.transferFamily.has_value()) {
         vkGetDeviceQueue(
             logicalDevice, queueFamilyIndices.transferFamily.value(), 0, &transferQueue);
     }
@@ -197,15 +198,11 @@ bool Device::IsDeviceSuitable(const Surface *Surface)
         !device_type_suitable)
         return false;
 
-    if (const bool device_features_suitable = deviceFeatures.geometryShader;
-        !device_features_suitable)
-        return false;
-
     QueryQueueFamilyIndices(Surface);
     if (!queueFamilyIndices.IsComplete())
         return false;
 
-    if (!CheckExtensionSupport())
+    if (!CheckExtensionSupport() || !CheckFeatureSupport())
         return false;
 
     return !formats.empty() && !presentModes.empty();
@@ -241,13 +238,21 @@ bool Device::CheckExtensionSupport() const
         physicalDevice, nullptr, &extension_count, available_extensions.data());
 
     std::set<std::string> required_extensions(Engine::DEVICE_EXTENSIONS.begin(),
-                                             Engine::DEVICE_EXTENSIONS.end());
+                                              Engine::DEVICE_EXTENSIONS.end());
 
     for (const auto &[extension_name, spec_version] : available_extensions) {
         required_extensions.erase(extension_name);
     }
 
     return required_extensions.empty();
+}
+
+bool Device::CheckFeatureSupport() const
+{
+    VkPhysicalDeviceFeatures supported_features;
+    vkGetPhysicalDeviceFeatures(physicalDevice, &supported_features);
+
+    return supported_features.samplerAnisotropy && supported_features.geometryShader;
 }
 
 const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface)
@@ -281,10 +286,9 @@ const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface
     }
 
     i = 0;
-    for (const auto &queue_family : queueFamilies)
-    {
-        if ((queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0 && queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT)
-        {
+    for (const auto &queue_family : queueFamilies) {
+        if ((queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0 &&
+            queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT) {
             indices.transferFamily = i;
             break;
         }

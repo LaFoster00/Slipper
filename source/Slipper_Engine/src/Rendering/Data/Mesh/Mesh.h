@@ -14,6 +14,7 @@ struct Vertex
 {
     glm::vec2 pos;
     glm::vec3 color;
+    glm::vec2 texCoord;
 
     static VkVertexInputBindingDescription *GetBindingDescription()
     {
@@ -25,9 +26,9 @@ struct Vertex
         return &binding_description;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 2> *GetAttributeDescriptions()
+    static std::array<VkVertexInputAttributeDescription, 3> *GetAttributeDescriptions()
     {
-        static std::array<VkVertexInputAttributeDescription, 2> attribute_descriptions{};
+        static std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions{};
 
         attribute_descriptions[0].binding = 0;
         attribute_descriptions[0].location = 0;
@@ -39,14 +40,20 @@ struct Vertex
         attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
         attribute_descriptions[1].offset = offsetof(Vertex, color);
 
+        attribute_descriptions[2].binding = 0;
+        attribute_descriptions[2].location = 2;
+        attribute_descriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+        attribute_descriptions[2].offset = offsetof(Vertex, texCoord);
+
         return &attribute_descriptions;
     }
 };
 
-const std::vector<Vertex> DEBUG_TRIANGLE_VERTICES = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                                                   {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-                                                   {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-                                                   {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
+const std::vector<Vertex> DEBUG_TRIANGLE_VERTICES = {
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
 
 const std::vector<VertexIndex> DEBUG_TRIANGLE_INDICES = {0, 1, 2, 2, 3, 0};
 
@@ -60,7 +67,7 @@ class Mesh
 
     void Bind(const VkCommandBuffer &CommandBuffer) const;
 
-    size_t NumVertex()const
+    size_t NumVertex() const
     {
         return m_vertexBuffer.numVertex;
     }

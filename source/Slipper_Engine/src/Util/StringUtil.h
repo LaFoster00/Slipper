@@ -5,16 +5,11 @@
 
 namespace String
 {
-template<typename... Format>
-requires std::is_convertible_v<Format..., std::string_view> std::string format(
-    const std::string_view &Base, const Format &...format)
+template<typename... FormatT>
+requires std::is_convertible_v<FormatT..., std::string> std::string append(
+    std::string Base, const FormatT &...Format)
 {
-    size_t finalStringSize = get_total_length_of_strings(format...);
-
-    const auto final_message = static_cast<char *>(malloc(Base.length() + finalStringSize));
-
-    sprintf(final_message, Base.data(), format.data()...);
-    return final_message;
+    return Base + format(Format...);
 }
 
 template<typename... StringView>

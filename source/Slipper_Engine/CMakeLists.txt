@@ -24,6 +24,11 @@ if ("${BUILD_TYPE}" STREQUAL "Debug")
     endif()
 endif()
 
+option(PRINTF_IN_SHADERS OFF)
+if(PRINTF_IN_SHADERS)
+add_compile_definitions(SHADER_PRINTF_ENABLED)
+endif()
+
 set(TARGET_INCLUDE_DIRECTORIES
     src
     src/Engine
@@ -61,6 +66,7 @@ endfunction()
 GroupSources(src src Source)
 
 #Include Engine Content containing shader handling
+set(COMPILE_SHADERS ON)
 add_subdirectory(EngineContent)
 
 

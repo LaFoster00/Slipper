@@ -17,12 +17,11 @@ Texture2D::Texture2D(const StbImage Image)
     Buffer::SetBufferData(Image.pixels, staging_buffer);
     stbi_image_free(Image.pixels);
 
-    CopyBuffer(staging_buffer, *this);
+    CopyBuffer(staging_buffer);
 }
 
 Texture2D::~Texture2D()
 {
-
 }
 
 std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath)

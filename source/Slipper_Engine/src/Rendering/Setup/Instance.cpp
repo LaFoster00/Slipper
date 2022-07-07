@@ -3,6 +3,58 @@
 #include <cstring>
 #include <iostream>
 
+VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+                                      const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+                                      const VkAllocationCallbacks *pAllocator,
+                                      VkDebugUtilsMessengerEXT *pDebugMessenger)
+{
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+        instance, "vkCreateDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+    }
+    else {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+}
+
+void DestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                   VkDebugUtilsMessengerEXT debugMessenger,
+                                   const VkAllocationCallbacks *pAllocator)
+{
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+        instance, "vkDestroyDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        func(instance, debugMessenger, pAllocator);
+    }
+}
+
+VkResult CreateDebugReportCallbackEXT(VkInstance instance,
+                                      const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
+                                      const VkAllocationCallbacks *pAllocator,
+                                      VkDebugReportCallbackEXT *pCallback)
+{
+    auto func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(
+        instance, "vkCreateDebugReportCallbackEXT");
+    if (func != nullptr) {
+        return func(instance, pCreateInfo, pAllocator, pCallback);
+    }
+    else {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+}
+
+void DestroyDebugReportCallbackEXT(VkInstance instance,
+                                   VkDebugReportCallbackEXT callback,
+                                   const VkAllocationCallbacks *pAllocator)
+{
+    auto func = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(
+        instance, "vkDestroyDebugReportCallbackEXT");
+    if (func != nullptr) {
+        func(instance, callback, pAllocator);
+    }
+}
+
 Instance *Instance::m_instance = nullptr;
 
 Instance::Instance()
@@ -24,19 +76,33 @@ Instance::Instance()
 
     uint32_t glfw_extension_count = 0;
 
-    const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-    create_info.enabledExtensionCount = glfw_extension_count;
-    create_info.ppEnabledExtensionNames = glfw_extensions;
+    auto required_extensions = GetRequiredExtensions();
+    create_info.enabledExtensionCount = static_cast<uint32_t>(required_extensions.size());
+    create_info.ppEnabledExtensionNames = required_extensions.data();
 
+    VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
+    VkValidationFeaturesEXT validation_features_ext{};
     if (Engine::EnableValidationLayers) {
         create_info.enabledLayerCount = static_cast<uint32_t>(Engine::VALIDATION_LAYERS.size());
         create_info.ppEnabledLayerNames = Engine::VALIDATION_LAYERS.data();
+
+        PopulateDebugMessengerCreateInfo(debug_create_info);
+        create_info.pNext = &debug_create_info;
+
+        validation_features_ext.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        validation_features_ext.enabledValidationFeatureCount = Engine::PRINTF_ENABLES.size();
+        validation_features_ext.pEnabledValidationFeatures = Engine::PRINTF_ENABLES.data();
+        validation_features_ext.pNext = create_info.pNext;
+
+        create_info.pNext = &validation_features_ext;
     }
     else {
         create_info.enabledLayerCount = 0;
     }
 
     VK_ASSERT(vkCreateInstance(&create_info, nullptr, &instance), "Failed to create VkInstance!")
+
+    SetupDebugMessenger();
 
     uint32_t extension_count = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr);
@@ -49,7 +115,7 @@ Instance::Instance()
     }
 
     std::cout << "\nAvailable Extensions:\n";
-    for (const auto & [extension_name, spec_version] : extensions) {
+    for (const auto &[extension_name, spec_version] : extensions) {
         std::cout << '\t' << extension_name << '\n';
     }
 }
@@ -93,7 +159,7 @@ bool Instance::CheckValidationLayerSupport()
 std::vector<const char *> Instance::GetRequiredExtensions()
 {
     uint32_t glfw_extension_count = 0;
-    const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+    const char **glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
     std::vector<const char *> extensions(glfw_extensions, glfw_extensions + glfw_extension_count);
 
@@ -102,4 +168,46 @@ std::vector<const char *> Instance::GetRequiredExtensions()
     }
 
     return extensions;
+}
+
+void Instance::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &CreateInfo)
+{
+    CreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    CreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+
+#ifdef SHADER_PRINTF_ENABLED
+    CreateInfo.messageSeverity = CreateInfo.messageSeverity |
+                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+#endif
+                                     CreateInfo.messageType =
+                                     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                     VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                     VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    CreateInfo.pfnUserCallback = DebugUtilsMessages;
+    CreateInfo.pUserData = nullptr;  // Optional
+}
+
+void Instance::SetupDebugMessenger()
+{
+    if (!Engine::EnableValidationLayers)
+        return;
+
+    VkDebugUtilsMessengerCreateInfoEXT utils_messenger_create_info{};
+    PopulateDebugMessengerCreateInfo(utils_messenger_create_info);
+
+    CreateDebugUtilsMessengerEXT(instance, &utils_messenger_create_info, nullptr, &debugMessenger);
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL
+Instance::DebugUtilsMessages(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                             VkDebugUtilsMessageTypeFlagsEXT messageType,
+                             const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                             void *pUserData)
+{
+
+    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+
+    return VK_FALSE;
 }

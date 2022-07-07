@@ -43,6 +43,4 @@ class HelloTriangleApplication
     Surface *surface = nullptr;
     Device *device = nullptr;
     GraphicsEngine *graphics = nullptr;
-
-    VkDebugUtilsMessengerEXT debugMessenger = nullptr;
 };

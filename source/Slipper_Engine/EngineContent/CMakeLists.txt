@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9.0)
+cmake_minimum_required(VERSION 3.16.0)
 
 file(GLOB_RECURSE ENGINE_CONTENT *.*)
 list(FILTER ENGINE_CONTENT EXCLUDE REGEX ".spv|CMakeLists.txt")
@@ -15,9 +15,9 @@ if(COMPILE_SHADERS)
         get_filename_component(FILENAME ${SHADER} NAME)
         set(COMPILED_SHADER_DIR ${SHADER_DIR}/Spir-V)
         add_custom_command(OUTPUT ${COMPILED_SHADER_DIR}/${FILENAME}.spv
-            COMMAND ${Vulkan_GLSLC_EXECUTABLE} ${SHADER} -o ${COMPILED_SHADER_DIR}/${FILENAME}.spv
+            COMMAND ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} --target-env vulkan1.2 -o ${COMPILED_SHADER_DIR}/${FILENAME}.spv ${SHADER}
             DEPENDS ${SHADER}
-            COMMENT "Compiling ${FILENAME}")
+            COMMENT "$Compiling ${FILENAME}")
     list(APPEND SPV_SHADERS ${COMPILED_SHADER_DIR}/${FILENAME}.spv)
     endForeach()
 endif()

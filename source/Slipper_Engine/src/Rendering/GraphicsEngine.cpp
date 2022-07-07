@@ -74,6 +74,10 @@ GraphicsEngine::~GraphicsEngine()
 
 void GraphicsEngine::SetupDefaultAssets()
 {
+    // The default shader depends on these so initialize them first
+    textures.emplace_back(Texture2D::LoadTexture("./EngineContent/Images/Slippers.jpg"));
+    samplers.emplace_back(Sampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT));
+
     /* Create shader for this pipeline. */
     std::vector<std::tuple<std::string_view, ShaderType>> shader_stages = {
         {"./EngineContent/Shaders/Spir-V/Basic.vert.spv", ShaderType::Vertex},
@@ -130,8 +134,6 @@ void GraphicsEngine::SetupDebugRender(Surface &Surface)
 
     Surface.RegisterRenderPass(*render_pass);
     shaders[0]->RegisterForRenderPass(render_pass, Surface.GetResolution());
-
-    textures.emplace_back(Texture2D::LoadTexture("./EngineContent/Images/Slippers.jpg"));
 
     SetupSimpleDraw();
 }

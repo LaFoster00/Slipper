@@ -1,4 +1,5 @@
 #pragma once
+#include "signal.h"
 #include <iostream>
 #include <stdexcept>
 
@@ -11,6 +12,8 @@
 #    define SLIPPER_FUNCTION
 #endif
 
+#define DEBUG_BREAK raise(SIGTRAP);
+
 #define VK_ASSERT(func, message)                                                            \
     if (func != VK_SUCCESS) {                                                               \
         std::cout << "\nA Vulkan exepction occured at line: '" << __LINE__ << "' in file '" \
@@ -18,6 +21,7 @@
         std::string formatedMessage = "\n\t";                                               \
         formatedMessage += message;                                                         \
         formatedMessage += '\n';                                                            \
+        DEBUG_BREAK                                                                         \
         throw std::runtime_error(formatedMessage);                                          \
     }
 
@@ -30,6 +34,7 @@
         std::string formatedMessage = "\n\t";                                                 \
         formatedMessage += message;                                                           \
         formatedMessage += '\n';                                                              \
+        DEBUG_BREAK                                                                           \
         throw std::runtime_error(formatedMessage);                                            \
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DeviceDependentObject.h"
+#include "Drawing/Sampler.h"
 #include "common_includes.h"
 
 #include <functional>
@@ -60,6 +61,7 @@ class GraphicsEngine : DeviceDependentObject
     std::unordered_set<Surface *> surfaces;
     std::vector<std::unique_ptr<Shader>> shaders;
     std::vector<std::unique_ptr<Texture>> textures;
+    std::vector<Sampler> samplers;
     std::vector<std::unique_ptr<RenderPass>> renderPasses;
     std::vector<std::unique_ptr<Mesh>> meshes;
 

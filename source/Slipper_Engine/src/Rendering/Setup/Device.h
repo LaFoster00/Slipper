@@ -75,6 +75,7 @@ class Device
     bool IsDeviceSuitable(const Surface *Surface);
     uint32_t RateDeviceSuitability() const;
     bool CheckExtensionSupport() const;
+    bool CheckFeatureSupport() const;
     const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *Surface);
 
  public:
