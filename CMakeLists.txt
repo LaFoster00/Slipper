@@ -44,7 +44,6 @@ add_subdirectory(extern/glm)
 message(STATUS "Configuring GLFW")
 set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
 set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
-
 add_subdirectory(extern/glfw ${CMAKE_CURRENT_LIST_DIR}/extern/glfw/build)
 
 if( MSVC )

@@ -41,7 +41,15 @@ set(TARGET_INCLUDE_DIRECTORIES
 )
 include_directories(${TARGET_INCLUDE_DIRECTORIES})
 
+# Fetch all source files
 file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES "*.h" "*.cpp") 
+
+#Append external source files to project
+#SPIRV-Reflect
+list(APPEND SLIPPER_ENGINE_SOURCE_FILES 
+    "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.h"
+    "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.cpp")
+include_directories(${EXTERNAL_LIBS_DIR}/SPIRV-Reflect)
 
 # Special thanks to Luca Gherardi who wrote this special little peace of code :)
 function(GroupSources curdir rootfiledir rootsolutiondir)
@@ -115,7 +123,6 @@ target_link_libraries(SlipperEngine ${Vulkan_LIBRARIES})
 #glfw
 target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/include")
 target_link_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glfw/build/src/")
-
 
 #glm
 target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
