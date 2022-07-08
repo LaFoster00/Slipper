@@ -35,6 +35,7 @@ set(TARGET_INCLUDE_DIRECTORIES
     src/Filesystem
     src/Rendering
     src/Rendering/Data
+    src/Rendering/GraphicsPipeline
     src/Tutorial
     src/Window
     src/Platform
@@ -43,13 +44,6 @@ include_directories(${TARGET_INCLUDE_DIRECTORIES})
 
 # Fetch all source files
 file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES "*.h" "*.cpp") 
-
-#Append external source files to project
-#SPIRV-Reflect
-list(APPEND SLIPPER_ENGINE_SOURCE_FILES 
-    "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.h"
-    "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.cpp")
-include_directories(${EXTERNAL_LIBS_DIR}/SPIRV-Reflect)
 
 # Special thanks to Luca Gherardi who wrote this special little peace of code :)
 function(GroupSources curdir rootfiledir rootsolutiondir)
@@ -73,8 +67,18 @@ endfunction()
 
 GroupSources(src src Source)
 
+#Append external source files to project
+#SPIRV-Reflect
+list(APPEND SLIPPER_ENGINE_SOURCE_FILES 
+    "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.h"
+    "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.cpp")
+include_directories(${EXTERNAL_LIBS_DIR}/SPIRV-Reflect)
+source_group(Spirv-Reflect FILES 
+    "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.h"
+    "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.cpp")
+
 #Include Engine Content containing shader handling
-set(COMPILE_SHADERS ON)
+set(COMPILE_SHADERS ON CACHE BOOL "Compile Shaders")
 add_subdirectory(EngineContent)
 
 

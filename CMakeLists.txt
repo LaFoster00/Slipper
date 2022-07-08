@@ -53,8 +53,8 @@ endif()
 
 #Slipper
 message(STATUS "Configuring SLIPPER_ENGINE Lib")
-set(OUTPUT_LIB OFF)
-set(PRINTF_IN_SHADERS OFF)
+set(OUTPUT_LIB OFF CACHE BOOL "")
+set(PRINTF_IN_SHADERS OFF CACHE BOOL "")
 add_subdirectory(source/Slipper_Engine)
 
 option(BUILD_EDITOR OFF)
