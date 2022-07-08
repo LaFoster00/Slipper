@@ -10,10 +10,10 @@
 GraphicsPipeline::GraphicsPipeline(const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
                                    const VkExtent2D Extent,
                                    const RenderPass *RenderPass,
-                                   const VkDescriptorSetLayout descriptorSet)
+                                   const std::vector<VkDescriptorSetLayout> &DescriptorSets)
     : device(Device::Get()), m_renderPass(RenderPass), m_shaderStages(ShaderStages)
 {
-    vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, descriptorSet);
+    vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, DescriptorSets);
     Create(Extent);
 }
 

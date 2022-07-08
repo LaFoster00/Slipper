@@ -3,6 +3,9 @@
 #include "Setup/Device.h"
 #include "common_defines.h"
 
+Sampler *Sampler::m_linearSampler = nullptr;
+Sampler *Sampler::m_nearestSampler = nullptr;
+
 Sampler::Sampler(const VkFilter Filter, const VkSamplerAddressMode AddressMode)
 {
     VkSamplerCreateInfo sampler_info{};

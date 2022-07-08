@@ -9,9 +9,9 @@
 namespace ShaderReflectionUtil
 {
 
-std::string ToStringShaderStage(SpvReflectShaderStageFlagBits stage)
+std::string to_string_shader_stage(SpvReflectShaderStageFlagBits Stage)
 {
-    switch (stage) {
+    switch (Stage) {
         case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
             return "VS";
         case SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
@@ -45,9 +45,40 @@ std::string ToStringShaderStage(SpvReflectShaderStageFlagBits stage)
     return "???";
 }
 
-std::string ToStringSpvStorageClass(SpvStorageClass storage_class)
+VkDescriptorType to_vk_descriptor_type(SpvReflectDescriptorType Type)
 {
-    switch (storage_class) {
+    switch (Type) {
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
+            return VK_DESCRIPTOR_TYPE_SAMPLER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+            return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+            return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+            return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+            return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+            return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+            return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+            return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+            return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+            return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+            return VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+    }
+    return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+}
+
+std::string to_string_spv_storage_class(SpvStorageClass StorageClass)
+{
+    switch (StorageClass) {
         case SpvStorageClassUniformConstant:
             return "UniformConstant";
         case SpvStorageClassInput:
@@ -99,7 +130,7 @@ std::string ToStringSpvStorageClass(SpvStorageClass storage_class)
     }
 
     // Special case: this specific "unhandled" value does actually seem to show up.
-    if (storage_class == (SpvStorageClass)-1) {
+    if (StorageClass == (SpvStorageClass)-1) {
         return "NOT APPLICABLE";
     }
 
@@ -107,9 +138,9 @@ std::string ToStringSpvStorageClass(SpvStorageClass storage_class)
     return "???";
 }
 
-std::string ToStringSpvDim(SpvDim dim)
+std::string to_string_spv_dim(SpvDim Dim)
 {
-    switch (dim) {
+    switch (Dim) {
         case SpvDim1D:
             return "1D";
         case SpvDim2D:
@@ -132,7 +163,7 @@ std::string ToStringSpvDim(SpvDim dim)
     return "???";
 }
 
-std::string ToStringResourceType(SpvReflectResourceType res_type)
+std::string to_string_resource_type(SpvReflectResourceType res_type)
 {
     switch (res_type) {
         case SPV_REFLECT_RESOURCE_FLAG_UNDEFINED:
@@ -150,9 +181,9 @@ std::string ToStringResourceType(SpvReflectResourceType res_type)
     return "???";
 }
 
-std::string ToStringDescriptorType(SpvReflectDescriptorType value)
+std::string to_string_descriptor_type(SpvReflectDescriptorType Value)
 {
-    switch (value) {
+    switch (Value) {
         case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
             return "VK_DESCRIPTOR_TYPE_SAMPLER";
         case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
@@ -182,9 +213,9 @@ std::string ToStringDescriptorType(SpvReflectDescriptorType value)
     return "VK_DESCRIPTOR_TYPE_???";
 }
 
-std::string ToStringSpvBuiltIn(SpvBuiltIn built_in)
+std::string to_string_spv_built_in(const SpvBuiltIn BuiltIn)
 {
-    switch (built_in) {
+    switch (BuiltIn) {
         case SpvBuiltInPosition:
             return "Position";
         case SpvBuiltInPointSize:
@@ -350,13 +381,13 @@ std::string ToStringSpvBuiltIn(SpvBuiltIn built_in)
     }
     // unhandled SpvBuiltIn enum value
     std::stringstream ss;
-    ss << "??? (" << built_in << ")";
+    ss << "??? (" << BuiltIn << ")";
     return ss.str();
 }
 
-std::string ToStringSpvImageFormat(SpvImageFormat fmt)
+std::string to_string_spv_image_format(SpvImageFormat Fmt)
 {
-    switch (fmt) {
+    switch (Fmt) {
         case SpvImageFormatUnknown:
             return "Unknown";
         case SpvImageFormatRgba32f:
@@ -449,9 +480,9 @@ std::string ToStringSpvImageFormat(SpvImageFormat fmt)
     return "???";
 }
 
-std::string ToStringTypeFlags(SpvReflectTypeFlags type_flags)
+std::string to_string_type_flags(SpvReflectTypeFlags TypeFlags)
 {
-    if (type_flags == SPV_REFLECT_TYPE_FLAG_UNDEFINED) {
+    if (TypeFlags == SPV_REFLECT_TYPE_FLAG_UNDEFINED) {
         return "UNDEFINED";
     }
 
@@ -461,30 +492,30 @@ std::string ToStringTypeFlags(SpvReflectTypeFlags type_flags)
         flags ^= SPV_REFLECT_TYPE_FLAG_##bit;                                         \
     }
     std::stringstream sstream;
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, ARRAY);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, STRUCT);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, EXTERNAL_MASK);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, EXTERNAL_BLOCK);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, EXTERNAL_SAMPLED_IMAGE);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, EXTERNAL_SAMPLER);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, EXTERNAL_IMAGE);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, MATRIX);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, VECTOR);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, FLOAT);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, INT);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, BOOL);
-    PRINT_AND_CLEAR_TYPE_FLAG(sstream, type_flags, VOID);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, ARRAY);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, STRUCT);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, EXTERNAL_MASK);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, EXTERNAL_BLOCK);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, EXTERNAL_SAMPLED_IMAGE);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, EXTERNAL_SAMPLER);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, EXTERNAL_IMAGE);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, MATRIX);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, VECTOR);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, FLOAT);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, INT);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, BOOL);
+    PRINT_AND_CLEAR_TYPE_FLAG(sstream, TypeFlags, VOID);
 #undef PRINT_AND_CLEAR_TYPE_FLAG
-    if (type_flags != 0) {
+    if (TypeFlags != 0) {
         // Unhandled SpvReflectTypeFlags bit
         sstream << "???";
     }
     return sstream.str();
 }
 
-std::string ToStringFormat(SpvReflectFormat fmt)
+std::string to_string_format(SpvReflectFormat Fmt)
 {
-    switch (fmt) {
+    switch (Fmt) {
         case SPV_REFLECT_FORMAT_UNDEFINED:
             return "VK_FORMAT_UNDEFINED";
         case SPV_REFLECT_FORMAT_R32_UINT:
@@ -646,31 +677,31 @@ static std::string ToStringHlslType(const SpvReflectTypeDescription &type)
     return ToStringScalarType(type);
 }
 
-std::string ToStringType(SpvSourceLanguage src_lang, const SpvReflectTypeDescription &type)
+std::string to_string_type(SpvSourceLanguage src_lang, const SpvReflectTypeDescription &Type)
 {
     if (src_lang == SpvSourceLanguageHLSL) {
-        return ToStringHlslType(type);
+        return ToStringHlslType(Type);
     }
 
-    return ToStringGlslType(type);
+    return ToStringGlslType(Type);
 }
 
-std::string ToStringComponentType(const SpvReflectTypeDescription &type,
-                                  uint32_t member_decoration_flags)
+std::string to_string_component_type(const SpvReflectTypeDescription &Type,
+                                  uint32_t MemberDecorationFlags)
 {
-    uint32_t masked_type = type.type_flags & 0xF;
+    uint32_t masked_type = Type.type_flags & 0xF;
     if (masked_type == 0) {
         return "";
     }
 
     std::stringstream ss;
 
-    if (type.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX) {
-        if (member_decoration_flags & SPV_REFLECT_DECORATION_COLUMN_MAJOR) {
+    if (Type.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX) {
+        if (MemberDecorationFlags & SPV_REFLECT_DECORATION_COLUMN_MAJOR) {
             ss << "column_major"
                << " ";
         }
-        else if (member_decoration_flags & SPV_REFLECT_DECORATION_ROW_MAJOR) {
+        else if (MemberDecorationFlags & SPV_REFLECT_DECORATION_ROW_MAJOR) {
             ss << "row_major"
                << " ";
         }
@@ -684,130 +715,130 @@ std::string ToStringComponentType(const SpvReflectTypeDescription &type,
             ss << "bool";
             break;
         case SPV_REFLECT_TYPE_FLAG_INT:
-            ss << (type.traits.numeric.scalar.signedness ? "int" : "uint");
+            ss << (Type.traits.numeric.scalar.signedness ? "int" : "uint");
             break;
         case SPV_REFLECT_TYPE_FLAG_FLOAT:
             ss << "float";
             break;
     }
 
-    if (type.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX) {
-        ss << type.traits.numeric.matrix.row_count;
+    if (Type.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX) {
+        ss << Type.traits.numeric.matrix.row_count;
         ss << "x";
-        ss << type.traits.numeric.matrix.column_count;
+        ss << Type.traits.numeric.matrix.column_count;
     }
-    else if (type.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR) {
-        ss << type.traits.numeric.vector.component_count;
+    else if (Type.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR) {
+        ss << Type.traits.numeric.vector.component_count;
     }
 
     return ss.str();
 }
 
-void PrintModuleInfo(std::ostream &os, const SpvReflectShaderModule &obj, const char * /*indent*/)
+void print_module_info(std::ostream &Os, const SpvReflectShaderModule &Obj, const char * /*indent*/)
 {
-    os << "entry point     : " << obj.entry_point_name << "\n";
-    os << "source lang     : " << spvReflectSourceLanguage(obj.source_language) << "\n";
-    os << "source lang ver : " << obj.source_language_version << "\n";
-    if (obj.source_language == SpvSourceLanguageHLSL) {
-        os << "stage           : ";
-        os << ToStringShaderStage(obj.shader_stage);
+    Os << "entry point     : " << Obj.entry_point_name << "\n";
+    Os << "source lang     : " << spvReflectSourceLanguage(Obj.source_language) << "\n";
+    Os << "source lang ver : " << Obj.source_language_version << "\n";
+    if (Obj.source_language == SpvSourceLanguageHLSL) {
+        Os << "stage           : ";
+        Os << to_string_shader_stage(Obj.shader_stage);
     }
 }
 
-void PrintDescriptorSet(std::ostream &os, const SpvReflectDescriptorSet &obj, const char *indent)
+void print_descriptor_set(std::ostream &Os, const SpvReflectDescriptorSet &Obj, const char *Indent)
 {
-    const char *t = indent;
-    std::string tt = std::string(indent) + "  ";
-    std::string ttttt = std::string(indent) + "    ";
+    const char *t = Indent;
+    std::string tt = std::string(Indent) + "  ";
+    std::string ttttt = std::string(Indent) + "    ";
 
-    os << t << "set           : " << obj.set << "\n";
-    os << t << "binding count : " << obj.binding_count;
-    os << "\n";
-    for (uint32_t i = 0; i < obj.binding_count; ++i) {
-        const SpvReflectDescriptorBinding &binding = *obj.bindings[i];
-        os << tt << i << ":"
+    Os << t << "set           : " << Obj.set << "\n";
+    Os << t << "binding count : " << Obj.binding_count;
+    Os << "\n";
+    for (uint32_t i = 0; i < Obj.binding_count; ++i) {
+        const SpvReflectDescriptorBinding &binding = *Obj.bindings[i];
+        Os << tt << i << ":"
            << "\n";
-        PrintDescriptorBinding(os, binding, false, ttttt.c_str());
-        if (i < (obj.binding_count - 1)) {
-            os << "\n";
+        print_descriptor_binding(Os, binding, false, ttttt.c_str());
+        if (i < (Obj.binding_count - 1)) {
+            Os << "\n";
         }
     }
 }
 
-void PrintDescriptorBinding(std::ostream &os,
-                            const SpvReflectDescriptorBinding &obj,
-                            bool write_set,
-                            const char *indent)
+void print_descriptor_binding(std::ostream &Os,
+                            const SpvReflectDescriptorBinding &Obj,
+                            bool WriteSet,
+                            const char *Indent)
 {
-    const char *t = indent;
-    os << t << "binding : " << obj.binding << "\n";
-    if (write_set) {
-        os << t << "set     : " << obj.set << "\n";
+    const char *t = Indent;
+    Os << t << "binding : " << Obj.binding << "\n";
+    if (WriteSet) {
+        Os << t << "set     : " << Obj.set << "\n";
     }
-    os << t << "type    : " << ToStringDescriptorType(obj.descriptor_type) << "\n";
+    Os << t << "type    : " << to_string_descriptor_type(Obj.descriptor_type) << "\n";
 
     // array
-    if (obj.array.dims_count > 0) {
-        os << t << "array   : ";
-        for (uint32_t dim_index = 0; dim_index < obj.array.dims_count; ++dim_index) {
-            os << "[" << obj.array.dims[dim_index] << "]";
+    if (Obj.array.dims_count > 0) {
+        Os << t << "array   : ";
+        for (uint32_t dim_index = 0; dim_index < Obj.array.dims_count; ++dim_index) {
+            Os << "[" << Obj.array.dims[dim_index] << "]";
         }
-        os << "\n";
+        Os << "\n";
     }
 
     // counter
-    if (obj.uav_counter_binding != nullptr) {
-        os << t << "counter : ";
-        os << "(";
-        os << "set=" << obj.uav_counter_binding->set << ", ";
-        os << "binding=" << obj.uav_counter_binding->binding << ", ";
-        os << "name=" << obj.uav_counter_binding->name;
-        os << ");";
-        os << "\n";
+    if (Obj.uav_counter_binding != nullptr) {
+        Os << t << "counter : ";
+        Os << "(";
+        Os << "set=" << Obj.uav_counter_binding->set << ", ";
+        Os << "binding=" << Obj.uav_counter_binding->binding << ", ";
+        Os << "name=" << Obj.uav_counter_binding->name;
+        Os << ");";
+        Os << "\n";
     }
 
-    os << t << "name    : " << obj.name;
-    if ((obj.type_description->type_name != nullptr) &&
-        (strlen(obj.type_description->type_name) > 0)) {
-        os << " "
-           << "(" << obj.type_description->type_name << ")";
+    Os << t << "name    : " << Obj.name;
+    if ((Obj.type_description->type_name != nullptr) &&
+        (strlen(Obj.type_description->type_name) > 0)) {
+        Os << " "
+           << "(" << Obj.type_description->type_name << ")";
     }
 }
 
-void PrintInterfaceVariable(std::ostream &os,
-                            SpvSourceLanguage src_lang,
-                            const SpvReflectInterfaceVariable &obj,
-                            const char *indent)
+void print_interface_variable(std::ostream &Os,
+                            SpvSourceLanguage SrcLang,
+                            const SpvReflectInterfaceVariable &Obj,
+                            const char *Indent)
 {
-    const char *t = indent;
-    os << t << "location  : ";
-    if (obj.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN) {
-        os << ToStringSpvBuiltIn(obj.built_in) << " "
+    const char *t = Indent;
+    Os << t << "location  : ";
+    if (Obj.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN) {
+        Os << to_string_spv_built_in(Obj.built_in) << " "
            << "(built-in)";
     }
     else {
-        os << obj.location;
+        Os << Obj.location;
     }
-    os << "\n";
-    if (obj.semantic != nullptr) {
-        os << t << "semantic  : " << obj.semantic << "\n";
+    Os << "\n";
+    if (Obj.semantic != nullptr) {
+        Os << t << "semantic  : " << Obj.semantic << "\n";
     }
-    os << t << "type      : " << ToStringType(src_lang, *obj.type_description) << "\n";
-    os << t << "format    : " << ToStringFormat(obj.format) << "\n";
-    os << t << "qualifier : ";
-    if (obj.decoration_flags & SPV_REFLECT_DECORATION_FLAT) {
-        os << "flat";
+    Os << t << "type      : " << to_string_type(SrcLang, *Obj.type_description) << "\n";
+    Os << t << "format    : " << to_string_format(Obj.format) << "\n";
+    Os << t << "qualifier : ";
+    if (Obj.decoration_flags & SPV_REFLECT_DECORATION_FLAT) {
+        Os << "flat";
     }
-    else if (obj.decoration_flags & SPV_REFLECT_DECORATION_NOPERSPECTIVE) {
-        os << "noperspective";
+    else if (Obj.decoration_flags & SPV_REFLECT_DECORATION_NOPERSPECTIVE) {
+        Os << "noperspective";
     }
-    os << "\n";
+    Os << "\n";
 
-    os << t << "name      : " << obj.name;
-    if ((obj.type_description->type_name != nullptr) &&
-        (strlen(obj.type_description->type_name) > 0)) {
-        os << " "
-           << "(" << obj.type_description->type_name << ")";
+    Os << t << "name      : " << Obj.name;
+    if ((Obj.type_description->type_name != nullptr) &&
+        (strlen(Obj.type_description->type_name) > 0)) {
+        Os << " "
+           << "(" << Obj.type_description->type_name << ")";
     }
 }
 }  // namespace ShaderReflectionUtil

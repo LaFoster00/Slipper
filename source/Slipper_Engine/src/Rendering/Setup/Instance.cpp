@@ -90,7 +90,7 @@ Instance::Instance()
         create_info.pNext = &debug_create_info;
 
         validation_features_ext.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-        validation_features_ext.enabledValidationFeatureCount = Engine::PRINTF_ENABLES.size();
+        validation_features_ext.enabledValidationFeatureCount = static_cast<uint32_t>(Engine::PRINTF_ENABLES.size());
         validation_features_ext.pEnabledValidationFeatures = Engine::PRINTF_ENABLES.data();
         validation_features_ext.pNext = create_info.pNext;
 

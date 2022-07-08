@@ -83,7 +83,7 @@ struct SingleUseCommandBuffer
     SingleUseCommandBuffer(const SingleUseCommandBuffer &Other) = delete;
 
     SingleUseCommandBuffer(SingleUseCommandBuffer &&Other) noexcept
-        : m_commandPool(Other.m_commandPool)
+        : m_commandPool(Other.m_commandPool), m_submit(Other.m_submit)
     {
         buffer = Other.buffer;
         Other.buffer.reset();

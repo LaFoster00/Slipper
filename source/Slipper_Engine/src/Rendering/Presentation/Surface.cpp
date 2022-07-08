@@ -8,8 +8,10 @@
 #include "common_defines.h"
 
 Surface::Surface(const Window &Window)
-    : window(Window){VK_ASSERT(glfwCreateWindowSurface(Instance::Get(), Window, nullptr, &surface),
-                               "Failed to create window suface!")}
+    : device(nullptr),
+      window(Window){
+          VK_ASSERT(glfwCreateWindowSurface(Instance::Get(), Window, nullptr, &surface),
+                    "Failed to create window suface!")}
 
       Surface::~Surface()
 {

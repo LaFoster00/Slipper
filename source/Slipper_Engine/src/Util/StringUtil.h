@@ -12,6 +12,11 @@ requires std::is_convertible_v<FormatT..., std::string> std::string append(
     return Base + format(Format...);
 }
 
+inline std::string append(std::string Base)
+{
+    return Base;
+}
+
 template<typename... StringView>
 requires std::is_convertible_v<StringView..., std::string_view>
 int get_total_length_of_strings(const std::string_view &String, const StringView &...Strings)
@@ -20,4 +25,6 @@ int get_total_length_of_strings(const std::string_view &String, const StringView
 }
 
 extern void replace_substring(std::string &Str, const std::string &From, const std::string &To);
+
+    extern std::string to_lower(std::string_view String);
 }  // namespace String

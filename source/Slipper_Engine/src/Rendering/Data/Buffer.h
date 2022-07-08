@@ -1,11 +1,11 @@
 #pragma once
 
 #include "DeviceDependentObject.h"
-#include "Setup/Device.h"
-#include "Shader/Shader.h"
 #include "common_includes.h"
 
 #include <cstring>
+
+#include "Setup/Device.h"
 
 struct ShaderUniform;
 class CommandPool;

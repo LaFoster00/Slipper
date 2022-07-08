@@ -5,6 +5,8 @@
 #include <array>
 
 #include "common_defines.h"
+#include "GraphicsEngine.h"
+#include "Shader/Shader.h"
 
 Buffer::Buffer(const VkDeviceSize Size,
                const VkBufferUsageFlags Usage,

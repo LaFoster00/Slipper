@@ -34,6 +34,7 @@ class GraphicsEngine : DeviceDependentObject
 
     static void Destroy()
     {
+        Sampler::DestroyDefaultSamplers();
         delete instance;
         instance = nullptr;
     }
@@ -61,7 +62,6 @@ class GraphicsEngine : DeviceDependentObject
     std::unordered_set<Surface *> surfaces;
     std::vector<std::unique_ptr<Shader>> shaders;
     std::vector<std::unique_ptr<Texture>> textures;
-    std::vector<Sampler> samplers;
     std::vector<std::unique_ptr<RenderPass>> renderPasses;
     std::vector<std::unique_ptr<Mesh>> meshes;
 

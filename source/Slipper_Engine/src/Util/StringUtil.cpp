@@ -1,6 +1,6 @@
 #include "StringUtil.h"
 
-#include <cstdarg>
+#include <algorithm>
 #include <string>
 #include <string_view>
 
@@ -16,5 +16,13 @@ void replace_substring(std::string &Str, const std::string &From, const std::str
                 To.length();  // In case 'to' contains 'from', like replacing 'x' with 'yx'
         }
     }
+}
+
+std::string to_lower(std::string_view String)
+{
+    std::string output(String);
+    std::ranges::transform(String, output.begin(),
+                           [](unsigned char c) { return std::tolower(c); });
+    return output;
 }
 }  // namespace String

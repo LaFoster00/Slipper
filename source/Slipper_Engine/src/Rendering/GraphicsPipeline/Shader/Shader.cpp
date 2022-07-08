@@ -3,48 +3,55 @@
 #include "File.h"
 #include "GraphicsPipeline.h"
 #include "Mesh/Mesh.h"
+#include "Mesh/UniformBuffer.h"
 #include "Setup/Device.h"
+#include "ShaderReflection.h"
 #include "Texture/Texture.h"
 #include "common_defines.h"
 #include "spirv_reflect.h"
-#include "Mesh/UniformBuffer.h"
 
 const char *ShaderTypeNames[]{"Vertex", "Fragment", "Compute"};
 
 Shader::Shader(std::string_view Name,
                std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
-               VkDeviceSize BufferSize,
-               VkDescriptorSetLayout DescriptorSetLayout,
-               std::optional<std::vector<RenderPass *>> RenderPasses,
+               const std::optional<std::vector<RenderPass *>> RenderPasses,
                std::optional<VkExtent2D> RenderPassesExtent)
-    : device(Device::Get()), name(Name), descriptorSetLayout(DescriptorSetLayout)
+    : device(Device::Get()), name(Name)
 {
     for (auto &[filepath, shaderType] : ShaderStagesCode) {
         LoadShader(filepath, shaderType);
     }
-
-    if (BufferSize > 0) {
-        CreateUniformBuffers(Engine::MAX_FRAMES_IN_FLIGHT, BufferSize);
+    
+        CreateUniformBuffers(Engine::MAX_FRAMES_IN_FLIGHT);
         CreateDescriptorPool(Engine::MAX_FRAMES_IN_FLIGHT);
-        CreateDescriptorSets(Engine::MAX_FRAMES_IN_FLIGHT, DescriptorSetLayout, BufferSize);
-    }
+        CreateDescriptorSets(Engine::MAX_FRAMES_IN_FLIGHT, GetDescriptorSetLayouts());
 
     if (RenderPasses.has_value()) {
-        for (const auto renderPass : RenderPasses.value()) {
-            CreateGraphicsPipeline(renderPass, RenderPassesExtent.value(), DescriptorSetLayout);
+        for (const auto render_pass : RenderPasses.value()) {
+            RegisterForRenderPass(render_pass, RenderPassesExtent.value());
+            CreateGraphicsPipeline(render_pass, RenderPassesExtent.value(), GetDescriptorSetLayouts());
         }
     }
 }
 
 Shader::~Shader()
 {
-    graphicsPipelines.clear();
+    m_graphicsPipelines.clear();
+
+    for (auto &infos : shaderDescriptorSetLayoutInfos | std::views::values)
+    {
+	    for (const auto info : infos)
+	    {
+            delete info;
+	    }
+    }
+    shaderDescriptorSetLayoutInfos.clear();
 
     if (descriptorPool)
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);
-    uniformBuffers.clear();
+    m_uniformBuffers.clear();
 
-    for (const auto &[shaderType, shaderStage] : shaderStages) {
+    for (const auto &[shaderType, shaderStage] : m_shaderStages) {
         vkDestroyShaderModule(device.logicalDevice, shaderStage.shaderModule, nullptr);
     }
 }
@@ -53,14 +60,16 @@ Shader::~Shader()
 GraphicsPipeline &Shader::RegisterForRenderPass(RenderPass *RenderPass, VkExtent2D Extent)
 {
     RenderPass->RegisterShader(this);
-    return CreateGraphicsPipeline(RenderPass, Extent, descriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
+
+    return CreateGraphicsPipeline(RenderPass, Extent, GetDescriptorSetLayouts());
 }
 
 bool Shader::UnregisterFromRenderPass(RenderPass *RenderPass)
 {
-    if (graphicsPipelines.contains(RenderPass)) {
+    if (m_graphicsPipelines.contains(RenderPass)) {
         RenderPass->UnregisterShader(this);
-        graphicsPipelines.erase(RenderPass);
+        m_graphicsPipelines.erase(RenderPass);
         return true;
     }
     return false;
@@ -70,8 +79,8 @@ bool Shader::UnregisterFromRenderPass(RenderPass *RenderPass)
 // bound to multiple render passes and swapchains
 void Shader::ChangeResolutionForRenderPass(RenderPass *RenderPass, VkExtent2D Resolution)
 {
-    if (graphicsPipelines.contains(RenderPass)) {
-        graphicsPipelines.at(RenderPass)->ChangeResolution(Resolution);
+    if (m_graphicsPipelines.contains(RenderPass)) {
+        m_graphicsPipelines.at(RenderPass)->ChangeResolution(Resolution);
     }
 }
 
@@ -79,12 +88,12 @@ void Shader::Bind(const VkCommandBuffer &CommandBuffer,
                   const RenderPass *RenderPass,
                   std::optional<uint32_t> CurrentFrame) const
 {
-    if (graphicsPipelines.contains(RenderPass)) {
-        graphicsPipelines.at(RenderPass)->Bind(CommandBuffer);
+    if (m_graphicsPipelines.contains(RenderPass)) {
+        m_graphicsPipelines.at(RenderPass)->Bind(CommandBuffer);
 
         vkCmdBindDescriptorSets(CommandBuffer,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                graphicsPipelines.at(RenderPass)->vkPipelineLayout,
+                                m_graphicsPipelines.at(RenderPass)->vkPipelineLayout,
                                 0,
                                 1,
                                 &GetDescriptorSet(CurrentFrame),
@@ -100,68 +109,34 @@ void Shader::LoadShader(std::string_view Filepath, ShaderType ShaderType)
 {
     ShaderStage newShaderStage{};
     name = File::get_file_name_from_path(Filepath);
-    const auto binaryCode = File::read_binary_file(Filepath);
-    newShaderStage.shaderModule = CreateShaderModule(binaryCode);
+    const auto binary_code = File::read_binary_file(Filepath);
+    newShaderStage.shaderModule = CreateShaderModule(binary_code);
     newShaderStage.pipelineStageCrateInfo = CreateShaderStage(ShaderType,
                                                               newShaderStage.shaderModule);
 
-    shaderStages.insert(std::make_pair(ShaderType, newShaderStage));
+    m_shaderStages.insert(std::make_pair(ShaderType, newShaderStage));
+    shaderDescriptorSetLayoutInfos.emplace(std::make_pair(
+        newShaderStage.shaderModule, ShaderReflection::CreateShaderBindingInfo(binary_code.data(), binary_code.size())));
 
     std::cout << "Created " << ShaderTypeNames[static_cast<uint32_t>(ShaderType)] << " shader '"
               << name << "' from " << Filepath << '\n';
-
-    ReflectShader(binaryCode.data(), binaryCode.size());
 }
 
-void Shader::ReflectShader(const void *SpirvCode, size_t spirvCodeByteCount)
-{
-    SpvReflectShaderModule module;
-    SpvReflectResult result = spvReflectCreateShaderModule(spirvCodeByteCount, SpirvCode, &module);
-    ASSERT(result = SPV_REFLECT_RESULT_SUCCESS,
-           "Failed to create reflection data for shader code.")
-
-    // In Variables
-    uint32_t var_count = 0;
-    result = spvReflectEnumerateInputVariables(&module, &var_count, NULL);
-    ASSERT(result = SPV_REFLECT_RESULT_SUCCESS, "Failed to enumerate shader input variable count.")
-    std::vector<SpvReflectInterfaceVariable *> input_vars(var_count);
-    result = spvReflectEnumerateInputVariables(&module, &var_count, input_vars.data());
-    ASSERT(result = SPV_REFLECT_RESULT_SUCCESS, "Failed to enumerate shader input variables.")
-
-    // Out Variables
-    var_count = 0;
-    result = spvReflectEnumerateOutputVariables(&module, &var_count, NULL);
-    assert(result == SPV_REFLECT_RESULT_SUCCESS);
-
-    std::vector<SpvReflectInterfaceVariable *> output_vars(var_count);
-    result = spvReflectEnumerateOutputVariables(&module, &var_count, output_vars.data());
-    assert(result == SPV_REFLECT_RESULT_SUCCESS);
-
-    // Descriptor Sets
-    uint32_t descriptor_set_count = 0;
-    result = spvReflectEnumerateDescriptorSets(&module, &descriptor_set_count, NULL);
-    assert(result == SPV_REFLECT_RESULT_SUCCESS);
-
-    std::vector<SpvReflectDescriptorSet *> sets(descriptor_set_count);
-    result = spvReflectEnumerateDescriptorSets(&module, &descriptor_set_count, sets.data());
-    assert(result == SPV_REFLECT_RESULT_SUCCESS);
-
-    spvReflectDestroyShaderModule(&module);
-}
-
-GraphicsPipeline &Shader::CreateGraphicsPipeline(RenderPass *RenderPass,
-                                                 VkExtent2D &Extent,
-                                                 VkDescriptorSetLayout DescriptorSetLayout)
+GraphicsPipeline &Shader::CreateGraphicsPipeline(
+    RenderPass *RenderPass,
+    VkExtent2D &Extent,
+    const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts)
 {
     std::vector<VkPipelineShaderStageCreateInfo> createInfos;
-    createInfos.reserve(shaderStages.size());
-    for (auto &[shaderType, shaderStage] : shaderStages) {
+    createInfos.reserve(m_shaderStages.size());
+    for (auto &[shaderType, shaderStage] : m_shaderStages) {
         createInfos.push_back(shaderStage.pipelineStageCrateInfo);
     }
-    return *graphicsPipelines
-                .emplace(std::make_pair(RenderPass,
-                                        std::make_unique<GraphicsPipeline>(
-                                            createInfos, Extent, RenderPass, DescriptorSetLayout)))
+    return *m_graphicsPipelines
+                .emplace(
+                    std::make_pair(RenderPass,
+                                   std::make_unique<GraphicsPipeline>(
+                                       createInfos, Extent, RenderPass, DescriptorSetLayouts)))
                 .first->second;
 }
 
@@ -205,14 +180,14 @@ VkPipelineShaderStageCreateInfo Shader::CreateShaderStage(const ShaderType &Shad
     return createInfo;
 }
 
-std::vector<std::unique_ptr<UniformBuffer>> &Shader::CreateUniformBuffers(size_t Count,
-                                                                          VkDeviceSize BufferSize)
+std::vector<std::unique_ptr<UniformBuffer>> &Shader::CreateUniformBuffers(size_t Count)
 {
     for (int i = 0; i < Count; ++i) {
-        uniformBuffers.emplace_back(std::make_unique<UniformBuffer>(BufferSize));
+        // TODO fix 0 to uniform buffer size
+        m_uniformBuffers.emplace_back(std::make_unique<UniformBuffer>(0));
     }
 
-    return uniformBuffers;
+    return m_uniformBuffers;
 }
 
 void Shader::CreateDescriptorPool(size_t Count)
@@ -234,10 +209,12 @@ void Shader::CreateDescriptorPool(size_t Count)
 }
 
 void Shader::CreateDescriptorSets(const size_t Count,
-                                  const VkDescriptorSetLayout DescriptorSetLayout,
-                                  const VkDeviceSize BufferSize)
+                                  const std::vector<VkDescriptorSetLayout> &DescriptorSetLayout)
 {
-    const std::vector<VkDescriptorSetLayout> layouts(Count, DescriptorSetLayout);
+    if (DescriptorSetLayout.empty())
+        return;
+
+    const std::vector layouts(Count, DescriptorSetLayout.front());
     VkDescriptorSetAllocateInfo alloc_info{};
     alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.descriptorPool = descriptorPool;
@@ -249,16 +226,11 @@ void Shader::CreateDescriptorSets(const size_t Count,
               "Failed to allocate descriptor sets!")
 
     for (int i = 0; i < Count; ++i) {
-        VkDescriptorBufferInfo buffer_info{};
-        buffer_info.buffer = *uniformBuffers[i];
-        buffer_info.offset = 0;
-        buffer_info.range = BufferSize;
-
         VkDescriptorImageInfo image_info{};
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         // TODO Doing this like this is shit, move it into a proper parameter set function
         image_info.imageView = *GraphicsEngine::Get().textures[0];
-        image_info.sampler = GraphicsEngine::Get().samplers[0];
+        image_info.sampler = GraphicsEngine::Get().textures[0]->sampler;
 
         std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -267,7 +239,7 @@ void Shader::CreateDescriptorSets(const size_t Count,
         descriptor_writes[0].dstArrayElement = 0;
         descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptor_writes[0].descriptorCount = 1;
-        descriptor_writes[0].pBufferInfo = &buffer_info;
+        descriptor_writes[0].pBufferInfo = m_uniformBuffers[i]->GetDescriptorInfo();
 
         descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[1].dstSet = descriptorSets[i];
@@ -283,6 +255,19 @@ void Shader::CreateDescriptorSets(const size_t Count,
                                0,
                                nullptr);
     }
+}
+
+const std::vector<VkDescriptorSetLayout> Shader::GetDescriptorSetLayouts() const
+{
+    std::vector<VkDescriptorSetLayout> layouts;
+    for (const auto &[shader_module, layout_infos] : shaderDescriptorSetLayoutInfos)
+	{
+        for (const auto &layout_info : layout_infos)
+		{
+            layouts.push_back(layout_info->layout);
+		}
+	}
+    return layouts;
 }
 
 VkDescriptorSetLayout UniformMVP::GetDescriptorSetLayout()
@@ -316,4 +301,22 @@ VkDescriptorSetLayout UniformMVP::GetDescriptorSetLayout()
     }
 
     return layout;
+}
+
+
+template<> void Shader::SetShaderUniform(const std::string_view Name, const Buffer Data)
+{
+    for (auto &descriptor_set_layout_infos : shaderDescriptorSetLayoutInfos | std::views::values) {
+        for (const auto &info : descriptor_set_layout_infos) {
+            for (int i = 0; i < info->bindings.size(); ++i) {
+                if (String::to_lower(info->bindings[i].name) == String::to_lower(Name)) {
+                    for (auto descriptor_set : descriptorSets) {
+                        VkWriteDescriptorSet descriptor_write{};
+                        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        descriptor_write.dstSet = descriptor_set;
+                    }
+                }
+            }
+        }
+    }
 }

@@ -1,6 +1,7 @@
 #include "Texture.h"
 
 #include "Buffer.h"
+#include "GraphicsEngine.h"
 #include "Drawing/CommandPool.h"
 #include "Path.h"
 
@@ -9,7 +10,8 @@ Texture::Texture(const VkImageType Type,
                  const VkFormat Format,
                  const VkImageAspectFlags ImageAspect,
                  uint32_t ArrayLayers)
-    : type(Type),
+    : sampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT),
+      type(Type),
       extent(Extent),
       format(Format),
       imageAspect(ImageAspect),

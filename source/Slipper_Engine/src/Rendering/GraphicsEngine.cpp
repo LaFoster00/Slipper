@@ -16,6 +16,8 @@
 
 #include <filesystem>
 
+#include "Shader/Shader.h"
+
 GraphicsEngine *GraphicsEngine::instance = nullptr;
 bool GraphicsEngine::bSetupDefaultAssets = true;
 
@@ -76,7 +78,6 @@ void GraphicsEngine::SetupDefaultAssets()
 {
     // The default shader depends on these so initialize them first
     textures.emplace_back(Texture2D::LoadTexture("./EngineContent/Images/Slippers.jpg"));
-    samplers.emplace_back(Sampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT));
 
     /* Create shader for this pipeline. */
     std::vector<std::tuple<std::string_view, ShaderType>> shader_stages = {
@@ -84,9 +85,7 @@ void GraphicsEngine::SetupDefaultAssets()
         {"./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::Fragment}};
 
     shaders.emplace_back(std::make_unique<Shader>("BasicVertex",
-                                                  shader_stages,
-                                                  UniformMVP().GetDataSize(),
-                                                  UniformMVP().GetDescriptorSetLayout()));
+                                                  shader_stages));
 
     meshes.emplace_back(std::make_unique<Mesh>(DEBUG_TRIANGLE_VERTICES.data(),
                                                DEBUG_TRIANGLE_VERTICES.size(),
