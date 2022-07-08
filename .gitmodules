@@ -7,3 +7,6 @@
 [submodule "extern/stb"]
 	path = extern/stb
 	url = https://github.com/nothings/stb.git
+[submodule "extern/SPIRV-Reflect"]
+	path = extern/SPIRV-Reflect
+	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
