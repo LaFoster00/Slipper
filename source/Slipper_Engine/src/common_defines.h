@@ -6,13 +6,13 @@
 #ifdef LINUX
 #    define SLIPPER_FUNCTION __attribute__((dllexport))
 #    define MAX_PATH PATH_MAX
+#    define DEBUG_BREAK raise(SIGTRAP);
 #elif WINDOWS
 #    define SLIPPER_FUNCTION _declspec(dllexport)
+#    define DEBUG_BREAK __debugbreak;
 #else
 #    define SLIPPER_FUNCTION
 #endif
-
-#define DEBUG_BREAK raise(SIGTRAP);
 
 #define VK_ASSERT(func, message)                                                            \
     if (func != VK_SUCCESS) {                                                               \
