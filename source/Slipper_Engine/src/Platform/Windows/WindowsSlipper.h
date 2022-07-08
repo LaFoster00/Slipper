@@ -3,6 +3,8 @@
 #include "Platform.h"
 #include <string>
 
+#include "Util/StringUtil.h"
+
 #ifdef WINDOWS
 #    define NOMINMAX
 #    include "windows.h"
@@ -21,7 +23,7 @@ class Windows : public IPlatform
 
             if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                                       GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                                  reinterpret_cast<LPCSTR>(&get_engine_path),
+                                  reinterpret_cast<LPCSTR>(&Path::get_engine_path),
                                   &hm) == 0) {
                 const int ret = GetLastError();
                 fprintf(stderr, "GetModuleHandle failed, error = %d\n", ret);
@@ -34,7 +36,7 @@ class Windows : public IPlatform
             }
 
             module_file_name_string = module_file_name;
-            replace_substring(module_file_name_string, "\\", "/");
+            String::replace_substring(module_file_name_string, "\\", "/");
             module_file_name_string = module_file_name_string.erase(
                 module_file_name_string.find_last_of('/') + 1);
         }

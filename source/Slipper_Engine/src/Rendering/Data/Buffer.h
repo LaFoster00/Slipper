@@ -1,8 +1,8 @@
 #pragma once
 
 #include "DeviceDependentObject.h"
-#include "GraphicsPipeline/Shader.h"
 #include "Setup/Device.h"
+#include "Shader/Shader.h"
 #include "common_includes.h"
 
 #include <cstring>

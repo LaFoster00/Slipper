@@ -1,19 +1,17 @@
 #include "Surface.h"
 
-#include "GraphicsPipeline/RenderPass.h"
-#include "GraphicsPipeline/Shader.h"
+#include "RenderPass.h"
 #include "Setup/Instance.h"
+#include "Shader/Shader.h"
 #include "SwapChain.h"
 #include "Window.h"
 #include "common_defines.h"
 
-Surface::Surface(const Window &Window) : window(Window)
-{
-    VK_ASSERT(glfwCreateWindowSurface(Instance::Get(), Window, nullptr, &surface),
-              "Failed to create window suface!")
-}
+Surface::Surface(const Window &Window)
+    : window(Window){VK_ASSERT(glfwCreateWindowSurface(Instance::Get(), Window, nullptr, &surface),
+                               "Failed to create window suface!")}
 
-Surface::~Surface()
+      Surface::~Surface()
 {
     vkDestroySurfaceKHR(Instance::Get(), surface, nullptr);
 }
@@ -65,12 +63,12 @@ void Surface::RecreateSwapChain()
 
         for (const auto render_pass_shader : render_pass->registeredShaders) {
             render_pass_shader->ChangeResolutionForRenderPass(render_pass,
-                                                            swapChain->GetResolution());
+                                                              swapChain->GetResolution());
         }
     }
 }
 
-void Surface::RegisterRenderPass(RenderPass& RenderPass)
+void Surface::RegisterRenderPass(RenderPass &RenderPass)
 {
     renderPasses.push_back(&RenderPass);
     RenderPass.CreateSwapChainFramebuffers(swapChain.get());
