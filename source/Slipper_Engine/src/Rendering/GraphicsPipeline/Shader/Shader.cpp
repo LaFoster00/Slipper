@@ -10,7 +10,7 @@
 #include "common_defines.h"
 #include "spirv_reflect.h"
 
-const char *ShaderTypeNames[]{"Vertex", "Fragment", "Compute"};
+const char *ShaderTypeNames[]{"UNDEFINED", "Vertex", "Fragment", "Compute"};
 
 Shader::Shader(std::string_view Name,
                std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
@@ -163,13 +163,13 @@ VkPipelineShaderStageCreateInfo Shader::CreateShaderStage(const ShaderType &Shad
     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 
     switch (ShaderType) {
-        case ShaderType::Vertex:
+        case ShaderType::VERTEX:
             createInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
             break;
-        case ShaderType::Fragment:
+        case ShaderType::FRAGMENT:
             createInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             break;
-        case ShaderType::Compute:
+        case ShaderType::COMPUTE:
             createInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
             break;
     }

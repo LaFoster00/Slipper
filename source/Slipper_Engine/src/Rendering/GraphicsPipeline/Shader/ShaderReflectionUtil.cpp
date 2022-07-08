@@ -6,6 +6,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "Shader.h"
+
 namespace ShaderReflectionUtil
 {
 
@@ -74,6 +76,127 @@ VkDescriptorType to_vk_descriptor_type(SpvReflectDescriptorType Type)
             return VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
     }
     return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+}
+
+ShaderMemberType to_shader_member_type(const SpvReflectTypeDescription &Type)
+{
+    switch (Type.op) {
+        case SpvOpTypeVoid:
+            return ShaderMemberType::VOID;
+        case SpvOpTypeBool:
+            return ShaderMemberType::BOOL;
+        case SpvOpTypeInt:
+            if (Type.traits.numeric.scalar.signedness)
+                return ShaderMemberType::INT;
+            else
+                return ShaderMemberType::UINT;
+        case SpvOpTypeFloat: {
+            switch (Type.traits.numeric.scalar.width) {
+                case 32:
+                    return ShaderMemberType::FLOAT;
+                case 64:
+                    return ShaderMemberType::DOUBLE;
+            }
+        }
+        case SpvOpTypeVector:
+            switch (Type.traits.numeric.scalar.width) {
+                case 32:
+                    switch (Type.traits.numeric.vector.component_count) {
+                        case 2:
+                            return ShaderMemberType::VEC2;
+                        case 3:
+                            return ShaderMemberType::VEC3;
+                        case 4:
+                            return ShaderMemberType::VEC4;
+                    }
+                    break;
+                case 64:
+                    switch (Type.traits.numeric.vector.component_count) {
+                        case 2:
+                            return ShaderMemberType::DVEC2;
+                        case 3:
+                            return ShaderMemberType::DVEC3;
+                        case 4:
+                            return ShaderMemberType::DVEC4;
+                    }
+                    break;
+            }
+            break;
+        case SpvOpTypeMatrix:
+            switch (Type.traits.numeric.matrix.column_count) {
+                case 2:
+                    return ShaderMemberType::MATRIX2;
+                case 3:
+                    return ShaderMemberType::MATRIX3;
+                case 4:
+                    return ShaderMemberType::MATRIX4;
+            }
+            break;
+        case SpvOpTypeImage:
+            return ShaderMemberType::IMAGE;
+        case SpvOpTypeSampler:
+            return ShaderMemberType::SAMPLER;
+        case SpvOpTypeSampledImage:
+            return ShaderMemberType::SAMPLED_IMAGE;
+        case SpvOpTypeAccelerationStructureKHR:
+            return ShaderMemberType::ACCELERATION_STRUCTURE;
+        case SpvOpTypeStruct:
+            return ShaderMemberType::STRUCT;
+        case SpvOpTypeArray:
+            return ShaderMemberType::ARRAY;
+    }
+    return ShaderMemberType::UNDEFINED;
+}
+
+ShaderType to_shader_type(SpvReflectShaderStageFlagBits Stage)
+{
+    switch (Stage) {
+        case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
+            return ShaderType::VERTEX;
+        case SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT:
+            return ShaderType::FRAGMENT;
+        case SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT:
+            return ShaderType::COMPUTE;
+        case SPV_REFLECT_SHADER_STAGE_TASK_BIT_NV:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_MESH_BIT_NV:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_RAYGEN_BIT_KHR:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_ANY_HIT_BIT_KHR:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_MISS_BIT_KHR:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_INTERSECTION_BIT_KHR:
+            break;
+        case SPV_REFLECT_SHADER_STAGE_CALLABLE_BIT_KHR:
+            break;
+    }
+    return ShaderType::UNDEFINED;
+}
+
+VkShaderStageFlags to_shader_stage_flag(ShaderType Type)
+{
+    switch (Type) {
+        case ShaderType::UNDEFINED:
+            return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+        case ShaderType::VERTEX:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ShaderType::FRAGMENT:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        case ShaderType::COMPUTE:
+            return VK_SHADER_STAGE_COMPUTE_BIT;
+        default:
+            return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+    }
 }
 
 std::string to_string_spv_storage_class(SpvStorageClass StorageClass)
@@ -687,7 +810,7 @@ std::string to_string_type(SpvSourceLanguage src_lang, const SpvReflectTypeDescr
 }
 
 std::string to_string_component_type(const SpvReflectTypeDescription &Type,
-                                  uint32_t MemberDecorationFlags)
+                                     uint32_t MemberDecorationFlags)
 {
     uint32_t masked_type = Type.type_flags & 0xF;
     if (masked_type == 0) {
@@ -734,7 +857,9 @@ std::string to_string_component_type(const SpvReflectTypeDescription &Type,
     return ss.str();
 }
 
-void print_module_info(std::ostream &Os, const SpvReflectShaderModule &Obj, const char * /*indent*/)
+void print_module_info(std::ostream &Os,
+                       const SpvReflectShaderModule &Obj,
+                       const char * /*indent*/)
 {
     Os << "entry point     : " << Obj.entry_point_name << "\n";
     Os << "source lang     : " << spvReflectSourceLanguage(Obj.source_language) << "\n";
@@ -766,9 +891,9 @@ void print_descriptor_set(std::ostream &Os, const SpvReflectDescriptorSet &Obj, 
 }
 
 void print_descriptor_binding(std::ostream &Os,
-                            const SpvReflectDescriptorBinding &Obj,
-                            bool WriteSet,
-                            const char *Indent)
+                              const SpvReflectDescriptorBinding &Obj,
+                              bool WriteSet,
+                              const char *Indent)
 {
     const char *t = Indent;
     Os << t << "binding : " << Obj.binding << "\n";
@@ -806,9 +931,9 @@ void print_descriptor_binding(std::ostream &Os,
 }
 
 void print_interface_variable(std::ostream &Os,
-                            SpvSourceLanguage SrcLang,
-                            const SpvReflectInterfaceVariable &Obj,
-                            const char *Indent)
+                              SpvSourceLanguage SrcLang,
+                              const SpvReflectInterfaceVariable &Obj,
+                              const char *Indent)
 {
     const char *t = Indent;
     Os << t << "location  : ";

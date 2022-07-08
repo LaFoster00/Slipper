@@ -81,8 +81,8 @@ void GraphicsEngine::SetupDefaultAssets()
 
     /* Create shader for this pipeline. */
     std::vector<std::tuple<std::string_view, ShaderType>> shader_stages = {
-        {"./EngineContent/Shaders/Spir-V/Basic.vert.spv", ShaderType::Vertex},
-        {"./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::Fragment}};
+        {"./EngineContent/Shaders/Spir-V/Basic.vert.spv", ShaderType::VERTEX},
+        {"./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::FRAGMENT}};
 
     shaders.emplace_back(std::make_unique<Shader>("BasicVertex",
                                                   shader_stages));

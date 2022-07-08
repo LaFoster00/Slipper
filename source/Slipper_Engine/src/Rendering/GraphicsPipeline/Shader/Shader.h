@@ -16,12 +16,15 @@ class RenderPass;
 class GraphicsPipeline;
 class UniformBuffer;
 
+extern const char *ShaderTypeNames[];
+
 // DO NOT CHANGE NUMBERS WITHOUT CHANGING SHADERTYPENAMES ARRAY!!!
 enum class ShaderType
 {
-    Vertex = 0,
-    Fragment = 1,
-    Compute = 2
+    UNDEFINED = 0,
+    VERTEX = 1,
+    FRAGMENT = 2,
+    COMPUTE = 3
 };
 
 struct ShaderUniform
@@ -57,28 +60,33 @@ struct UniformMVP : ShaderUniform
     }
 };
 
-extern const char *ShaderTypeNames[];
-
 class Device;
 class GraphicsEngine;
 
 enum class ShaderMemberType : uint32_t
 {
-    UNDEFINED = 0x00000000,
-    VOID = 0x00000001,
-    BOOL = 0x00000002,
-    INT = 0x00000004,
-    FLOAT = 0x00000008,
-    VECTOR = 0x00000100,
-    MATRIX = 0x00000200,
-    IMAGE = 0x00010000,
-    SAMPLER = 0x00020000,
-    SAMPLED_IMAGE = 0x00040000,
-    BLOCK = 0x00080000,
-    ACCELERATION_STRUCTURE = 0x00100000,
-    EXTERNAL_MASK = 0x00FF0000,
-    STRUCT = 0x10000000,
-    ARRAY = 0x20000000,
+    UNDEFINED,
+    VOID,
+    BOOL,
+    INT,
+    UINT,
+    FLOAT,
+    DOUBLE,
+    VEC2,
+    VEC3,
+    VEC4,
+    DVEC2,
+    DVEC3,
+    DVEC4,
+    MATRIX2,
+    MATRIX3,
+    MATRIX4,
+    IMAGE,
+    SAMPLER,
+    SAMPLED_IMAGE,
+    ACCELERATION_STRUCTURE,
+    STRUCT,
+    ARRAY,
 };
 
 struct ShaderMember
@@ -93,7 +101,6 @@ struct ShaderMember
 struct DescriptorSetLayoutBinding
 {
     std::string name;
-    VkDescriptorType descriptorType;
     std::vector<ShaderMember> members;
     uint32_t size;
     uint32_t padded_size;

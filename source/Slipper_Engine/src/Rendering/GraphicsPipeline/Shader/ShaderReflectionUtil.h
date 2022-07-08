@@ -3,9 +3,16 @@
 #include "spirv_reflect.h"
 #include "common_includes.h"
 
+enum class ShaderMemberType : uint32_t;
+enum class ShaderType;
+
 namespace ShaderReflectionUtil
 {
 VkDescriptorType to_vk_descriptor_type(SpvReflectDescriptorType Type);
+ShaderMemberType to_shader_member_type(const SpvReflectTypeDescription &Type);
+ShaderType to_shader_type(SpvReflectShaderStageFlagBits Stage);
+VkShaderStageFlags to_shader_stage_flag(ShaderType Type);
+
 
 
 std::string to_string_spv_storage_class(SpvStorageClass StorageClass);

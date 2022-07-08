@@ -27,9 +27,10 @@ std::vector<DescriptorSetLayoutInfo *> ShaderReflection::CreateShaderBindingInfo
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
     std::vector<DescriptorSetLayoutInfo *> descriptor_sets_layout;
-    descriptor_sets_layout.reserve(descriptor_set_count);
 
-    CreateDescriptorSetLayout(refl_descriptor_sets, descriptor_sets_layout);
+    CreateDescriptorSetLayout(ShaderReflectionUtil::to_shader_type(module.shader_stage),
+                              refl_descriptor_sets,
+                              descriptor_sets_layout);
 
     spvReflectDestroyShaderModule(&module);
 
@@ -37,16 +38,19 @@ std::vector<DescriptorSetLayoutInfo *> ShaderReflection::CreateShaderBindingInfo
 }
 
 void ShaderReflection::CreateDescriptorSetLayout(
+    ShaderType ShaderType,
     const std::vector<SpvReflectDescriptorSet *> &ReflSets,
     std::vector<DescriptorSetLayoutInfo *> &LayoutInfos)
 {
+    LayoutInfos.reserve(ReflSets.size());
     for (const auto refl_descriptor_set : ReflSets) {
         const auto layout_info = LayoutInfos.emplace_back(new DescriptorSetLayoutInfo());
         layout_info->setNumber = refl_descriptor_set->set;
-        layout_info->bindings.reserve(refl_descriptor_set->binding_count);
+        layout_info->bindings.resize(refl_descriptor_set->binding_count);
 
         for (uint32_t binding = 0; binding < refl_descriptor_set->binding_count; ++binding) {
-            PopulateDescriptorSetLayoutBinding(layout_info->bindings[binding],
+            PopulateDescriptorSetLayoutBinding(ShaderType,
+                                               layout_info->bindings[binding],
                                                refl_descriptor_set->bindings[binding]);
         }
 
@@ -55,20 +59,27 @@ void ShaderReflection::CreateDescriptorSetLayout(
         auto bindings = layout_info->GetVkBindings();
         layout_info->createInfo.bindingCount = bindings.size();
         layout_info->createInfo.pBindings = bindings.data();
-
         vkCreateDescriptorSetLayout(
             Device::Get(), &layout_info->createInfo, nullptr, &layout_info->layout);
     }
 }
 
 void ShaderReflection::PopulateDescriptorSetLayoutBinding(
-    DescriptorSetLayoutBinding &SetBinding, const SpvReflectDescriptorBinding *ReflSetBinding)
+    ShaderType ShaderType,
+    DescriptorSetLayoutBinding &SetBinding,
+    const SpvReflectDescriptorBinding *ReflSetBinding)
 {
     SetBinding.name = ReflSetBinding->name;
-    SetBinding.descriptorType = static_cast<VkDescriptorType>(ReflSetBinding->descriptor_type);
     SetBinding.size = ReflSetBinding->block.size;
     SetBinding.padded_size = ReflSetBinding->block.padded_size;
     SetBinding.members.resize(ReflSetBinding->block.member_count);
+    SetBinding.binding.binding = ReflSetBinding->binding;
+    SetBinding.binding.descriptorType = static_cast<VkDescriptorType>(
+        ReflSetBinding->descriptor_type);
+    SetBinding.binding.descriptorCount = ReflSetBinding->count;
+    SetBinding.binding.pImmutableSamplers = nullptr;
+    SetBinding.binding.stageFlags |= ShaderReflectionUtil::to_shader_stage_flag(ShaderType);
+
     for (int i = 0; i < ReflSetBinding->block.member_count; ++i) {
         PopulateShaderMember(SetBinding.members[i], &ReflSetBinding->block.members[i]);
     }
@@ -80,7 +91,7 @@ void ShaderReflection::PopulateShaderMember(ShaderMember &Member,
     Member.name = ReflMember->name;
     Member.size = ReflMember->size;
     Member.padded_size = ReflMember->padded_size;
-    Member.type = static_cast<ShaderMemberType>(ReflMember->type_description->type_flags);
+    Member.type = ShaderReflectionUtil::to_shader_member_type(*ReflMember->type_description);
     Member.members.resize(ReflMember->member_count);
     for (int i = 0; i < ReflMember->member_count; ++i) {
         PopulateShaderMember(Member.members[i], &ReflMember->members[i]);
