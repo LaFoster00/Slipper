@@ -86,6 +86,7 @@ void GraphicsEngine::SetupDefaultAssets()
 
     shaders.emplace_back(std::make_unique<Shader>("BasicVertex",
                                                   shader_stages));
+    shaders[0]->SetShaderUniform("texSampler", *textures[0]);
 
     meshes.emplace_back(std::make_unique<Mesh>(DEBUG_TRIANGLE_VERTICES.data(),
                                                DEBUG_TRIANGLE_VERTICES.size(),
@@ -167,7 +168,7 @@ void GraphicsEngine::SetupSimpleDraw()
 
         mvp.projection[1][1] *= -1;
 
-        debug_shader->GetUniformBuffer().SubmitData(&mvp);
+        debug_shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
 
         vkCmdDrawIndexed(CommandBuffer, static_cast<uint32_t>(meshes[0]->NumIndex()), 1, 0, 0, 0);
     });

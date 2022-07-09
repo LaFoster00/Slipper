@@ -18,7 +18,7 @@ class ShaderReflection
     static std::vector<DescriptorSetLayoutInfo *> CreateShaderBindingInfo(
         const void *SpirvCode, size_t SpirvCodeByteCount);
 
-    static void CreateDescriptorSetLayout(ShaderType ShaderType,
+    static void PopulateDescriptorSetLayoutInfo(ShaderType ShaderType,
                                           const std::vector<SpvReflectDescriptorSet *> &ReflSets,
                                           std::vector<DescriptorSetLayoutInfo *> &LayoutInfos);
 

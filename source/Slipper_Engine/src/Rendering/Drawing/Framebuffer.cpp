@@ -8,7 +8,7 @@
 
 Framebuffer::Framebuffer(const RenderPass *RenderPass,
                          const VkImageView *Attachments,
-                         const size_t AttachmentCount,
+                         const uint32_t AttachmentCount,
                          const VkExtent2D Extent)
 {
     Create(RenderPass, Attachments, AttachmentCount, Extent);
@@ -16,7 +16,7 @@ Framebuffer::Framebuffer(const RenderPass *RenderPass,
 
 void Framebuffer::Create(const RenderPass *RenderPass,
                          const VkImageView *Attachments,
-                         const size_t AttachmentCount,
+                         const uint32_t AttachmentCount,
                          const VkExtent2D Extent)
 {
     VkFramebufferCreateInfo framebuffer_info{};

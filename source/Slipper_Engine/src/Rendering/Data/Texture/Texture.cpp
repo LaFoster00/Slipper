@@ -1,8 +1,8 @@
 #include "Texture.h"
 
 #include "Buffer.h"
-#include "GraphicsEngine.h"
 #include "Drawing/CommandPool.h"
+#include "GraphicsEngine.h"
 #include "Path.h"
 
 Texture::Texture(const VkImageType Type,
@@ -15,7 +15,8 @@ Texture::Texture(const VkImageType Type,
       extent(Extent),
       format(Format),
       imageAspect(ImageAspect),
-      arrayLayerCount(ArrayLayers)
+      arrayLayerCount(ArrayLayers),
+      imageInfo(std::make_unique<VkDescriptorImageInfo>())
 {
     VkImageCreateInfo image_info{};
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -31,7 +32,7 @@ Texture::Texture(const VkImageType Type,
     image_info.samples = VK_SAMPLE_COUNT_1_BIT;
     image_info.flags = 0;  // Optional
 
-    layout = image_info.initialLayout;
+    imageInfo->imageLayout = image_info.initialLayout;
 
     VK_ASSERT(vkCreateImage(device, &image_info, nullptr, &texture), "Failed to create image!")
 
@@ -50,6 +51,8 @@ Texture::Texture(const VkImageType Type,
     vkBindImageMemory(device, texture, textureMemory, 0);
 
     textureView = CreateImageView(texture, type, format, imageAspect, arrayLayerCount);
+    imageInfo->imageView = textureView;
+    imageInfo->sampler = sampler;
 }
 
 Texture::~Texture()
@@ -65,7 +68,7 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
 {
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.oldLayout = layout;
+    barrier.oldLayout = imageInfo->imageLayout;
     barrier.newLayout = NewLayout;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -80,7 +83,7 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
     VkPipelineStageFlags destination_stage;
 
     CommandPool *command_pool;
-    if (layout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    if (imageInfo->imageLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
@@ -89,7 +92,7 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
 
         command_pool = GraphicsEngine::Get().memoryCommandPool;
     }
-    else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+    else if (imageInfo->imageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
              NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -106,7 +109,7 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
     vkCmdPipelineBarrier(
         command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-    layout = NewLayout;
+    imageInfo->imageLayout = NewLayout;
     return command_buffer;
 }
 
@@ -136,6 +139,11 @@ void Texture::CopyBuffer(const Buffer &Buffer, const bool TransitionToShaderUse)
     if (TransitionToShaderUse) {
         TransitionImageLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
+}
+
+VkDescriptorImageInfo *Texture::GetDescriptorImageInfo() const
+{
+    return imageInfo.get();
 }
 
 VkImageView Texture::CreateImageView(VkImage image,
@@ -182,7 +190,6 @@ VkImageView Texture::CreateImageView(VkImage image,
 
     VkImageView image_view;
     VK_ASSERT(vkCreateImageView(Device::Get(), &view_info, nullptr, &image_view),
-              "Failed to create texture image view!")
-
+              "Failed to create texture image view!");
     return image_view;
 }

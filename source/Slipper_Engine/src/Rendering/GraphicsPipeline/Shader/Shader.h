@@ -7,10 +7,12 @@
 #include <unordered_map>
 
 #include "Buffer.h"
-#include "common_defines.h"
 #include "GraphicsEngine.h"
+#include "ShaderLayout.h"
+#include "common_defines.h"
 #include "common_includes.h"
 
+class ShaderLayout;
 class ShaderReflection;
 class RenderPass;
 class GraphicsPipeline;
@@ -89,47 +91,6 @@ enum class ShaderMemberType : uint32_t
     ARRAY,
 };
 
-struct ShaderMember
-{
-    std::string name;
-    ShaderMemberType type;
-    uint32_t size;
-    uint32_t padded_size;
-    std::vector<ShaderMember> members;
-};
-
-struct DescriptorSetLayoutBinding
-{
-    std::string name;
-    std::vector<ShaderMember> members;
-    uint32_t size;
-    uint32_t padded_size;
-    VkDescriptorSetLayoutBinding binding;
-};
-
-struct DescriptorSetLayoutInfo
-{
-    uint32_t setNumber;
-    VkDescriptorSetLayout layout;
-    VkDescriptorSetLayoutCreateInfo createInfo;
-    std::vector<DescriptorSetLayoutBinding> bindings;
-
-    std::vector<VkDescriptorSetLayoutBinding> GetVkBindings() const
-    {
-        std::vector<VkDescriptorSetLayoutBinding> vkBindings(bindings.size());
-        for (int i = 0; i < vkBindings.size(); ++i)
-        {
-            vkBindings[i] = bindings[i].binding;
-        }
-        return vkBindings;
-    }
-
-    ~DescriptorSetLayoutInfo()
-    {
-        vkDestroyDescriptorSetLayout(Device::Get(), layout, nullptr);
-    }
-};
-
 class Shader
 {
     friend ShaderReflection;
@@ -160,30 +121,53 @@ class Shader
               const RenderPass *RenderPass,
               std::optional<uint32_t> CurrentFrame = {}) const;
 
-    [[nodiscard]] UniformBuffer &GetUniformBuffer(const std::optional<uint32_t> Index = {}) const
+    [[nodiscard]] UniformBuffer *GetUniformBuffer(const std::string Name,
+                                                  const std::optional<uint32_t> Index = {}) const
     {
-        if (Index.has_value()) {
-            return *m_uniformBuffers[Index.value()];
+        const auto lowered_name = String::to_lower(Name);
+        for (auto &shader_module_layout : shaderModuleLayouts | std::views::values) {
+            if (shader_module_layout->namedLayoutBindings.contains(lowered_name)) {
+                if (const auto binding = shader_module_layout->namedLayoutBindings.at(
+                        lowered_name);
+                    uniformBindingBuffers.contains(binding)) {
+                    if (Index.has_value()) {
+                        return uniformBindingBuffers.at(binding)[Index.value()].get();
+                    }
+                    else {
+                        return uniformBindingBuffers
+                            .at(binding)[GraphicsEngine::Get().currentFrame]
+                            .get();
+                    }
+                }
+                ASSERT(true, "Uniform '", Name, "' is not a buffer.");
+            }
         }
-        return *m_uniformBuffers[GraphicsEngine::Get().currentFrame];
+        ASSERT(true, "Object '", Name, "' does not exist.");
     }
 
-    [[nodiscard]] const VkDescriptorSet &GetDescriptorSet(
+    [[nodiscard]] std::vector<VkDescriptorSet> GetDescriptorSets(
         const std::optional<uint32_t> Index = {}) const
     {
-        if (Index.has_value()) {
-            return descriptorSets[Index.value()];
+        std::vector<VkDescriptorSet> ds;
+        for (auto &shader_layout : shaderModuleLayouts | std::views::values) {
+            for (auto descriptor_sets : shader_layout->descriptorSets | std::views::values) {
+                if (Index.has_value()) {
+                    ds.push_back(descriptor_sets[Index.value()]);
+                }
+                else {
+                    ds.push_back(descriptor_sets[GraphicsEngine::Get().currentFrame]);
+                }
+            }
         }
-        return descriptorSets[GraphicsEngine::Get().currentFrame];
+        return ds;
     }
 
-    template<typename DataType>
-    void SetShaderUniform(const std::string_view Name, const DataType Data)
+    template<typename DataType> void SetShaderUniform(const std::string Name, const DataType &Data)
     {
         ASSERT(true, "DataType", typeid(DataType).name(), "is not suppored.")
     }
 
-private:
+ private:
     void LoadShader(std::string_view Filepath, ShaderType ShaderType);
 
     GraphicsPipeline &CreateGraphicsPipeline(
@@ -195,26 +179,24 @@ private:
     static VkPipelineShaderStageCreateInfo CreateShaderStage(const ShaderType &ShaderType,
                                                              const VkShaderModule &ShaderModule);
 
-    std::vector<std::unique_ptr<UniformBuffer>> &CreateUniformBuffers(size_t Count);
-    void CreateDescriptorPool(size_t Count);
-    void CreateDescriptorSets(size_t Count,
-                              const std::vector<VkDescriptorSetLayout> &DescriptorSetLayout);
+    void CreateUniformBuffers(size_t Count);
 
-    const std::vector<VkDescriptorSetLayout> GetDescriptorSetLayouts() const;
+    std::vector<VkDescriptorSetLayout> GetDescriptorSetLayouts() const;
 
  public:
     Device &device;
 
     std::string name;
-
-    std::unordered_map<VkShaderModule, std::vector<DescriptorSetLayoutInfo *>>
-        shaderDescriptorSetLayoutInfos;
+    std::unordered_map<VkShaderModule, std::unique_ptr<ShaderLayout>> shaderModuleLayouts;
+    std::unordered_map<DescriptorSetLayoutBinding *, std::vector<std::unique_ptr<UniformBuffer>>>
+        uniformBindingBuffers;
 
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
-    std::vector<VkDescriptorSet> descriptorSets;
 
  private:
     std::unordered_map<ShaderType, ShaderStage> m_shaderStages;
-    std::vector<std::unique_ptr<UniformBuffer>> m_uniformBuffers;
     std::unordered_map<const RenderPass *, std::unique_ptr<GraphicsPipeline>> m_graphicsPipelines;
 };
+
+extern template void Shader::SetShaderUniform(const std::string Name, const UniformBuffer &Data);
+extern template void Shader::SetShaderUniform(const std::string Name, const Texture &Data);

@@ -12,14 +12,14 @@ class Framebuffer : DeviceDependentObject
  public:
     Framebuffer(const RenderPass *RenderPass,
                 const VkImageView *Attachments,
-                size_t AttachmentCount,
+                uint32_t AttachmentCount,
                 VkExtent2D Extent);
     ~Framebuffer();
 
  private:
     void Create(const RenderPass *RenderPass,
                 const VkImageView *Attachments,
-                size_t AttachmentCount,
+                uint32_t AttachmentCount,
                 VkExtent2D Extent);
 
  public:

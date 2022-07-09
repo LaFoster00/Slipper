@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "common_includes.h"
 
 #include "DeviceDependentObject.h"
@@ -18,7 +20,7 @@ class Texture : DeviceDependentObject
             VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
             uint32_t ArrayLayers = 1);
     Texture(const Texture &Other) = delete;
-    Texture(Texture &&Other) noexcept: sampler(std::move(Other.sampler)), arrayLayerCount(Other.arrayLayerCount)
+    Texture(Texture &&Other) noexcept: sampler(std::move(Other.sampler)), arrayLayerCount(Other.arrayLayerCount), imageInfo(std::move(Other.imageInfo))
     {
 	    texture = Other.texture;
 	    Other.texture = VK_NULL_HANDLE;
@@ -32,15 +34,14 @@ class Texture : DeviceDependentObject
 	    type = Other.type;
 	    extent = Other.extent;
 	    format = Other.format;
-	    layout = Other.layout;
 	    imageAspect = Other.imageAspect;
     }
 
     virtual ~Texture();
 
     SingleUseCommandBuffer TransitionImageLayout(VkFormat Format, VkImageLayout NewLayout);
-
     void CopyBuffer(const Buffer &Buffer, bool TransitionToShaderUse = true);
+    VkDescriptorImageInfo *GetDescriptorImageInfo() const;
 
     operator VkImage() const
     {
@@ -69,8 +70,9 @@ class Texture : DeviceDependentObject
     VkImageType type;
     VkExtent3D extent;
     VkFormat format;
-
-    VkImageLayout layout;
+    
     VkImageAspectFlags imageAspect;
     uint32_t arrayLayerCount;
+
+    std::unique_ptr<VkDescriptorImageInfo> imageInfo;
 };

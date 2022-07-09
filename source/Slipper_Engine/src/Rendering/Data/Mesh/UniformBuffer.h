@@ -1,11 +1,16 @@
 #pragma once
+#include <memory>
+
 #include "Buffer.h"
 
 class UniformBuffer : public Buffer
 {
  public:
     explicit UniformBuffer(VkDeviceSize SizeUniformObject);
-    ~UniformBuffer() override;
+    UniformBuffer(UniformBuffer &&Other) noexcept
+	    : Buffer(std::move(Other)), m_descriptorInfo(std::move(Other.m_descriptorInfo))
+    {
+    }
 
     void SubmitData(const ShaderUniform *UniformData)
     {
@@ -14,9 +19,9 @@ class UniformBuffer : public Buffer
 
     [[nodiscard]] VkDescriptorBufferInfo *GetDescriptorInfo() const
     {
-        return m_descriptorInfo;
+        return m_descriptorInfo.get();
     }
 
 private:
-    VkDescriptorBufferInfo *m_descriptorInfo{};
+    std::unique_ptr<VkDescriptorBufferInfo> m_descriptorInfo;
 };

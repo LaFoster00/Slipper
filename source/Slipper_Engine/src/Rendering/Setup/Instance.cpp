@@ -181,8 +181,7 @@ void Instance::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoE
     CreateInfo.messageSeverity = CreateInfo.messageSeverity |
                                  VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
 #endif
-    CreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+    CreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                              VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     CreateInfo.pfnUserCallback = DebugUtilsMessages;
     CreateInfo.pUserData = nullptr;  // Optional
