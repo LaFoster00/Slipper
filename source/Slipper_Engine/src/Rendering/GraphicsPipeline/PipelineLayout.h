@@ -13,7 +13,7 @@ class Device;
 class PipelineLayout
 {
  public:
-    static VkPipelineLayout CreatePipelineLayout(const Device &Device, const std::vector<VkDescriptorSetLayout> &DescriptorSets);
+    static VkPipelineLayout CreatePipelineLayout(const Device &Device, const VkDescriptorSetLayout DescriptorSetLayout);
 
     static VkPipelineVertexInputStateCreateInfo SetupVertexInputState();
 

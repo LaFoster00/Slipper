@@ -154,7 +154,7 @@ void GraphicsEngine::SetupSimpleDraw()
                                current_time - start_time)
                                .count();
 
-        UniformMVP mvp{};
+        UniformMVP mvp;
         mvp.model = glm::rotate(
             glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         mvp.view = glm::lookAt(

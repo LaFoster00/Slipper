@@ -7,7 +7,7 @@ enum class ShaderType;
 struct ShaderMember;
 struct DescriptorSetLayoutBinding;
 class Shader;
-struct DescriptorSetLayoutInfo;
+struct ModuleDescriptorSetLayoutInfo;
 struct SpvReflectDescriptorBinding;
 struct SpvReflectDescriptorSet;
 struct SpvReflectBlockVariable;
@@ -15,16 +15,15 @@ struct SpvReflectBlockVariable;
 class ShaderReflection
 {
  public:
-    static std::vector<DescriptorSetLayoutInfo *> CreateShaderBindingInfo(
+    static std::unique_ptr<ModuleDescriptorSetLayoutInfo> CreateShaderBindingInfo(
         const void *SpirvCode, size_t SpirvCodeByteCount);
 
     static void PopulateDescriptorSetLayoutInfo(ShaderType ShaderType,
                                           const std::vector<SpvReflectDescriptorSet *> &ReflSets,
-                                          std::vector<DescriptorSetLayoutInfo *> &LayoutInfos);
+                                          std::unique_ptr<ModuleDescriptorSetLayoutInfo> &LayoutInfo);
 
-    static void PopulateDescriptorSetLayoutBinding(
+    static DescriptorSetLayoutBinding PopulateDescriptorSetLayoutBinding(
         ShaderType ShaderType,
-        DescriptorSetLayoutBinding &SetBinding,
         const SpvReflectDescriptorBinding *ReflSetBinding);
 
     static void PopulateShaderMember(ShaderMember &Member,

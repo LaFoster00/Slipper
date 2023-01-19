@@ -121,6 +121,10 @@ class Shader
               const RenderPass *RenderPass,
               std::optional<uint32_t> CurrentFrame = {}) const;
 
+
+    bool SetUniformBuffer(const std::string Name, const UniformBuffer &Buffer) const;
+    bool SetTexture(const std::string Name, const Texture &Texture) const;
+
     [[nodiscard]] UniformBuffer *GetUniformBuffer(const std::string Name,
                                                   const std::optional<uint32_t> Index = {}) const
     {
@@ -149,15 +153,11 @@ class Shader
         const std::optional<uint32_t> Index = {}) const
     {
         std::vector<VkDescriptorSet> ds;
-        for (auto &shader_layout : shaderModuleLayouts | std::views::values) {
-            for (auto descriptor_sets : shader_layout->descriptorSets | std::views::values) {
-                if (Index.has_value()) {
-                    ds.push_back(descriptor_sets[Index.value()]);
-                }
-                else {
-                    ds.push_back(descriptor_sets[GraphicsEngine::Get().currentFrame]);
-                }
-            }
+        if (Index.has_value()) {
+            ds.push_back(m_vkDescriptorSets[Index.value()]);
+        }
+        else {
+            ds.push_back(m_vkDescriptorSets[GraphicsEngine::Get().currentFrame]);
         }
         return ds;
     }
@@ -170,10 +170,13 @@ class Shader
  private:
     void LoadShader(std::string_view Filepath, ShaderType ShaderType);
 
-    GraphicsPipeline &CreateGraphicsPipeline(
-        RenderPass *RenderPass,
-        VkExtent2D &Extent,
-        const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts);
+    void CreateDescriptorPool();
+    VkDescriptorSetLayout CreateDescriptorSetLayout();
+    void AllocateDescriptorSets();
+
+    GraphicsPipeline &CreateGraphicsPipeline(RenderPass *RenderPass,
+                                             VkExtent2D &Extent,
+                                             const VkDescriptorSetLayout DescriptorSetLayout);
 
     static VkShaderModule CreateShaderModule(const std::vector<char> &Code);
     static VkPipelineShaderStageCreateInfo CreateShaderStage(const ShaderType &ShaderType,
@@ -181,20 +184,24 @@ class Shader
 
     void CreateUniformBuffers(size_t Count);
 
-    std::vector<VkDescriptorSetLayout> GetDescriptorSetLayouts() const;
+ private:
+    static VkDescriptorPool GetDescriptorPool();
 
  public:
     Device &device;
 
     std::string name;
-    std::unordered_map<VkShaderModule, std::unique_ptr<ShaderLayout>> shaderModuleLayouts;
+    std::unordered_map<VkShaderModule, std::unique_ptr<ShaderModuleLayout>> shaderModuleLayouts;
     std::unordered_map<DescriptorSetLayoutBinding *, std::vector<std::unique_ptr<UniformBuffer>>>
         uniformBindingBuffers;
 
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 
  private:
+    VkDescriptorPool m_vkDescriptorPool = VK_NULL_HANDLE;
+    std::vector<VkDescriptorSet> m_vkDescriptorSets;
     std::unordered_map<ShaderType, ShaderStage> m_shaderStages;
+    VkDescriptorSetLayout m_vkDescriptorSetLayout = VK_NULL_HANDLE;
     std::unordered_map<const RenderPass *, std::unique_ptr<GraphicsPipeline>> m_graphicsPipelines;
 };
 

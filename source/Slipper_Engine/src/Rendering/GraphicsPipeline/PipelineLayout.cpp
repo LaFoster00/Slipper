@@ -9,12 +9,14 @@
 #include "common_defines.h"
 
 VkPipelineLayout PipelineLayout::CreatePipelineLayout(const Device &Device,
-                                                      const std::vector<VkDescriptorSetLayout> &DescriptorSets)
+                                                      const VkDescriptorSetLayout DescriptorSetLayout)
 {
+    std::vector<VkDescriptorSetLayout> DescriptorSetLayouts(Engine::MAX_FRAMES_IN_FLIGHT,
+                                                            DescriptorSetLayout);
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(DescriptorSets.size());        
-    pipeline_layout_info.pSetLayouts = DescriptorSets.data(); 
+    pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(DescriptorSetLayouts.size());        
+    pipeline_layout_info.pSetLayouts = DescriptorSetLayouts.data(); 
     pipeline_layout_info.pushConstantRangeCount = 0;     // Optional
     pipeline_layout_info.pPushConstantRanges = nullptr;  // Optional
 

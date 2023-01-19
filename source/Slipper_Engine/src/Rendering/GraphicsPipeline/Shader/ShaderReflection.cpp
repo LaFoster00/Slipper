@@ -8,12 +8,12 @@
 #include "common_defines.h"
 #include "spirv_reflect.h"
 
-std::vector<DescriptorSetLayoutInfo *> ShaderReflection::CreateShaderBindingInfo(
+std::unique_ptr<ModuleDescriptorSetLayoutInfo> ShaderReflection::CreateShaderBindingInfo(
     const void *SpirvCode, size_t SpirvCodeByteCount)
 {
     SpvReflectShaderModule module;
     SpvReflectResult result = spvReflectCreateShaderModule(SpirvCodeByteCount, SpirvCode, &module);
-    ASSERT(result = SPV_REFLECT_RESULT_SUCCESS,
+    ASSERT(result,
            "Failed to create reflection data for shader code.")
 
     // Descriptor Sets
@@ -26,7 +26,7 @@ std::vector<DescriptorSetLayoutInfo *> ShaderReflection::CreateShaderBindingInfo
         &module, &descriptor_set_count, refl_descriptor_sets.data());
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
-    std::vector<DescriptorSetLayoutInfo *> descriptor_sets_layout;
+    auto descriptor_sets_layout = std::make_unique<ModuleDescriptorSetLayoutInfo>();
 
     PopulateDescriptorSetLayoutInfo(ShaderReflectionUtil::to_shader_type(module.shader_stage),
                               refl_descriptor_sets,
@@ -38,44 +38,43 @@ std::vector<DescriptorSetLayoutInfo *> ShaderReflection::CreateShaderBindingInfo
 }
 
 void ShaderReflection::PopulateDescriptorSetLayoutInfo(
-    ShaderType ShaderType,
+    const ShaderType ShaderType,
     const std::vector<SpvReflectDescriptorSet *> &ReflSets,
-    std::vector<DescriptorSetLayoutInfo *> &LayoutInfos)
+    std::unique_ptr<ModuleDescriptorSetLayoutInfo> &LayoutInfo)
 {
-    LayoutInfos.reserve(ReflSets.size());
     for (const auto refl_descriptor_set : ReflSets) {
-        const auto &layout_info = LayoutInfos.emplace_back(new DescriptorSetLayoutInfo());
-        layout_info->setNumber = refl_descriptor_set->set;
-        layout_info->bindings.resize(refl_descriptor_set->binding_count);
 
         for (uint32_t binding = 0; binding < refl_descriptor_set->binding_count; ++binding) {
+            LayoutInfo->bindings.push_back(
             PopulateDescriptorSetLayoutBinding(ShaderType,
-                                               layout_info->bindings[binding],
-                                               refl_descriptor_set->bindings[binding]);
+                                               refl_descriptor_set->bindings[binding]));
         }
     }
 }
 
-void ShaderReflection::PopulateDescriptorSetLayoutBinding(
-    ShaderType ShaderType,
-    DescriptorSetLayoutBinding &SetBinding,
+DescriptorSetLayoutBinding ShaderReflection::PopulateDescriptorSetLayoutBinding(
+    const ShaderType ShaderType,
     const SpvReflectDescriptorBinding *ReflSetBinding)
 {
-    SetBinding.name = ReflSetBinding->name;
-    SetBinding.size = ReflSetBinding->block.size;
-    SetBinding.paddedSize = ReflSetBinding->block.padded_size;
-    SetBinding.members.resize(ReflSetBinding->block.member_count);
+    DescriptorSetLayoutBinding set_binding{};
+    set_binding.name = ReflSetBinding->name;
+    set_binding.setNumber = ReflSetBinding->set;
+    set_binding.size = ReflSetBinding->block.size;
+    set_binding.paddedSize = ReflSetBinding->block.padded_size;
+    set_binding.members.resize(ReflSetBinding->block.member_count);
 
-    SetBinding.binding.binding = ReflSetBinding->binding;
-    SetBinding.binding.descriptorType = static_cast<VkDescriptorType>(
+    set_binding.binding.binding = ReflSetBinding->binding;
+    set_binding.binding.descriptorType = static_cast<VkDescriptorType>(
         ReflSetBinding->descriptor_type);
-    SetBinding.binding.descriptorCount = ReflSetBinding->count;
-    SetBinding.binding.pImmutableSamplers = nullptr;
-    SetBinding.binding.stageFlags |= ShaderReflectionUtil::to_shader_stage_flag(ShaderType);
+    set_binding.binding.descriptorCount = ReflSetBinding->count;
+    set_binding.binding.pImmutableSamplers = nullptr;
+    set_binding.binding.stageFlags |= ShaderReflectionUtil::to_shader_stage_flag(ShaderType);
 
     for (uint32_t i = 0; i < ReflSetBinding->block.member_count; ++i) {
-        PopulateShaderMember(SetBinding.members[i], &ReflSetBinding->block.members[i]);
+        PopulateShaderMember(set_binding.members[i], &ReflSetBinding->block.members[i]);
     }
+
+    return set_binding;
 }
 
 void ShaderReflection::PopulateShaderMember(ShaderMember &Member,

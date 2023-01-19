@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 static bool EnableValidationLayers = true;
 
