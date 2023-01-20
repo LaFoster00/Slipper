@@ -68,9 +68,7 @@ GraphicsEngine::~GraphicsEngine()
     for (const auto in_flight_fence : m_inFlightFences) {
         vkDestroyFence(device.logicalDevice, in_flight_fence, nullptr);
     }
-
-    // TODO move this into shader once the descriptor set system is more fleshed out
-    vkDestroyDescriptorSetLayout(device, UniformMVP().GetDescriptorSetLayout(), nullptr);
+    
     shaders.clear();
 }
 

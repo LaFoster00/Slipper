@@ -38,15 +38,17 @@ Shader::~Shader()
 {
     m_graphicsPipelines.clear();
     shaderModuleLayouts.clear();
-    if (descriptorPool)
-        vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+    if (m_vkDescriptorPool)
+        vkDestroyDescriptorPool(device, m_vkDescriptorPool, nullptr);
+
+    vkDestroyDescriptorSetLayout(device, m_vkDescriptorSetLayout, nullptr);
     uniformBindingBuffers.clear();
 
     for (const auto &[shaderType, shaderStage] : m_shaderStages) {
         vkDestroyShaderModule(device.logicalDevice, shaderStage.shaderModule, nullptr);
     }
 
-    vkDestroyDescriptorSetLayout(device, m_vkDescriptorSetLayout, nullptr);
+    
 }
 
 // TODO Introduce surface dependency since this is not only dependent on render pass
@@ -321,39 +323,6 @@ void Shader::AllocateDescriptorSets()
     m_vkDescriptorSets.resize(layouts.size());
     VK_ASSERT(vkAllocateDescriptorSets(Device::Get(), &allocate_info, m_vkDescriptorSets.data()),
               "Failed to allocate descriptor sets!");
-}
-
-VkDescriptorSetLayout UniformMVP::GetDescriptorSetLayout()
-{
-    static VkDescriptorSetLayout layout = nullptr;
-    if (!layout) {
-        VkDescriptorSetLayoutBinding mvp_layout_binding{};
-        mvp_layout_binding.binding = 0;
-        mvp_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        mvp_layout_binding.descriptorCount = 1;
-        mvp_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        mvp_layout_binding.pImmutableSamplers = nullptr;
-
-        VkDescriptorSetLayoutBinding sampler_layout_binding{};
-        sampler_layout_binding.binding = 1;
-        sampler_layout_binding.descriptorCount = 1;
-        sampler_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        sampler_layout_binding.pImmutableSamplers = nullptr;
-        sampler_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-        std::array<VkDescriptorSetLayoutBinding, 2> bindings = {mvp_layout_binding,
-                                                                sampler_layout_binding};
-
-        VkDescriptorSetLayoutCreateInfo layout_info{};
-        layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
-        layout_info.pBindings = bindings.data();
-
-        VK_ASSERT(vkCreateDescriptorSetLayout(Device::Get(), &layout_info, nullptr, &layout),
-                  "Failed to create descriptor set vkLayout!")
-    }
-
-    return layout;
 }
 
 template<> void Shader::SetShaderUniform(const std::string Name, const UniformBuffer &Data)

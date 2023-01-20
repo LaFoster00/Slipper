@@ -32,7 +32,6 @@ enum class ShaderType
 struct ShaderUniform
 {
     virtual ~ShaderUniform() = default;
-    virtual VkDescriptorSetLayout GetDescriptorSetLayout() = 0;
 
     // This is reuqired since the virtual function table takes up additional memory and only the
     // actual data is interesting to vulkan
@@ -48,8 +47,6 @@ struct UniformMVP : ShaderUniform
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 projection;
-
-    VkDescriptorSetLayout GetDescriptorSetLayout() override;
 
     size_t GetDataSize() const override
     {
@@ -194,8 +191,6 @@ class Shader
     std::unordered_map<VkShaderModule, std::unique_ptr<ShaderModuleLayout>> shaderModuleLayouts;
     std::unordered_map<DescriptorSetLayoutBinding *, std::vector<std::unique_ptr<UniformBuffer>>>
         uniformBindingBuffers;
-
-    VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 
  private:
     VkDescriptorPool m_vkDescriptorPool = VK_NULL_HANDLE;
