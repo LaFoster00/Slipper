@@ -37,6 +37,8 @@ GraphicsEngine::GraphicsEngine() : DeviceDependentObject()
         device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
                                device.queueFamilyIndices.graphicsFamily.value());
 
+    depthBuffer = std::make_unique<Texture2D>()
+
     if (bSetupDefaultAssets) {
         SetupDefaultAssets();
         CreateSyncObjects();
@@ -119,9 +121,10 @@ void GraphicsEngine::CreateSyncObjects()
     }
 }
 
-RenderPass *GraphicsEngine::CreateRenderPass(const VkFormat AttachmentFormat)
+RenderPass *GraphicsEngine::CreateRenderPass(const VkFormat AttachmentFormat,
+                                             const VkFormat DepthFormat)
 {
-    return renderPasses.emplace_back(std::make_unique<RenderPass>(AttachmentFormat)).get();
+    return renderPasses.emplace_back(std::make_unique<RenderPass>(AttachmentFormat, DepthFormat)).get();
 }
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface)

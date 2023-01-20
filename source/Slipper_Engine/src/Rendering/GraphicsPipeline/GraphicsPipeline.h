@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RenderPass.h"
-#include "Rendering/Drawing/Framebuffer.h"
 
 class Device;
 class Window;
@@ -14,7 +13,7 @@ class GraphicsPipeline
     GraphicsPipeline(const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
                      VkExtent2D Extent,
                      const RenderPass *RenderPass,
-                     const VkDescriptorSetLayout DescriptorSets);
+                     const VkDescriptorSetLayout DescriptorSetLayout);
     ~GraphicsPipeline();
 
     void Bind(const VkCommandBuffer &CommandBuffer) const;

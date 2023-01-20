@@ -8,16 +8,19 @@
 Texture2D::Texture2D(const StbImage Image)
     : Texture(VK_IMAGE_TYPE_2D, Image.extent, Image.format), filepath(Image.filepath)
 {
-    const VkDeviceSize texture_size = Image.extent.width * Image.extent.height * 4;
-
-    const Buffer staging_buffer(texture_size,
-                                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    Buffer::SetBufferData(Image.pixels, staging_buffer);
+    CreateTexture2D(Image.pixels);
     stbi_image_free(Image.pixels);
+}
 
-    CopyBuffer(staging_buffer);
+Texture2D::Texture2D(const VkExtent2D Extent,
+                     const VkFormat Format,
+                     const VkImageTiling Tiling,
+                     const VkImageUsageFlags Usage,
+                     const VkImageAspectFlags ImageAspect,
+                     VkMemoryPropertyFlags MemoryFlags)
+    : Texture(VK_IMAGE_TYPE_2D, VkExtent3D(Extent.width, Extent.height, 1), Format, Tiling, Usage, ImageAspect)
+{
+    CreateTexture2D(nullptr, MemoryFlags);
 }
 
 Texture2D::~Texture2D()
@@ -45,4 +48,16 @@ std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepat
     auto image = StbImage(
         pixels, tex_dimensions, VK_FORMAT_R8G8B8A8_SRGB, std::move(absolute_path));
     return std::make_unique<Texture2D>(image);
+}
+
+void Texture2D::CreateTexture2D(void *Data, const VkMemoryPropertyFlags MemoryFlags)
+{
+    const VkDeviceSize texture_size = extent.width * extent.height * 4;
+
+    const Buffer staging_buffer(texture_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, MemoryFlags);
+
+    if (Data)
+        Buffer::SetBufferData(Data, staging_buffer);
+
+    CopyBuffer(staging_buffer);
 }

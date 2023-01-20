@@ -68,7 +68,7 @@ class Device
 
     uint32_t FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const;
 
- private:
+private:
     Device(VkPhysicalDevice PhysicalDevice);
     ~Device();
 

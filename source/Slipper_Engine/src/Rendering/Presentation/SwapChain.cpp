@@ -4,6 +4,7 @@
 
 #include "Data/Texture/Texture.h"
 #include "Surface.h"
+#include "Texture/Texture2D.h"
 #include "Window.h"
 #include "common_defines.h"
 
@@ -88,6 +89,12 @@ void SwapChain::Create(VkSwapchainKHR oldSwapChain)
     m_resolution = create_info.imageExtent;
 
     CreateImageViews();
+    depthBuffer = std::make_unique<Texture2D>(extent,
+                                              Texture2D::FindDepthFormat(),
+                                              VK_IMAGE_TILING_OPTIMAL,
+                                              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                              VK_IMAGE_ASPECT_DEPTH_BIT,
+                                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }
 
 void SwapChain::CreateImageViews()

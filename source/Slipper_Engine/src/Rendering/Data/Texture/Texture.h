@@ -17,24 +17,29 @@ class Texture : DeviceDependentObject
     Texture(VkImageType Type,
             VkExtent3D Extent,
             VkFormat Format,
+            VkImageTiling Tiling = VK_IMAGE_TILING_OPTIMAL,
+            VkImageUsageFlags Usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
             uint32_t ArrayLayers = 1);
     Texture(const Texture &Other) = delete;
-    Texture(Texture &&Other) noexcept: sampler(std::move(Other.sampler)), arrayLayerCount(Other.arrayLayerCount), imageInfo(std::move(Other.imageInfo))
+    Texture(Texture &&Other) noexcept
+        : sampler(std::move(Other.sampler)), tiling(Other.tiling), usage(Other.usage),
+          arrayLayerCount(Other.arrayLayerCount),
+          imageInfo(std::move(Other.imageInfo))
     {
-	    texture = Other.texture;
-	    Other.texture = VK_NULL_HANDLE;
+        texture = Other.texture;
+        Other.texture = VK_NULL_HANDLE;
 
-	    textureMemory = Other.textureMemory;
-	    Other.textureMemory = VK_NULL_HANDLE;
+        textureMemory = Other.textureMemory;
+        Other.textureMemory = VK_NULL_HANDLE;
 
-	    textureView = Other.textureView;
-	    Other.textureView = VK_NULL_HANDLE;
+        textureView = Other.textureView;
+        Other.textureView = VK_NULL_HANDLE;
 
-	    type = Other.type;
-	    extent = Other.extent;
-	    format = Other.format;
-	    imageAspect = Other.imageAspect;
+        type = Other.type;
+        extent = Other.extent;
+        format = Other.format;
+        imageAspect = Other.imageAspect;
     }
 
     virtual ~Texture();
@@ -60,6 +65,13 @@ class Texture : DeviceDependentObject
         VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
         uint32_t ArrayLayerCount = 1);
 
+    static VkFormat FindSupportedFormat(const std::vector<VkFormat> &Candidates,
+                                        VkImageTiling Tiling,
+                                        VkFormatFeatureFlags Features);
+    static VkFormat FindDepthFormat();
+
+    static bool HasStencilComponent(const VkFormat Format);
+
  public:
     VkImage texture;
     VkDeviceMemory textureMemory;
@@ -70,7 +82,9 @@ class Texture : DeviceDependentObject
     VkImageType type;
     VkExtent3D extent;
     VkFormat format;
-    
+    VkImageTiling tiling;
+    VkImageUsageFlags usage;
+
     VkImageAspectFlags imageAspect;
     uint32_t arrayLayerCount;
 

@@ -19,7 +19,7 @@ class RenderPass : DeviceDependentObject
 {
  public:
     RenderPass() = delete;
-    RenderPass(VkFormat AttachmentFormat);
+    RenderPass(VkFormat AttachmentFormat, VkFormat DepthFormat);
     ~RenderPass();
 
     void DestroyAllFrameBuffers();

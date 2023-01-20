@@ -1,9 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include "common_includes.h"
 #include "DeviceDependentObject.h"
 #include "Setup/Device.h"
 
+class Texture2D;
 class Window;
 class Device;
 class Surface;
@@ -20,10 +23,15 @@ class SwapChain : DeviceDependentObject
         return m_resolution;
 	}
 
-    [[nodiscard]] const VkFormat &GetFormat() const
+    [[nodiscard]] const VkFormat &GetImageFormat() const
     {
         return m_imageFormat;
 	}
+
+    [[nodiscard]] const VkFormat &GetDepthFormat() const
+    {
+        return m_depthFormat;
+    }
 
     operator VkSwapchainKHR() const
     {
@@ -47,8 +55,10 @@ class SwapChain : DeviceDependentObject
 
     std::vector<VkImage> vkImages;
     std::vector<VkImageView> vkImageViews;
+    std::unique_ptr<Texture2D> depthBuffer;
 
 private:
     VkFormat m_imageFormat;
+    VkFormat m_depthFormat;
     VkExtent2D m_resolution;
 };

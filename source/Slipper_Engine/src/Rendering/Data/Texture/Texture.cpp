@@ -8,12 +8,16 @@
 Texture::Texture(const VkImageType Type,
                  const VkExtent3D Extent,
                  const VkFormat Format,
+                 const VkImageTiling Tiling,
+                 const VkImageUsageFlags Usage,
                  const VkImageAspectFlags ImageAspect,
                  uint32_t ArrayLayers)
     : sampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT),
       type(Type),
       extent(Extent),
       format(Format),
+      tiling(Tiling),
+      usage(Usage),
       imageAspect(ImageAspect),
       arrayLayerCount(ArrayLayers),
       imageInfo(std::make_unique<VkDescriptorImageInfo>())
@@ -25,9 +29,9 @@ Texture::Texture(const VkImageType Type,
     image_info.mipLevels = 1;
     image_info.arrayLayers = arrayLayerCount;
     image_info.format = format;
-    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.tiling = tiling;
     image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    image_info.usage = usage;
     image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     image_info.samples = VK_SAMPLE_COUNT_1_BIT;
     image_info.flags = 0;  // Optional
@@ -83,7 +87,8 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
     VkPipelineStageFlags destination_stage;
 
     CommandPool *command_pool;
-    if (imageInfo->imageLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    if (imageInfo->imageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
@@ -99,6 +104,16 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
 
         source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        command_pool = GraphicsEngine::Get().renderCommandPool;
+    }
+    else if (imageInfo->imageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+             NewLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         command_pool = GraphicsEngine::Get().renderCommandPool;
     }
     else {
@@ -192,4 +207,38 @@ VkImageView Texture::CreateImageView(VkImage image,
     VK_ASSERT(vkCreateImageView(Device::Get(), &view_info, nullptr, &image_view),
               "Failed to create texture image view!");
     return image_view;
+}
+
+VkFormat Texture::FindSupportedFormat(const std::vector<VkFormat> &Candidates,
+                                      const VkImageTiling Tiling,
+                                      const VkFormatFeatureFlags Features)
+{
+    for (const VkFormat format : Candidates) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(Device::Get().physicalDevice, format, &props);
+
+        if (Tiling == VK_IMAGE_TILING_LINEAR &&
+            (props.linearTilingFeatures & Features) == Features) {
+            return format;
+        }
+        else if (Tiling == VK_IMAGE_TILING_OPTIMAL &&
+                 (props.optimalTilingFeatures & Features) == Features) {
+            return format;
+        }
+    }
+
+    throw std::runtime_error("Failed to find supported format!");
+}
+
+VkFormat Texture::FindDepthFormat()
+{
+    return FindSupportedFormat(
+        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+bool Texture::HasStencilComponent(const VkFormat Format)
+{
+    return Format == VK_FORMAT_D32_SFLOAT_S8_UINT || Format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
