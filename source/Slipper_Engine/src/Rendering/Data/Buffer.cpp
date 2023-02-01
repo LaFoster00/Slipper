@@ -62,13 +62,14 @@ Buffer::Buffer(Buffer &&Source) noexcept
 void Buffer::CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer)
 {
     auto &memory_command_pool = *GraphicsEngine::Get().memoryCommandPool;
-    const SingleUseCommandBuffer command_buffer(memory_command_pool);
+    SingleUseCommandBuffer command_buffer(memory_command_pool);
 
     VkBufferCopy copy_region{};
     copy_region.srcOffset = 0;
     copy_region.dstOffset = 0;
     copy_region.size = SrcBuffer.vkBufferSize;
     vkCmdCopyBuffer(command_buffer, SrcBuffer, DstBuffer, 1, &copy_region);
+    command_buffer.Submit();
 }
 
 void Buffer::SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer)

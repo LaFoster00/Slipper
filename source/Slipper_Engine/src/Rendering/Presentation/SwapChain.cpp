@@ -19,6 +19,8 @@ SwapChain::~SwapChain()
         vkDestroyImageView(device.logicalDevice, image_view, nullptr);
     }
 
+    depthBuffer.reset();
+
     vkDestroySwapchainKHR(device.logicalDevice, vkSwapChain, nullptr);
 }
 
@@ -89,12 +91,20 @@ void SwapChain::Create(VkSwapchainKHR oldSwapChain)
     m_resolution = create_info.imageExtent;
 
     CreateImageViews();
-    depthBuffer = std::make_unique<Texture2D>(extent,
-                                              Texture2D::FindDepthFormat(),
-                                              VK_IMAGE_TILING_OPTIMAL,
-                                              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                                              VK_IMAGE_ASPECT_DEPTH_BIT,
-                                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    if (!depthBuffer) {
+        m_depthFormat = Texture2D::FindDepthFormat();
+        depthBuffer = std::make_unique<Texture2D>(extent,
+                                                  m_depthFormat,
+                                                  VK_IMAGE_TILING_OPTIMAL,
+                                                  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                                  VK_IMAGE_ASPECT_DEPTH_BIT,
+                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    }
+    else {
+        const auto texture_extent = VkExtent3D(extent.width, extent.height, 1);
+        depthBuffer->Resize(texture_extent);
+    }
 }
 
 void SwapChain::CreateImageViews()

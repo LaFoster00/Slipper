@@ -61,7 +61,9 @@ void GraphicsPipeline::Create(VkExtent2D Extent)
 
     auto multisampling = PipelineLayout::SetupMultisampleState();
     pipeline_info.pMultisampleState = &multisampling;
-    pipeline_info.pDepthStencilState = nullptr;  // Optional
+
+    auto depth_stencil_state = PipelineLayout::SetupDepthStencilState();
+    pipeline_info.pDepthStencilState = &depth_stencil_state;
 
     VkPipelineColorBlendAttachmentState color_blend_attachment{};
     auto color_blending = PipelineLayout::SetupColorBlendState(color_blend_attachment);

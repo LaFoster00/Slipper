@@ -11,12 +11,12 @@
 VkPipelineLayout PipelineLayout::CreatePipelineLayout(const Device &Device,
                                                       const VkDescriptorSetLayout DescriptorSetLayout)
 {
-    std::vector<VkDescriptorSetLayout> DescriptorSetLayouts(Engine::MAX_FRAMES_IN_FLIGHT,
-                                                            DescriptorSetLayout);
+    const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(Engine::MAX_FRAMES_IN_FLIGHT,
+                                                                  DescriptorSetLayout);
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(DescriptorSetLayouts.size());        
-    pipeline_layout_info.pSetLayouts = DescriptorSetLayouts.data(); 
+    pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());        
+    pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data(); 
     pipeline_layout_info.pushConstantRangeCount = 0;     // Optional
     pipeline_layout_info.pPushConstantRanges = nullptr;  // Optional
 
@@ -114,7 +114,19 @@ VkPipelineMultisampleStateCreateInfo PipelineLayout::SetupMultisampleState()
 
 VkPipelineDepthStencilStateCreateInfo PipelineLayout::SetupDepthStencilState()
 {
-    return VkPipelineDepthStencilStateCreateInfo{};
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_state{};
+    depth_stencil_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil_state.depthTestEnable = VK_TRUE;
+    depth_stencil_state.depthWriteEnable = VK_TRUE;
+    depth_stencil_state.depthCompareOp = VK_COMPARE_OP_LESS;
+    depth_stencil_state.depthBoundsTestEnable = VK_FALSE;
+    depth_stencil_state.minDepthBounds = 0.0f;
+    depth_stencil_state.maxDepthBounds = 1.f;
+    depth_stencil_state.stencilTestEnable = VK_FALSE;
+    depth_stencil_state.front = {};
+    depth_stencil_state.back = {};
+
+    return depth_stencil_state;
 }
 
 /* Pass in empty colorblendattachementstate */

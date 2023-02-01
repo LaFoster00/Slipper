@@ -47,8 +47,6 @@ Shader::~Shader()
     for (const auto &[shaderType, shaderStage] : m_shaderStages) {
         vkDestroyShaderModule(device.logicalDevice, shaderStage.shaderModule, nullptr);
     }
-
-    
 }
 
 // TODO Introduce surface dependency since this is not only dependent on render pass

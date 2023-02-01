@@ -74,8 +74,6 @@ struct SingleUseCommandBuffer
 
     ~SingleUseCommandBuffer() noexcept
     {
-        Submit();
-
         if (buffer.has_value())
 			m_commandPool.DestroySingleUseCommandBuffer(buffer.value());
     }
@@ -88,8 +86,7 @@ struct SingleUseCommandBuffer
         buffer = Other.buffer;
         Other.buffer.reset();
     }
-
-    /* If called before destruction will not be called again on destruction. */
+    
     void Submit()
     {
         if (!m_submitted && buffer.has_value()) {
