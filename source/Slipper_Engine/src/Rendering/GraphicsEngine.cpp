@@ -37,8 +37,6 @@ GraphicsEngine::GraphicsEngine() : DeviceDependentObject()
         device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
                                device.queueFamilyIndices.graphicsFamily.value());
 
-    depthBuffer = std::make_unique<Texture2D>()
-
     if (bSetupDefaultAssets) {
         SetupDefaultAssets();
         CreateSyncObjects();
@@ -131,7 +129,7 @@ void GraphicsEngine::SetupDebugRender(Surface &Surface)
 {
     surfaces.insert(&Surface);
 
-    const auto render_pass = CreateRenderPass(Surface.swapChain->GetFormat());
+    const auto render_pass = CreateRenderPass(Surface.swapChain->GetImageFormat(), Surface.swapChain->GetDepthFormat());
 
     Surface.RegisterRenderPass(*render_pass);
     shaders[0]->RegisterForRenderPass(render_pass, Surface.GetResolution());

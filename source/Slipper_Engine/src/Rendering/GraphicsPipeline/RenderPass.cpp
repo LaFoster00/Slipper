@@ -7,6 +7,7 @@
 
 #include "common_defines.h"
 #include "Presentation/SwapChain.h"
+#include "Drawing/Framebuffer.h"
 
 RenderPass::RenderPass(VkFormat AttachmentFormat, VkFormat DepthFormat)
 {
