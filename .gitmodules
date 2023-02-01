@@ -10,3 +10,7 @@
 [submodule "extern/SPIRV-Reflect"]
 	path = extern/SPIRV-Reflect
 	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
+[submodule "extern/tinyobjloader"]
+	path = extern/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader.git
+	branch = release

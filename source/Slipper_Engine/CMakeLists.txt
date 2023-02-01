@@ -77,6 +77,15 @@ source_group(Spirv-Reflect FILES
     "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.h"
     "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.cpp")
 
+#tinyobjloader
+list(APPEND SLIPPER_ENGINE_SOURCE_FILES
+    "${EXTERNAL_LIBS_DIR}/tinyobjloader/tiny_obj_loader.h"
+    "${EXTERNAL_LIBS_DIR}/tinyobjloader/tiny_obj_loader.cc")
+include_directories(${EXTERNAL_LIBS_DIR}/tinyobjloader)
+source_group(tinyobjloader FILES 
+    "${EXTERNAL_LIBS_DIR}/tinyobjloader/tiny_obj_loader.h"
+    "${EXTERNAL_LIBS_DIR}/tinyobjloader/tiny_obj_loader.cc")
+
 #Include Engine Content containing shader handling
 set(COMPILE_SHADERS ON CACHE BOOL "Compile Shaders")
 add_subdirectory(EngineContent)
