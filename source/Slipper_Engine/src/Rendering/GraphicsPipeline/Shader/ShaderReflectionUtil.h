@@ -1,7 +1,7 @@
 #pragma once
 
 #include "spirv_reflect.h"
-#include "common_includes.h"
+#include "Engine.h"
 
 enum class ShaderMemberType : uint32_t;
 enum class ShaderType;

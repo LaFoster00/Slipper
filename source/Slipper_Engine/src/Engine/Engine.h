@@ -1,10 +1,15 @@
 #pragma once
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+#include "glm/glm.hpp"
+
 #include <vector>
 
 namespace Engine
 {
 static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+static uint64_t FRAME_COUNT = 0;
 
 static bool EnableValidationLayers = true;
 

@@ -4,7 +4,6 @@
 
 #include "DeviceDependentObject.h"
 #include "SwapChain.h"
-#include "common_includes.h"
 
 class RenderPass;
 class SwapChain;

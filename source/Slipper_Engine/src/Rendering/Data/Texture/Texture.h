@@ -2,8 +2,6 @@
 
 #include <memory>
 
-#include "common_includes.h"
-
 #include "DeviceDependentObject.h"
 #include "Drawing/CommandPool.h"
 #include "Drawing/Sampler.h"

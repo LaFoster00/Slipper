@@ -16,6 +16,7 @@
 
 #include <filesystem>
 
+#include "Model/Model.h"
 #include "Shader/Shader.h"
 
 GraphicsEngine *GraphicsEngine::instance = nullptr;
@@ -50,8 +51,6 @@ void GraphicsEngine::SetSetupDefaultAssets(const bool Value)
 
 GraphicsEngine::~GraphicsEngine()
 {
-    meshes.clear();
-
     renderPasses.clear();
 
     delete memoryCommandPool;
@@ -70,12 +69,16 @@ GraphicsEngine::~GraphicsEngine()
     }
     
     shaders.clear();
+
+    models.clear();
+    textures.clear();
 }
 
 void GraphicsEngine::SetupDefaultAssets()
 {
     // The default shader depends on these so initialize them first
-    textures.emplace_back(Texture2D::LoadTexture("./EngineContent/Images/Slippers.jpg"));
+    textures.emplace_back(Texture2D::LoadTexture(DEMO_TEXTURE_PATH));
+    models.emplace_back(std::make_unique<Model>(DEMO_MODEL_PATH));
 
     /* Create shader for this pipeline. */
     std::vector<std::tuple<std::string_view, ShaderType>> shader_stages = {
@@ -85,11 +88,6 @@ void GraphicsEngine::SetupDefaultAssets()
     shaders.emplace_back(std::make_unique<Shader>("BasicVertex",
                                                   shader_stages));
     shaders[0]->SetShaderUniform("texSampler", *textures[0]);
-
-    meshes.emplace_back(std::make_unique<Mesh>(DEBUG_TRIANGLE_VERTICES.data(),
-                                               DEBUG_TRIANGLE_VERTICES.size(),
-                                               DEBUG_TRIANGLE_INDICES.data(),
-                                               DEBUG_TRIANGLE_INDICES.size()));
 }
 
 void GraphicsEngine::CreateSyncObjects()
@@ -144,8 +142,6 @@ void GraphicsEngine::SetupSimpleDraw()
         const auto debug_shader = *RenderPass.registeredShaders.begin();
         debug_shader->Bind(CommandBuffer, &RenderPass);
 
-        meshes[0]->Bind(CommandBuffer);
-
         static auto start_time = std::chrono::high_resolution_clock::now();
 
         const auto current_time = std::chrono::high_resolution_clock::now();
@@ -169,7 +165,7 @@ void GraphicsEngine::SetupSimpleDraw()
 
         debug_shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
 
-        vkCmdDrawIndexed(CommandBuffer, static_cast<uint32_t>(meshes[0]->NumIndex()), 1, 0, 0, 0);
+        models[0]->Draw(CommandBuffer);
     });
 }
 

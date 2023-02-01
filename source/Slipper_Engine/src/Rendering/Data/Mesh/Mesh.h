@@ -2,13 +2,14 @@
 
 #include <array>
 
-#include "common_includes.h"
-
 #include <glm/glm.hpp>
 #include <vector>
 
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
+
+const std::string DEMO_MODEL_PATH = "./EngineContent/Models/VikingRoom/viking_room.obj";
+const std::string DEMO_TEXTURE_PATH = "./EngineContent/Models/VikingRoom/viking_room.png";
 
 struct Vertex
 {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DeviceDependentObject.h"
-#include "common_includes.h"
 
 class Device;
 class RenderPass;

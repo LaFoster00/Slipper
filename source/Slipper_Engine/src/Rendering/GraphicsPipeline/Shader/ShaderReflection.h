@@ -1,7 +1,8 @@
 #pragma once
 #include <memory>
 
-#include "common_includes.h"
+#include "Engine.h"
+
 
 enum class ShaderType;
 struct ShaderMember;

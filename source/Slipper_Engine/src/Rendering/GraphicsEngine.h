@@ -5,13 +5,13 @@
 
 #include "DeviceDependentObject.h"
 #include "Drawing/Sampler.h"
-#include "common_includes.h"
 
 #include <functional>
 #include <memory>
 #include <unordered_set>
 #include <vector>
 
+class Model;
 class Texture2D;
 class Texture;
 class CommandPool;
@@ -68,7 +68,7 @@ class GraphicsEngine : DeviceDependentObject
     std::vector<std::unique_ptr<Texture>> textures;
     std::unique_ptr<Texture2D> depthBuffer;
     std::vector<std::unique_ptr<RenderPass>> renderPasses;
-    std::vector<std::unique_ptr<Mesh>> meshes;
+    std::vector<std::unique_ptr<Model>> models;
 
     // Render commands
     CommandPool *renderCommandPool;

@@ -4,7 +4,6 @@
 
 #include "DeviceDependentObject.h"
 #include "Setup/Device.h"
-#include "common_includes.h"
 
 struct SingleUseCommandBuffer;
 class RenderPass;

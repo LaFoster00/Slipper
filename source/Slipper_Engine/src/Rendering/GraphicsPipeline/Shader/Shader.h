@@ -10,7 +10,6 @@
 #include "GraphicsEngine.h"
 #include "ShaderLayout.h"
 #include "common_defines.h"
-#include "common_includes.h"
 
 class ShaderLayout;
 class ShaderReflection;
