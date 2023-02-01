@@ -22,6 +22,11 @@ Texture::Texture(const VkImageType Type,
       arrayLayerCount(ArrayLayers),
       imageInfo(std::make_unique<VkDescriptorImageInfo>())
 {
+    Create();
+}
+
+void Texture::Create()
+{
     VkImageCreateInfo image_info{};
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_info.imageType = type;
@@ -66,8 +71,18 @@ Texture::~Texture()
     vkFreeMemory(device, textureMemory, nullptr);
 }
 
+void Texture::Resize(const VkExtent3D Extent)
+{
+    extent = Extent;
+    vkDestroyImageView(device, textureView, nullptr);
+    vkDestroyImage(device, texture, nullptr);
+    vkFreeMemory(device, textureMemory, nullptr);
+
+    Create();
+}
+
 // TODO Format will be used for depth buffer, do not remove
-SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
+SingleUseCommandBuffer Texture::CreateTransitionImageLayout(VkFormat Format,
                                                       const VkImageLayout NewLayout)
 {
     VkImageMemoryBarrier barrier{};
@@ -87,8 +102,19 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
     VkPipelineStageFlags destination_stage;
 
     CommandPool *command_pool;
-    if (imageInfo->imageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-        NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    if (barrier.newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        if (HasStencilComponent(format)) {
+            barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+    }
+    else {
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+
+    if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
@@ -97,8 +123,9 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
 
         command_pool = GraphicsEngine::Get().memoryCommandPool;
     }
-    else if (imageInfo->imageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-             NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+             barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
@@ -106,8 +133,9 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
         destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         command_pool = GraphicsEngine::Get().renderCommandPool;
     }
-    else if (imageInfo->imageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-             NewLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) {
+    else if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+             barrier.newLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) {
+
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
                                 VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -130,8 +158,8 @@ SingleUseCommandBuffer Texture::TransitionImageLayout(VkFormat Format,
 
 void Texture::CopyBuffer(const Buffer &Buffer, const bool TransitionToShaderUse)
 {
-    SingleUseCommandBuffer command_buffer = TransitionImageLayout(
-        VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    SingleUseCommandBuffer command_buffer = CreateTransitionImageLayout(
+        format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     VkBufferImageCopy region{};
     region.bufferOffset = 0;
@@ -152,7 +180,7 @@ void Texture::CopyBuffer(const Buffer &Buffer, const bool TransitionToShaderUse)
     command_buffer.Submit();
 
     if (TransitionToShaderUse) {
-        TransitionImageLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        CreateTransitionImageLayout(format, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL).Submit();
     }
 }
 

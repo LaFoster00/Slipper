@@ -21,7 +21,9 @@ class Texture : DeviceDependentObject
             VkImageUsageFlags Usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
             uint32_t ArrayLayers = 1);
+
     Texture(const Texture &Other) = delete;
+
     Texture(Texture &&Other) noexcept
         : sampler(std::move(Other.sampler)), tiling(Other.tiling), usage(Other.usage),
           arrayLayerCount(Other.arrayLayerCount),
@@ -44,7 +46,9 @@ class Texture : DeviceDependentObject
 
     virtual ~Texture();
 
-    SingleUseCommandBuffer TransitionImageLayout(VkFormat Format, VkImageLayout NewLayout);
+    virtual void Resize(const VkExtent3D Extent);
+
+    SingleUseCommandBuffer CreateTransitionImageLayout(VkFormat Format, VkImageLayout NewLayout);
     void CopyBuffer(const Buffer &Buffer, bool TransitionToShaderUse = true);
     VkDescriptorImageInfo *GetDescriptorImageInfo() const;
 
@@ -71,6 +75,9 @@ class Texture : DeviceDependentObject
     static VkFormat FindDepthFormat();
 
     static bool HasStencilComponent(const VkFormat Format);
+
+ private:
+    void Create();
 
  public:
     VkImage texture;

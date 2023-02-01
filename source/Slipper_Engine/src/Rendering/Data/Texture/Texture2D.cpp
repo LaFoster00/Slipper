@@ -18,7 +18,12 @@ Texture2D::Texture2D(const VkExtent2D Extent,
                      const VkImageUsageFlags Usage,
                      const VkImageAspectFlags ImageAspect,
                      VkMemoryPropertyFlags MemoryFlags)
-    : Texture(VK_IMAGE_TYPE_2D, VkExtent3D(Extent.width, Extent.height, 1), Format, Tiling, Usage, ImageAspect)
+    : Texture(VK_IMAGE_TYPE_2D,
+              VkExtent3D(Extent.width, Extent.height, 1),
+              Format,
+              Tiling,
+              Usage,
+              ImageAspect)
 {
     CreateTexture2D(nullptr, MemoryFlags);
 }
@@ -30,7 +35,7 @@ Texture2D::~Texture2D()
 std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath)
 {
     VkExtent3D tex_dimensions{0, 0, 1};
-    const std::string absolute_path = Path::make_engine_relative_path_absolute(Filepath);
+    std::string absolute_path = Path::make_engine_relative_path_absolute(Filepath);
     stbi_uc *pixels = nullptr;
     {
         int tex_width, tex_height, tex_channels;
@@ -56,8 +61,8 @@ void Texture2D::CreateTexture2D(void *Data, const VkMemoryPropertyFlags MemoryFl
 
     const Buffer staging_buffer(texture_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, MemoryFlags);
 
-    if (Data)
+    if (Data) {
         Buffer::SetBufferData(Data, staging_buffer);
-
-    CopyBuffer(staging_buffer);
+        CopyBuffer(staging_buffer);
+    }
 }
