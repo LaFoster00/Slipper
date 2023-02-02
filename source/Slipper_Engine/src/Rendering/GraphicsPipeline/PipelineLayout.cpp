@@ -6,17 +6,17 @@
 #include <optional>
 
 #include "Mesh/Mesh.h"
+#include "Setup/GraphicsSettings.h"
 #include "common_defines.h"
 
-VkPipelineLayout PipelineLayout::CreatePipelineLayout(const Device &Device,
-                                                      const VkDescriptorSetLayout DescriptorSetLayout)
+VkPipelineLayout PipelineLayout::CreatePipelineLayout(
+    const Device &Device, const VkDescriptorSetLayout DescriptorSetLayout)
 {
-    const std::vector<VkDescriptorSetLayout> descriptor_set_layouts(Engine::MAX_FRAMES_IN_FLIGHT,
-                                                                  DescriptorSetLayout);
+    const std::vector descriptor_set_layouts(Engine::MAX_FRAMES_IN_FLIGHT, DescriptorSetLayout);
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());        
-    pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data(); 
+    pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
+    pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data();
     pipeline_layout_info.pushConstantRangeCount = 0;     // Optional
     pipeline_layout_info.pPushConstantRanges = nullptr;  // Optional
 
@@ -30,8 +30,8 @@ VkPipelineLayout PipelineLayout::CreatePipelineLayout(const Device &Device,
 
 VkPipelineVertexInputStateCreateInfo PipelineLayout::SetupVertexInputState()
 {
-	const auto binding_description = Vertex::GetBindingDescription();
-	const auto attribute_descriptions = Vertex::GetAttributeDescriptions();
+    const auto binding_description = Vertex::GetBindingDescription();
+    const auto attribute_descriptions = Vertex::GetAttributeDescriptions();
 
     VkPipelineVertexInputStateCreateInfo vertex_input_info{};
     vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -103,7 +103,7 @@ VkPipelineMultisampleStateCreateInfo PipelineLayout::SetupMultisampleState()
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampling.rasterizationSamples = GraphicsSettings::Get().MSAA_SAMPLES;
     multisampling.minSampleShading = 1.0f;           // Optional
     multisampling.pSampleMask = nullptr;             // Optional
     multisampling.alphaToCoverageEnable = VK_FALSE;  // Optional
@@ -160,7 +160,7 @@ VkPipelineColorBlendStateCreateInfo PipelineLayout::SetupColorBlendState(
 }
 
 VkPipelineDynamicStateCreateInfo PipelineLayout::SetupDynamicState(
-	const std::optional<std::vector<VkDynamicState>> DynamicStates)
+    const std::optional<std::vector<VkDynamicState>> DynamicStates)
 {
     VkPipelineDynamicStateCreateInfo dynamic_state{};
     dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;

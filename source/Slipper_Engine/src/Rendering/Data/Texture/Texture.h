@@ -16,6 +16,7 @@ class Texture : DeviceDependentObject
             VkExtent3D Extent,
             VkFormat Format,
             bool GenerateMipMaps = true,
+            VkSampleCountFlagBits NumSamples = VK_SAMPLE_COUNT_1_BIT,
             VkImageTiling Tiling = VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlags Usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -35,6 +36,7 @@ class Texture : DeviceDependentObject
           format(Other.format),
           tiling(Other.tiling),
           usage(Other.usage),
+          numSamples(Other.numSamples),
           imageAspect(0),
           arrayLayerCount(Other.arrayLayerCount),
           imageInfo(std::move(Other.imageInfo))
@@ -97,6 +99,7 @@ class Texture : DeviceDependentObject
     VkFormat format;
     VkImageTiling tiling;
     VkImageUsageFlags usage;
+    VkSampleCountFlagBits numSamples;
 
     VkImageAspectFlags imageAspect;
     uint32_t arrayLayerCount;

@@ -85,7 +85,7 @@ void ShaderReflection::PopulateShaderMember(ShaderMember &Member,
     Member.paddedSize = ReflMember->padded_size;
     Member.type = ShaderReflectionUtil::to_shader_member_type(*ReflMember->type_description);
     Member.members.resize(ReflMember->member_count);
-    for (int i = 0; i < ReflMember->member_count; ++i) {
+    for (uint32_t i = 0; i < ReflMember->member_count; ++i) {
         PopulateShaderMember(Member.members[i], &ReflMember->members[i]);
     }
 }

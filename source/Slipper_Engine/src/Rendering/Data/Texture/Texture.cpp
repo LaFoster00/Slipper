@@ -10,16 +10,18 @@ Texture::Texture(const VkImageType Type,
                  const VkExtent3D Extent,
                  const VkFormat Format,
                  const bool GenerateMipMaps,
+                 const VkSampleCountFlagBits NumSamples,
                  const VkImageTiling Tiling,
                  const VkImageUsageFlags Usage,
                  const VkImageAspectFlags ImageAspect,
-                 uint32_t ArrayLayers)
+                 const uint32_t ArrayLayers)
     : generateMipMaps(GenerateMipMaps),
       type(Type),
       extent(Extent),
       format(Format),
       tiling(Tiling),
       usage(Usage),
+      numSamples(NumSamples),
       imageAspect(ImageAspect),
       arrayLayerCount(ArrayLayers),
       imageInfo()
@@ -63,7 +65,7 @@ void Texture::Create()
     else {
         image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
-    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_info.samples = numSamples;
     image_info.flags = 0;  // Optional
 
     imageInfo.imageLayout = image_info.initialLayout;

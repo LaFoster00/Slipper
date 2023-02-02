@@ -5,6 +5,8 @@
 #include "DeviceDependentObject.h"
 #include "Setup/Device.h"
 
+class DepthBuffer;
+class RenderTarget;
 class Texture2D;
 class Window;
 class Device;
@@ -48,13 +50,16 @@ class SwapChain : DeviceDependentObject
 
  public:
     Surface &surface;
+
 	SwapChainSupportDetails swapChainSupport;
 
     VkSwapchainKHR vkSwapChain;
 
     std::vector<VkImage> vkImages;
     std::vector<VkImageView> vkImageViews;
-    std::unique_ptr<Texture2D> depthBuffer;
+
+    std::unique_ptr<RenderTarget> renderTarget;
+    std::unique_ptr<DepthBuffer> depthBuffer;
 
 private:
     VkFormat m_imageFormat;

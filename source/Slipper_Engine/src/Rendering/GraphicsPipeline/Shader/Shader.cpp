@@ -89,7 +89,7 @@ void Shader::Bind(const VkCommandBuffer &CommandBuffer,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 m_graphicsPipelines.at(RenderPass)->vkPipelineLayout,
                                 0,
-                                descriptor_sets.size(),
+                                static_cast<uint32_t>(descriptor_sets.size()),
                                 descriptor_sets.data(),
                                 0,
                                 nullptr);

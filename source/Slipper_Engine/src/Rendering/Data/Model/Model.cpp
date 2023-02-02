@@ -53,5 +53,5 @@ Model::Model(std::string_view FilePath)
 void Model::Draw(VkCommandBuffer CommandBuffer, uint32_t InstanceCount) const
 {
     m_mesh->Bind(CommandBuffer);
-    vkCmdDrawIndexed(CommandBuffer, m_mesh->NumIndex(), InstanceCount, 0, 0, 0);
+    vkCmdDrawIndexed(CommandBuffer, static_cast<uint32_t>(m_mesh->NumIndex()), InstanceCount, 0, 0, 0);
 }

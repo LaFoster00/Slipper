@@ -4,11 +4,14 @@
 
 #include "Data/Texture/Texture.h"
 #include "Surface.h"
+#include "Texture/DepthBuffer.h"
+#include "Texture/RenderTarget.h"
 #include "Texture/Texture2D.h"
 #include "Window.h"
 #include "common_defines.h"
 
-SwapChain::SwapChain(Surface &Surface) : surface(Surface)
+SwapChain::SwapChain(Surface &Surface)
+    : surface(Surface)
 {
     Create();
 }
@@ -92,19 +95,19 @@ void SwapChain::Create(VkSwapchainKHR oldSwapChain)
 
     CreateImageViews();
 
-    if (!depthBuffer) {
-        m_depthFormat = Texture2D::FindDepthFormat();
-        depthBuffer = std::make_unique<Texture2D>(extent,
-                                                  m_depthFormat,
-                                                  false,
-                                                  VK_IMAGE_TILING_OPTIMAL,
-                                                  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                                                  VK_IMAGE_ASPECT_DEPTH_BIT,
-                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    if (!renderTarget) {
+        renderTarget = std::make_unique<RenderTarget>(extent, format);
     }
     else {
-        const auto texture_extent = VkExtent3D(extent.width, extent.height, 1);
-        depthBuffer->Resize(texture_extent);
+        renderTarget->Resize(VkExtent3D(extent.width, extent.height, 1));
+    }
+
+    if (!depthBuffer) {
+        m_depthFormat = Texture2D::FindDepthFormat();
+        depthBuffer = std::make_unique<DepthBuffer>(extent, m_depthFormat);
+    }
+    else {
+        depthBuffer->Resize(VkExtent3D(extent.width, extent.height, 1));
     }
 }
 
@@ -112,7 +115,8 @@ void SwapChain::CreateImageViews()
 {
     vkImageViews.resize(vkImages.size());
     for (size_t i = 0; i < vkImages.size(); i++) {
-        vkImageViews[i] = Texture::CreateImageView(vkImages[i], VK_IMAGE_TYPE_2D, m_imageFormat, 1);
+        vkImageViews[i] = Texture::CreateImageView(
+            vkImages[i], VK_IMAGE_TYPE_2D, m_imageFormat, 1);
     }
 }
 

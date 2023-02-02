@@ -1,6 +1,7 @@
 #include "HelloTriangleApplication.h"
 
 #include "Rendering/GraphicsEngine.h"
+#include "Setup/GraphicsSettings.h"
 #include "Time/Time.h"
 
 void HelloTriangleApplication::InitWindow()
@@ -22,6 +23,9 @@ void HelloTriangleApplication::InitVulkan()
     instance = &Instance::Get();
     surface = new Surface(*window);
     device = Device::PickPhysicalDevice(surface, true);
+
+    GraphicsSettings::Get().MSAA_SAMPLES = device->GetMaxUsableSampleCount();
+
     surface->CreateSwapChain();
     graphics = &GraphicsEngine::Get();
 
@@ -35,8 +39,9 @@ void HelloTriangleApplication::MainLoop()
         Time::Tick(Engine::FRAME_COUNT);
         Engine::FRAME_COUNT += 1;
         if (!(Engine::FRAME_COUNT % 64)) {
-            std::cout << '\r' << std::setw(10) << 1.0f / Time::DeltaTimeSmooth() << "fps" << std::setw(2)
-                      << Time::DeltaTimeSmooth() << ' ' << std::setw(2) << "ms" << std::flush;
+            std::cout << '\r' << std::setw(10) << 1.0f / Time::DeltaTimeSmooth() << "fps"
+                      << std::setw(2) << Time::DeltaTimeSmooth() << ' ' << std::setw(2) << "ms"
+                      << std::flush;
         }
         graphics->DrawFrame();
     }

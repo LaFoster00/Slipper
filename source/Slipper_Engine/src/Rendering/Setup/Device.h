@@ -71,6 +71,7 @@ class Device
     VkSurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const;
     SwapChainSupportDetails QuerySwapChainSupport(const Surface *Surface) const;
     VkExtent2D GetSurfaceResolution(const Surface *Surface) const;
+    VkSampleCountFlagBits GetMaxUsableSampleCount() const;
 
     uint32_t FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const;
 

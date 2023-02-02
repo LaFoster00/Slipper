@@ -23,6 +23,7 @@ Texture2D::Texture2D(const VkExtent2D Extent,
               VkExtent3D(Extent.width, Extent.height, 1),
               Format,
               GenerateMipMaps,
+              VK_SAMPLE_COUNT_1_BIT,
               Tiling,
               Usage,
               ImageAspect)
