@@ -287,7 +287,7 @@ const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface
 
     i = 0;
     for (const auto &queue_family : queueFamilies) {
-        if ((queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0 &&
+        if ((queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
             queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT) {
             indices.transferFamily = i;
             break;

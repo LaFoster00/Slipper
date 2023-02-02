@@ -1,12 +1,13 @@
 #pragma once
 
 #include <array>
-
-#include <glm/glm.hpp>
 #include <vector>
 
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 const std::string DEMO_MODEL_PATH = "./EngineContent/Models/VikingRoom/viking_room.obj";
 const std::string DEMO_TEXTURE_PATH = "./EngineContent/Models/VikingRoom/viking_room.png";
@@ -16,6 +17,11 @@ struct Vertex
     glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 texCoord;
+
+    bool operator==(const Vertex &other) const
+    {
+        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+    }
 
     static VkVertexInputBindingDescription *GetBindingDescription()
     {
@@ -49,6 +55,18 @@ struct Vertex
         return &attribute_descriptions;
     }
 };
+
+namespace std
+{
+template<> struct hash<Vertex>
+{
+    size_t operator()(Vertex const &Vertex) const noexcept
+    {
+        return ((hash<glm::vec3>()(Vertex.pos) ^ (hash<glm::vec3>()(Vertex.color) << 1)) >> 1) ^
+               (hash<glm::vec2>()(Vertex.texCoord) << 1);
+    }
+};
+}  // namespace std
 
 const std::vector<Vertex> DEBUG_TRIANGLE_VERTICES = {
     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},

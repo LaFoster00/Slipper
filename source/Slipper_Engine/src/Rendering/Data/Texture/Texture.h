@@ -15,6 +15,7 @@ class Texture : DeviceDependentObject
     Texture(VkImageType Type,
             VkExtent3D Extent,
             VkFormat Format,
+            bool GenerateMipMaps = true,
             VkImageTiling Tiling = VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlags Usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -23,32 +24,34 @@ class Texture : DeviceDependentObject
     Texture(const Texture &Other) = delete;
 
     Texture(Texture &&Other) noexcept
-        : sampler(std::move(Other.sampler)), tiling(Other.tiling), usage(Other.usage),
+        : generateMipMaps(Other.generateMipMaps),
+          mipLevels(Other.mipLevels),
+          texture(Other.texture),
+          textureMemory(Other.textureMemory),
+          sampler(std::move(Other.sampler)),
+          textureView(Other.textureView),
+          type(Other.type),
+          extent(Other.extent),
+          format(Other.format),
+          tiling(Other.tiling),
+          usage(Other.usage),
+          imageAspect(0),
           arrayLayerCount(Other.arrayLayerCount),
           imageInfo(std::move(Other.imageInfo))
     {
-        texture = Other.texture;
         Other.texture = VK_NULL_HANDLE;
-
-        textureMemory = Other.textureMemory;
         Other.textureMemory = VK_NULL_HANDLE;
-
-        textureView = Other.textureView;
         Other.textureView = VK_NULL_HANDLE;
-
-        type = Other.type;
-        extent = Other.extent;
-        format = Other.format;
-        imageAspect = Other.imageAspect;
     }
 
     virtual ~Texture();
 
     virtual void Resize(const VkExtent3D Extent);
 
-    SingleUseCommandBuffer CreateTransitionImageLayout(VkFormat Format, VkImageLayout NewLayout);
+    void EnqueueTransitionImageLayout(VkCommandBuffer CommandBuffer, VkImageLayout NewLayout);
+    SingleUseCommandBuffer CreateTransitionImageLayout(VkImageLayout NewLayout);
     void CopyBuffer(const Buffer &Buffer, bool TransitionToShaderUse = true);
-    VkDescriptorImageInfo *GetDescriptorImageInfo() const;
+    const VkDescriptorImageInfo *GetDescriptorImageInfo() const;
 
     operator VkImage() const
     {
@@ -61,9 +64,10 @@ class Texture : DeviceDependentObject
     }
 
     [[nodiscard]] static VkImageView CreateImageView(
-        VkImage image,
+        VkImage Image,
         VkImageType Type,
         VkFormat Format,
+        uint32_t MipLevels,
         VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
         uint32_t ArrayLayerCount = 1);
 
@@ -76,8 +80,12 @@ class Texture : DeviceDependentObject
 
  private:
     void Create();
+    void EnqueueGenerateMipMaps(VkCommandBuffer CommandBuffer);
 
  public:
+    bool generateMipMaps;
+    uint32_t mipLevels;
+
     VkImage texture;
     VkDeviceMemory textureMemory;
     Sampler sampler;
@@ -93,5 +101,5 @@ class Texture : DeviceDependentObject
     VkImageAspectFlags imageAspect;
     uint32_t arrayLayerCount;
 
-    std::unique_ptr<VkDescriptorImageInfo> imageInfo;
+    VkDescriptorImageInfo imageInfo;
 };

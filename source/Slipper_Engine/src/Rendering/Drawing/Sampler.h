@@ -2,17 +2,30 @@
 
 #include "DeviceDependentObject.h"
 
+#include "Setup/Device.h"
+
 class Sampler : DeviceDependentObject
 {
  public:
-    Sampler(VkFilter Filter, VkSamplerAddressMode AddressMode);
+    Sampler() = default;
+    Sampler(VkFilter Filter, VkSamplerAddressMode AddressMode, uint32_t MipLevels);
     Sampler(const Sampler &Other) = delete;
     Sampler(Sampler &&Other) noexcept
     {
         sampler = Other.sampler;
         Other.sampler = VK_NULL_HANDLE;
     }
-    ~Sampler();
+
+    Sampler& operator=(Sampler &&Other) noexcept
+    {
+        sampler = Other.sampler;
+        Other.sampler = VK_NULL_HANDLE;
+        return *this;
+    }
+    ~Sampler()
+    {
+        vkDestroySampler(device, sampler, nullptr);
+    }
 
     operator VkSampler() const
     {
@@ -31,7 +44,7 @@ class Sampler : DeviceDependentObject
     {
         if (!m_linearSampler)
         {
-            m_linearSampler = new Sampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
+            m_linearSampler = new Sampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 0);
         }
         return *m_linearSampler;
     }
@@ -40,13 +53,13 @@ class Sampler : DeviceDependentObject
     {
         if (!m_nearestSampler)
         {
-            m_nearestSampler = new Sampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT);
+            m_nearestSampler = new Sampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT, 0);
         }
         return *m_nearestSampler;
     }
 
  public:
-    VkSampler sampler;
+    VkSampler sampler = VK_NULL_HANDLE;
 
  private:
     static Sampler *m_linearSampler;

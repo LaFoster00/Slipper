@@ -5,8 +5,8 @@
 #include "Buffer.h"
 #include "Path.h"
 
-Texture2D::Texture2D(const StbImage Image)
-    : Texture(VK_IMAGE_TYPE_2D, Image.extent, Image.format), filepath(Image.filepath)
+Texture2D::Texture2D(const StbImage Image, const bool GenerateMipMaps)
+    : Texture(VK_IMAGE_TYPE_2D, Image.extent, Image.format, GenerateMipMaps), filepath(Image.filepath)
 {
     CreateTexture2D(Image.pixels);
     stbi_image_free(Image.pixels);
@@ -14,13 +14,15 @@ Texture2D::Texture2D(const StbImage Image)
 
 Texture2D::Texture2D(const VkExtent2D Extent,
                      const VkFormat Format,
+                     const bool GenerateMipMaps,
                      const VkImageTiling Tiling,
                      const VkImageUsageFlags Usage,
                      const VkImageAspectFlags ImageAspect,
-                     VkMemoryPropertyFlags MemoryFlags)
+                     const VkMemoryPropertyFlags MemoryFlags)
     : Texture(VK_IMAGE_TYPE_2D,
               VkExtent3D(Extent.width, Extent.height, 1),
               Format,
+              GenerateMipMaps,
               Tiling,
               Usage,
               ImageAspect)
@@ -32,7 +34,7 @@ Texture2D::~Texture2D()
 {
 }
 
-std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath)
+std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath, const bool GenerateMipMaps)
 {
     VkExtent3D tex_dimensions{0, 0, 1};
     std::string absolute_path = Path::make_engine_relative_path_absolute(Filepath);
@@ -52,7 +54,7 @@ std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepat
 
     auto image = StbImage(
         pixels, tex_dimensions, VK_FORMAT_R8G8B8A8_SRGB, std::move(absolute_path));
-    return std::make_unique<Texture2D>(image);
+    return std::make_unique<Texture2D>(image, GenerateMipMaps);
 }
 
 void Texture2D::CreateTexture2D(void *Data, const VkMemoryPropertyFlags MemoryFlags)

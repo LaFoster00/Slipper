@@ -62,9 +62,8 @@ struct SingleUseCommandBuffer
 
     explicit SingleUseCommandBuffer(
         CommandPool &CommandPool,
-        const VkCommandBufferUsageFlags Flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        const bool SubmitOnDestruct = true)
-        : m_commandPool(CommandPool), m_submit(SubmitOnDestruct)
+        const VkCommandBufferUsageFlags Flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+        : m_commandPool(CommandPool)
     {
         int32_t buffer_index = 0;
         buffer = m_commandPool.CreateSingleUseCommandBuffer();
@@ -74,31 +73,29 @@ struct SingleUseCommandBuffer
     ~SingleUseCommandBuffer() noexcept
     {
         if (buffer.has_value())
-			m_commandPool.DestroySingleUseCommandBuffer(buffer.value());
+            m_commandPool.DestroySingleUseCommandBuffer(buffer.value());
     }
 
     SingleUseCommandBuffer(const SingleUseCommandBuffer &Other) = delete;
 
     SingleUseCommandBuffer(SingleUseCommandBuffer &&Other) noexcept
-        : m_commandPool(Other.m_commandPool), m_submit(Other.m_submit)
+        : m_commandPool(Other.m_commandPool)
     {
         buffer = Other.buffer;
         Other.buffer.reset();
     }
-    
+
     void Submit()
     {
         if (!m_submitted && buffer.has_value()) {
             m_commandPool.EndCommandBuffer(buffer.value());
-            if (m_submit) {
-                VkSubmitInfo submit_info{};
-                submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                submit_info.commandBufferCount = 1;
-                submit_info.pCommandBuffers = &buffer.value();
+            VkSubmitInfo submit_info{};
+            submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submit_info.commandBufferCount = 1;
+            submit_info.pCommandBuffers = &buffer.value();
 
-                vkQueueSubmit(m_commandPool.GetQueue(), 1, &submit_info, VK_NULL_HANDLE);
-                vkQueueWaitIdle(m_commandPool.GetQueue());
-            }
+            vkQueueSubmit(m_commandPool.GetQueue(), 1, &submit_info, VK_NULL_HANDLE);
+            vkQueueWaitIdle(m_commandPool.GetQueue());
 
             m_submitted = true;
         }
@@ -116,6 +113,5 @@ struct SingleUseCommandBuffer
 
  private:
     CommandPool &m_commandPool;
-    bool m_submit;
     bool m_submitted = false;
 };

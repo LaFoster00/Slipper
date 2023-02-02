@@ -2,6 +2,7 @@
 
 #include "Filesystem/Path.h"
 #include "tiny_obj_loader.h"
+#include <unordered_map>
 
 Model::Model(std::string_view FilePath)
 {
@@ -20,6 +21,7 @@ Model::Model(std::string_view FilePath)
     }
 
     std::vector<Vertex> vertices;
+    std::unordered_map<Vertex, uint32_t> uniqueVertices;
     std::vector<VertexIndex> indices;
 
     for (const auto &shape : shapes) {
@@ -30,19 +32,22 @@ Model::Model(std::string_view FilePath)
                           attrib.vertices[3 * index.vertex_index + 1],
                           attrib.vertices[3 * index.vertex_index + 2]};
 
-            vertex.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                attrib.texcoords[2 * index.texcoord_index + 1]
-            };
+            vertex.texCoord = {attrib.texcoords[2 * index.texcoord_index + 0],
+                               1.0f - attrib.texcoords[2 * index.texcoord_index + 1]};
 
             vertex.color = {1.0f, 1.0f, 1.0f};
 
-            vertices.push_back(vertex);
-            indices.push_back(indices.size());
+            if (!uniqueVertices.contains(vertex)) {
+                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+
+            indices.push_back(uniqueVertices[vertex]);
         }
     }
 
-    m_mesh = std::make_unique<Mesh>(vertices.data(), vertices.size(), indices.data(), indices.size());
+    m_mesh = std::make_unique<Mesh>(
+        vertices.data(), vertices.size(), indices.data(), indices.size());
 }
 
 void Model::Draw(VkCommandBuffer CommandBuffer, uint32_t InstanceCount) const

@@ -17,7 +17,7 @@ struct QueueFamilyIndices
 
     bool IsComplete() const
     {
-        return graphicsFamily.has_value() && presentFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value() && transferFamily.has_value();
     }
 };
 
@@ -55,6 +55,11 @@ class Device
     operator VkDevice() const
     {
         return logicalDevice;
+    }
+
+    operator VkPhysicalDevice() const
+    {
+        return physicalDevice;
     }
 
     void InitLogicalDevice();

@@ -6,7 +6,7 @@
 Sampler *Sampler::m_linearSampler = nullptr;
 Sampler *Sampler::m_nearestSampler = nullptr;
 
-Sampler::Sampler(const VkFilter Filter, const VkSamplerAddressMode AddressMode)
+Sampler::Sampler(const VkFilter Filter, const VkSamplerAddressMode AddressMode, const uint32_t MipLevels)
 {
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -23,14 +23,9 @@ Sampler::Sampler(const VkFilter Filter, const VkSamplerAddressMode AddressMode)
     sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
     sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     sampler_info.mipLodBias = 0.0f;
-    sampler_info.minLod = 0.0f;
-    sampler_info.maxLod = 0.0f;
+    sampler_info.minLod = static_cast<float>(0);
+    sampler_info.maxLod = static_cast<float>(MipLevels);
 
     VK_ASSERT(vkCreateSampler(device, &sampler_info, nullptr, &sampler),
               "Failed to create texture sampler!")
-}
-
-Sampler::~Sampler()
-{
-    vkDestroySampler(device, sampler, nullptr);
 }

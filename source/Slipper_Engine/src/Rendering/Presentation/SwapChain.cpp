@@ -96,6 +96,7 @@ void SwapChain::Create(VkSwapchainKHR oldSwapChain)
         m_depthFormat = Texture2D::FindDepthFormat();
         depthBuffer = std::make_unique<Texture2D>(extent,
                                                   m_depthFormat,
+                                                  false,
                                                   VK_IMAGE_TILING_OPTIMAL,
                                                   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                                                   VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -111,7 +112,7 @@ void SwapChain::CreateImageViews()
 {
     vkImageViews.resize(vkImages.size());
     for (size_t i = 0; i < vkImages.size(); i++) {
-        vkImageViews[i] = Texture::CreateImageView(vkImages[i], VK_IMAGE_TYPE_2D, m_imageFormat);
+        vkImageViews[i] = Texture::CreateImageView(vkImages[i], VK_IMAGE_TYPE_2D, m_imageFormat, 1);
     }
 }
 

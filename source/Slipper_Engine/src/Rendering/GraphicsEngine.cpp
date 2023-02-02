@@ -77,7 +77,7 @@ GraphicsEngine::~GraphicsEngine()
 void GraphicsEngine::SetupDefaultAssets()
 {
     // The default shader depends on these so initialize them first
-    textures.emplace_back(Texture2D::LoadTexture(DEMO_TEXTURE_PATH));
+    textures.emplace_back(Texture2D::LoadTexture(DEMO_TEXTURE_PATH, true));
     models.emplace_back(std::make_unique<Model>(DEMO_MODEL_PATH));
 
     /* Create shader for this pipeline. */
