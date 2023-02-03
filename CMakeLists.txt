@@ -12,6 +12,7 @@ elseif(NOT APPLE)
     add_compile_definitions(WINDOWS)
 endif()
 
+set(EXTERNAL_LIBS_DIR "${CMAKE_CURRENT_LIST_DIR}/extern")
 
 string(CONCAT BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
@@ -34,17 +35,40 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/glfw/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 
+# Special thanks to Luca Gherardi who wrote this special little peace of code :)
+function(GroupSources curdir rootfiledir rootsolutiondir)
+    file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR}/${curdir} ${CMAKE_CURRENT_LIST_DIR}/${curdir}/*)
+    foreach(child ${children})
+        if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
+            GroupSources(${curdir}/${child} ${rootfiledir} ${rootsolutiondir})
+        else()
+            if(NOT ${child} STREQUAL CMakeLists.txt)
+                string(REPLACE "/" "\\" groupname ${curdir})
+                #message("Child dir ${groupname}")
+                #message("Child entry ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child}")
+                # I would like to call the src root folder in a different name, only in visual studio (not mandatory requirement)
+                string(REPLACE "${rootfiledir}" "${rootsolutiondir}" groupname ${groupname})
+                #message("Groupname entry ${groupname}")
+                source_group(${groupname} FILES ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
+            endif()
+        endif()
+    endforeach()
+endfunction()
 
 #GLM
 message(STATUS "Configuring GLM")
 add_subdirectory(extern/glm)
 
-
 #GLFW
 message(STATUS "Configuring GLFW")
-set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
-set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
-add_subdirectory(extern/glfw ${CMAKE_CURRENT_LIST_DIR}/extern/glfw/build)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(${EXTERNAL_LIBS_DIR}/glfw)
+
+#imgui
+message(STATUS "Configuring imgui")
+set(IMGUI_FILES ${EXTERNAL_LIBS_DIR}/imgui/imgui.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_demo.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_draw.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_tables.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_widgets.cpp ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_vulkan.cpp)
 
 if( MSVC )
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
