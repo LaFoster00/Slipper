@@ -14,3 +14,7 @@
 	path = extern/tinyobjloader
 	url = https://github.com/tinyobjloader/tinyobjloader.git
 	branch = release
+[submodule "extern/imgui"]
+	path = extern/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
