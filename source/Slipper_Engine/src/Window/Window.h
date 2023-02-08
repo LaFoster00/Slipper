@@ -1,5 +1,8 @@
 #pragma once
 
+#include <functional>
+#include <unordered_map>
+
 #include "Engine.h"
 
 struct WindowInfo
@@ -15,6 +18,8 @@ class Window
 {
  public:
     Window(WindowInfo CreateInfo);
+    Window(Window &Window) = delete;
+    Window(Window &&Window) = delete;
     ~Window()
     {
         glfwDestroyWindow(glfwWindow);
@@ -30,6 +35,11 @@ class Window
         return glfwWindow;
     }
 
+    glm::vec2 GetSize() const;
+
+    void AddResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback);
+    void RemoveResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback);
+
  private:
     static void FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height);
 
@@ -38,4 +48,6 @@ class Window
 
  private:
     WindowInfo m_info;
+    static std::unordered_map<GLFWwindow *, Window *> m_windows;
+    std::unordered_map<void *, std::function<void(Window &, int, int)>> m_resizeCallbacks;
 };

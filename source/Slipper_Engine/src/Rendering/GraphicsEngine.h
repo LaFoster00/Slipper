@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "GUI/Gui.h"
+
 class Model;
 class Texture2D;
 class Texture;
@@ -46,7 +48,7 @@ class GraphicsEngine : DeviceDependentObject
     void SetupDefaultAssets();
     void CreateSyncObjects();
     RenderPass *CreateRenderPass(const VkFormat AttachmentFormat, const VkFormat DepthFormat);
-    void SetupDebugRender(Surface &Surface);
+    void SetupDebugRender(Surface &Surface, bool SetupGui);
     void SetupSimpleDraw();
 
     void AddRepeatedDrawCommand(
@@ -59,6 +61,9 @@ class GraphicsEngine : DeviceDependentObject
  private:
     GraphicsEngine();
     ~GraphicsEngine();
+
+    static void SetupGui(const Window &Window, const RenderPass &RenderPass);
+    static void ShutdownGui();
 
  public:
     uint32_t currentFrame = 0;

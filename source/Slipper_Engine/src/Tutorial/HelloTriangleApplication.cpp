@@ -20,7 +20,7 @@ void HelloTriangleApplication::InitWindow()
 void HelloTriangleApplication::InitVulkan()
 {
     // Creates instance as well as retrieving it
-    instance = &Instance::Get();
+    Engine::Instance = &Instance::Get();
     surface = new Surface(*window);
     device = Device::PickPhysicalDevice(surface, true);
 
@@ -29,7 +29,7 @@ void HelloTriangleApplication::InitVulkan()
     surface->CreateSwapChain();
     graphics = &GraphicsEngine::Get();
 
-    graphics->SetupDebugRender(*surface);
+    graphics->SetupDebugRender(*surface, true);
 }
 
 void HelloTriangleApplication::MainLoop()
@@ -51,11 +51,12 @@ void HelloTriangleApplication::Cleanup()
 {
     vkDeviceWaitIdle(*device);
 
+
     GraphicsEngine::Destroy();
     surface->DestroyDeviceDependencies();
     Device::Destroy();
     delete surface;
-    delete instance;
+    delete Engine::Instance;
     delete window;
     glfwTerminate();
 }

@@ -15,6 +15,7 @@
 #include <stb_image.h>
 
 #include <filesystem>
+#include <imgui.h>
 
 #include "Model/Model.h"
 #include "Shader/Shader.h"
@@ -51,6 +52,8 @@ void GraphicsEngine::SetSetupDefaultAssets(const bool Value)
 
 GraphicsEngine::~GraphicsEngine()
 {
+    ShutdownGui();
+
     renderPasses.clear();
 
     delete memoryCommandPool;
@@ -72,6 +75,17 @@ GraphicsEngine::~GraphicsEngine()
 
     models.clear();
     textures.clear();
+}
+
+
+void GraphicsEngine::SetupGui(const Window &Window, const RenderPass &RenderPass)
+{
+    Gui::Init(Window, RenderPass);
+}
+
+void GraphicsEngine::ShutdownGui()
+{
+    Gui::Shutdown();
 }
 
 void GraphicsEngine::SetupDefaultAssets()
@@ -123,7 +137,7 @@ RenderPass *GraphicsEngine::CreateRenderPass(const VkFormat AttachmentFormat,
     return renderPasses.emplace_back(std::make_unique<RenderPass>(AttachmentFormat, DepthFormat)).get();
 }
 
-void GraphicsEngine::SetupDebugRender(Surface &Surface)
+void GraphicsEngine::SetupDebugRender(Surface &Surface, bool SetupGui)
 {
     surfaces.insert(&Surface);
 
@@ -133,6 +147,19 @@ void GraphicsEngine::SetupDebugRender(Surface &Surface)
     shaders[0]->RegisterForRenderPass(render_pass, Surface.GetResolution());
 
     SetupSimpleDraw();
+
+    if (SetupGui)
+    {
+        this->SetupGui(Surface.window, *render_pass);
+        AddRepeatedDrawCommand([=, this](const VkCommandBuffer &CommandBuffer, const RenderPass &RenderPass)
+        {
+            Gui::StartNewFrame();
+
+            ImGui::ShowMetricsWindow();
+
+            Gui::EndNewFrame(CommandBuffer);
+        });
+    }
 }
 
 void GraphicsEngine::SetupSimpleDraw()

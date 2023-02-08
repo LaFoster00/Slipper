@@ -39,7 +39,6 @@ class HelloTriangleApplication
 
  private:
     Window *window = nullptr;
-    Instance *instance = nullptr;
     Surface *surface = nullptr;
     Device *device = nullptr;
     GraphicsEngine *graphics = nullptr;
