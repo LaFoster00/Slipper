@@ -25,6 +25,7 @@ class Window
     Window(Window &&Window) = delete;
     ~Window()
     {
+        m_surface.reset();
         glfwDestroyWindow(glfwWindow);
     }
 

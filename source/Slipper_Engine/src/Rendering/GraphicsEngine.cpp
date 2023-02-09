@@ -139,11 +139,11 @@ void GraphicsEngine::AddWindow(Window &Window)
 {
     windows.insert(&Window);
     Window.GetSurface().CreateSwapChain();
+    Window.GetSurface().RegisterRenderPass(*mainRenderPass);
 }
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface)
 {
-    Surface.RegisterRenderPass(*mainRenderPass);
     shaders[0]->RegisterForRenderPass(mainRenderPass, Surface.GetResolution());
 
     SetupSimpleDraw();
@@ -198,8 +198,7 @@ void GraphicsEngine::SubmitDraw(const RenderPass *RenderPass,
         mvp.projection[1][1] *= -1;
         Shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
         Mesh->Bind(CommandBuffer);
-        vkCmdDrawIndexed(
-            CommandBuffer, static_cast<uint32_t>(Mesh->NumIndex()), 1, 0, 0, 0);
+        vkCmdDrawIndexed(CommandBuffer, static_cast<uint32_t>(Mesh->NumIndex()), 1, 0, 0, 0);
     });
 }
 
@@ -235,18 +234,18 @@ void GraphicsEngine::BeginFrame()
         throw std::runtime_error("Failed to acquire swap chain image!");
     }
 
-    m_currentRenderPass = m_currentSurface->renderPasses[0];
-
     vkResetFences(device, 1, &m_inFlightFences[currentFrame]);
 
     m_currentCommandBuffer = renderCommandPool->vkCommandBuffers[currentFrame];
     renderCommandPool->BeginCommandBuffer(m_currentCommandBuffer);
 }
 
-void GraphicsEngine::EndFrame()
+void GraphicsEngine::EndUpdate()
 {
     for (const auto render_pass : m_currentSurface->renderPasses) {
-        m_currentRenderPass->BeginRenderPass(
+        if (render_pass != mainRenderPass)
+            continue;
+        render_pass->BeginRenderPass(
             m_currentSurface->swapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
 
         for (auto &command : singleDrawCommand[render_pass]) {
@@ -258,8 +257,26 @@ void GraphicsEngine::EndFrame()
             command(m_currentCommandBuffer, *render_pass);
         }
 
-        m_currentRenderPass->EndRenderPass(m_currentCommandBuffer);
+        render_pass->EndRenderPass(m_currentCommandBuffer);
     }
+
+    m_currentRenderPass = mainRenderPass;
+    m_currentRenderPass->BeginRenderPass(
+        m_currentSurface->swapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
+
+    for (auto &command : singleDrawCommand[m_currentRenderPass]) {
+        command(m_currentCommandBuffer);
+    }
+    singleDrawCommand.at(m_currentRenderPass).clear();
+
+    for (auto &command : repeatedDrawCommands) {
+        command(m_currentCommandBuffer, *m_currentRenderPass);
+    }
+}
+
+void GraphicsEngine::EndFrame()
+{
+    mainRenderPass->EndRenderPass(m_currentCommandBuffer);
     renderCommandPool->EndCommandBuffer(m_currentCommandBuffer);
 
     VkSubmitInfo submit_info{};

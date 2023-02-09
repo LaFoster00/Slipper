@@ -14,6 +14,7 @@ EXTERNC
             Slipper::ApplicationInfo app_info{"Slipper Engine "};
             auto app = new Slipper::SlipperEngine(app_info);
             app->Run();
+            delete app;
         }
         catch (const std::exception &e) {
             std::cerr << e.what() << std::endl;

@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include "AppComponent.h"
+#include "AppComponents/Gui.h"
 #include "GraphicsEngine.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
@@ -32,19 +33,30 @@ Application::Application(ApplicationInfo &ApplicationInfo)
 
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
+
+    guiComponent = std::make_unique<Gui>("Gui");
+    guiComponent->Init();
 }
 
 Application::~Application()
 {
+    vkDeviceWaitIdle(Device::Get());
+
+    guiComponent->Shutdown();
+
+    for (auto &app_component : appComponents) {
+        app_component->Shutdown();
+    }
     appComponents.clear();
     GraphicsEngine::Shutdown();
-    Device::Destroy();
     window.reset();
+    Device::Destroy();
     glfwTerminate();
 }
 
 void Application::AddComponent(AppComponent *ProgramComponent)
 {
+    ProgramComponent->Init();
     appComponents.push_back(std::unique_ptr<AppComponent>(ProgramComponent));
 }
 
@@ -69,10 +81,20 @@ void Application::Run()
 
             GraphicsEngine::Get().BeginFrame();
 
-            for (auto &app_component : appComponents)
-            {
+            for (auto &app_component : appComponents) {
                 app_component->OnUpdate();
             }
+
+            GraphicsEngine::Get().EndUpdate();
+
+            guiComponent->OnUpdate();
+            guiComponent->StartNewFrame();
+
+            for (auto &app_component : appComponents) {
+                app_component->OnGuiRender();
+            }
+
+            guiComponent->EndNewFrame(GraphicsEngine::Get().GetCurrentCommandBuffer());
 
             GraphicsEngine::Get().EndFrame();
         }

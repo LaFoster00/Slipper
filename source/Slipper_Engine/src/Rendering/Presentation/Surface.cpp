@@ -17,6 +17,7 @@ Surface::Surface(const Window &Window) : window(Window)
 
 Surface::~Surface()
 {
+    swapChain.reset();
     vkDestroySurfaceKHR(VulkanInstance::Get(), surface, nullptr);
 }
 

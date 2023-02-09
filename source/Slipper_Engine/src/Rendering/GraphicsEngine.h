@@ -52,8 +52,11 @@ class GraphicsEngine : DeviceDependentObject
     void SubmitRepeatedDrawCommand(
         std::function<void(const VkCommandBuffer &, const RenderPass &)> Command);
     void BeginFrame();
+    void EndUpdate();
     void EndFrame();
     static void OnWindowResized(Window *Window, int Width, int Height);
+
+    [[nodiscard]]VkCommandBuffer GetCurrentCommandBuffer() const { return m_currentCommandBuffer; };
 
  private:
     GraphicsEngine();

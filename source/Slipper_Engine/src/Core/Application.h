@@ -4,12 +4,12 @@
 
 #include "common_defines.h"
 
-EXTERNC
-{
+EXTERNC {
     SLIPPER_FUNCTION int main(int argc, char *argv[]);
 
     namespace Slipper
     {
+        class Gui;
         class VulkanInstance;
         class Window;
     class GraphicsEngine;
@@ -51,6 +51,8 @@ EXTERNC
         bool minimized = false;
 
         std::unique_ptr<VulkanInstance> vulkanInstance;
+
+        std::unique_ptr<Gui> guiComponent;
         std::vector<std::unique_ptr<AppComponent>> appComponents;
     };
     }  // namespace Slipper

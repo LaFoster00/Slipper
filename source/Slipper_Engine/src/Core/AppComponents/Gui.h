@@ -21,6 +21,7 @@ class Gui : public AppComponent
     };
 
  public:
+    Gui(std::string_view Name);
     void StartNewFrame();
     void EndNewFrame(VkCommandBuffer CommandBuffer);
 
