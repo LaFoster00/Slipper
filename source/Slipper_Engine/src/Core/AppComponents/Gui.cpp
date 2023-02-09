@@ -11,6 +11,7 @@
 #include "Window/Window.h"
 #include "common_defines.h"
 #include "GraphicsEngine.h"
+#include "Core/Application.h"
 #include "Drawing/CommandPool.h"
 
 namespace Slipper
@@ -35,13 +36,13 @@ void Gui::ImGuiResources::CreateDescriptorPool(const VkDescriptorPoolSize *Sizes
               "Failed to create ImGui DescriptorPool")
 }
 
-void Gui::Init(const Window &Window, const RenderPass &RenderPass)
+void Gui::Init()
 {
     if (m_initialized)
         return;
 
     m_device = &Device::Get();
-    m_window = &Window;
+    m_window = Application::Get().window.get();
 
     ImGui::CreateContext();
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -53,7 +54,7 @@ void Gui::Init(const Window &Window, const RenderPass &RenderPass)
     m_resources = new ImGuiResources();
     m_resources->CreateDescriptorPool(&imgui_pool_size, 1, Engine::MAX_FRAMES_IN_FLIGHT);
 
-    ImGui_ImplGlfw_InitForVulkan(Window, true);
+    ImGui_ImplGlfw_InitForVulkan(*m_window, true);
     ImGui_ImplVulkan_InitInfo info{};
     info.Instance = VulkanInstance::Get();
     info.PhysicalDevice = *m_device;
@@ -64,7 +65,7 @@ void Gui::Init(const Window &Window, const RenderPass &RenderPass)
     info.MinImageCount = Engine::MAX_FRAMES_IN_FLIGHT;
     info.ImageCount = Engine::MAX_FRAMES_IN_FLIGHT;
     info.MSAASamples = GraphicsSettings::Get().MSAA_SAMPLES;
-    ImGui_ImplVulkan_Init(&info, RenderPass.vkRenderPass);
+    ImGui_ImplVulkan_Init(&info, m_window->GetSurface().renderPasses[0]->vkRenderPass);
 
     SingleUseCommandBuffer command_buffer(*GraphicsEngine::Get().memoryCommandPool);
     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
@@ -105,6 +106,16 @@ void Gui::Shutdown()
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+}
+
+void Gui::OnUpdate()
+{
+    AppComponent::OnUpdate();
+}
+
+void Gui::OnGuiRender()
+{
+    AppComponent::OnGuiRender();
 }
 
 void Gui::SetupDocksapce()

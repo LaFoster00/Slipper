@@ -16,9 +16,10 @@
 
 #include <filesystem>
 
-#include "Window.h"
 #include "Model/Model.h"
 #include "Shader/Shader.h"
+#include "Time/Time.h"
+#include "Window.h"
 
 namespace Slipper
 {
@@ -60,15 +61,15 @@ void GraphicsEngine::Init()
     m_graphicsInstance = new GraphicsEngine();
     auto &device = Device::Get();
 
-        m_graphicsInstance->renderCommandPool = new CommandPool(
+    m_graphicsInstance->renderCommandPool = new CommandPool(
         device.graphicsQueue,
         device.queueFamilyIndices.graphicsFamily.value(),
-                                            Engine::MAX_FRAMES_IN_FLIGHT);
+        Engine::MAX_FRAMES_IN_FLIGHT);
 
     m_graphicsInstance->memoryCommandPool = new CommandPool(
-            device.transferQueue ? device.transferQueue : device.graphicsQueue,
-            device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
-                                      device.queueFamilyIndices.graphicsFamily.value());
+        device.transferQueue ? device.transferQueue : device.graphicsQueue,
+        device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
+                               device.queueFamilyIndices.graphicsFamily.value());
 
     m_graphicsInstance->mainRenderPass = m_graphicsInstance->CreateRenderPass(
         "Main", SwapChain::swapChainFormat, Texture2D::FindDepthFormat());
@@ -122,7 +123,7 @@ void GraphicsEngine::CreateSyncObjects()
             vkCreateSemaphore(device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
             "Failed to create semaphore!")
         VK_ASSERT(vkCreateFence(device, &fence_info, nullptr, &m_inFlightFences[i]),
-            "Failed to create fence!")
+                  "Failed to create fence!")
     }
 }
 
@@ -134,7 +135,7 @@ RenderPass *GraphicsEngine::CreateRenderPass(const std::string &Name,
     return renderPasses[Name].get();
 }
 
-void GraphicsEngine::AddWindow(Window& Window)
+void GraphicsEngine::AddWindow(Window &Window)
 {
     windows.insert(&Window);
     Window.GetSurface().CreateSwapChain();
@@ -150,21 +151,15 @@ void GraphicsEngine::SetupDebugRender(Surface &Surface)
 
 void GraphicsEngine::SetupSimpleDraw()
 {
-    AddRepeatedDrawCommand([=, this](const VkCommandBuffer &CommandBuffer,
-                                     const RenderPass &RenderPass) {
+    SubmitRepeatedDrawCommand([=, this](const VkCommandBuffer &CommandBuffer,
+                                        const RenderPass &RenderPass) {
         const auto debug_shader = *RenderPass.registeredShaders.begin();
         debug_shader->Bind(CommandBuffer, &RenderPass);
 
-        static auto start_time = std::chrono::high_resolution_clock::now();
-
-        const auto current_time = std::chrono::high_resolution_clock::now();
-        const float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                               current_time - start_time)
-                               .count();
-
         UniformMVP mvp;
-        mvp.model = glm::rotate(
-            glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        mvp.model = glm::rotate(glm::mat4(1.0f),
+                                Time::TimeSinceStartup() * glm::radians(90.0f),
+                                glm::vec3(0.0f, 0.0f, 1.0f));
         mvp.view = glm::lookAt(
             glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         mvp.projection = glm::perspective(
@@ -182,50 +177,90 @@ void GraphicsEngine::SetupSimpleDraw()
     });
 }
 
-void GraphicsEngine::AddRepeatedDrawCommand(
-    const std::function<void(const VkCommandBuffer &, const RenderPass &)> Command)
+void GraphicsEngine::SubmitDraw(const RenderPass *RenderPass,
+                                const Shader *Shader,
+                                const Mesh *Mesh,
+                                const glm::mat4 &Transform)
 {
-    repeatedRenderCommands.push_back(Command);
+    SubmitSingleDrawCommand(RenderPass, [=, this](const VkCommandBuffer &CommandBuffer) {
+        Shader->Bind(CommandBuffer, RenderPass);
+        UniformMVP mvp;
+        mvp.model = Transform;
+        mvp.view = glm::lookAt(
+            glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        mvp.projection = glm::perspective(
+            glm::radians(45.0f),
+            RenderPass->GetActiveSwapChain()->GetResolution().width /
+                static_cast<float>(RenderPass->GetActiveSwapChain()->GetResolution().height),
+            0.1f,
+            10.0f);
+
+        mvp.projection[1][1] *= -1;
+        Shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
+        Mesh->Bind(CommandBuffer);
+        vkCmdDrawIndexed(
+            CommandBuffer, static_cast<uint32_t>(Mesh->NumIndex()), 1, 0, 0, 0);
+    });
 }
 
-void GraphicsEngine::DrawFrame()
+void GraphicsEngine::SubmitSingleDrawCommand(const RenderPass *RenderPass,
+                                             std::function<void(const VkCommandBuffer &)> Command)
+{
+    singleDrawCommand[RenderPass].push_back(Command);
+}
+
+void GraphicsEngine::SubmitRepeatedDrawCommand(
+    const std::function<void(const VkCommandBuffer &, const RenderPass &)> Command)
+{
+    repeatedDrawCommands.push_back(Command);
+}
+
+void GraphicsEngine::BeginFrame()
 {
     vkWaitForFences(device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-    Surface *current_surface = &(*windows.begin())->GetSurface();
-    RenderPass &current_render_pass = *current_surface->renderPasses[0];
-    uint32_t image_index;
-    VkResult result = vkAcquireNextImageKHR(device,
-                                            *current_surface->swapChain,
-                                            UINT64_MAX,
-                                            m_imageAvailableSemaphores[currentFrame],
-                                            VK_NULL_HANDLE,
-                                            &image_index);
+    m_currentSurface = &(*windows.begin())->GetSurface();
+    const auto result = vkAcquireNextImageKHR(device,
+                                              *m_currentSurface->swapChain,
+                                              UINT64_MAX,
+                                              m_imageAvailableSemaphores[currentFrame],
+                                              VK_NULL_HANDLE,
+                                              &m_currentImageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        current_surface->RecreateSwapChain();
-        return;
+        // This should be handled by even OnWindowResize
+        // current_surface->RecreateSwapChain();
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to acquire swap chain image!");
     }
 
+    m_currentRenderPass = m_currentSurface->renderPasses[0];
+
     vkResetFences(device, 1, &m_inFlightFences[currentFrame]);
 
-    const VkCommandBuffer command_buffer = renderCommandPool->vkCommandBuffers[currentFrame];
-    renderCommandPool->BeginCommandBuffer(command_buffer);
+    m_currentCommandBuffer = renderCommandPool->vkCommandBuffers[currentFrame];
+    renderCommandPool->BeginCommandBuffer(m_currentCommandBuffer);
+}
 
-    for (const auto render_pass : current_surface->renderPasses) {
-        current_render_pass.BeginRenderPass(
-            current_surface->swapChain.get(), image_index, command_buffer);
+void GraphicsEngine::EndFrame()
+{
+    for (const auto render_pass : m_currentSurface->renderPasses) {
+        m_currentRenderPass->BeginRenderPass(
+            m_currentSurface->swapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
 
-        for (auto &command : repeatedRenderCommands) {
-            command(command_buffer, *render_pass);
+        for (auto &command : singleDrawCommand[render_pass]) {
+            command(m_currentCommandBuffer);
+        }
+        singleDrawCommand.at(render_pass).clear();
+
+        for (auto &command : repeatedDrawCommands) {
+            command(m_currentCommandBuffer, *render_pass);
         }
 
-        current_render_pass.EndRenderPass(command_buffer);
+        m_currentRenderPass->EndRenderPass(m_currentCommandBuffer);
     }
-    renderCommandPool->EndCommandBuffer(command_buffer);
+    renderCommandPool->EndCommandBuffer(m_currentCommandBuffer);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -236,14 +271,13 @@ void GraphicsEngine::DrawFrame()
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffer;
+    submit_info.pCommandBuffers = &m_currentCommandBuffer;
     const VkSemaphore signal_semaphores[] = {m_renderFinishedSemaphores[currentFrame]};
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
 
-    VK_ASSERT(
-        vkQueueSubmit(device.graphicsQueue, 1, &submit_info, m_inFlightFences[currentFrame]),
-        "Failed to submit draw command buffer!");
+    VK_ASSERT(vkQueueSubmit(device.graphicsQueue, 1, &submit_info, m_inFlightFences[currentFrame]),
+              "Failed to submit draw command buffer!");
 
     renderCommandPool->ClearSingleUseCommands();
     memoryCommandPool->ClearSingleUseCommands();
@@ -254,18 +288,17 @@ void GraphicsEngine::DrawFrame()
     present_info.waitSemaphoreCount = 1;
     present_info.pWaitSemaphores = signal_semaphores;
 
-    const VkSwapchainKHR present_swap_chains[] = {*current_surface->swapChain};
+    const VkSwapchainKHR present_swap_chains[] = {*m_currentSurface->swapChain};
     present_info.swapchainCount = 1;
     present_info.pSwapchains = present_swap_chains;
-    present_info.pImageIndices = &image_index;
+    present_info.pImageIndices = &m_currentImageIndex;
     present_info.pResults = nullptr;  // Optional
 
-    result = vkQueuePresentKHR(device.presentQueue, &present_info);
+    const auto result = vkQueuePresentKHR(device.presentQueue, &present_info);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
-        m_framebufferResized) {
-        m_framebufferResized = false;
-        current_surface->RecreateSwapChain();
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+        // This should be handled by even OnWindowResize
+        // current_surface->RecreateSwapChain();
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to present swap chain image!");
@@ -274,8 +307,8 @@ void GraphicsEngine::DrawFrame()
     currentFrame = (currentFrame + 1) % Engine::MAX_FRAMES_IN_FLIGHT;
 }
 
-void GraphicsEngine::OnWindowResized()
+void GraphicsEngine::OnWindowResized(Window *Window, int Width, int Height)
 {
-    m_framebufferResized = true;
+    Window->GetSurface().RecreateSwapChain(Width, Height);
 }
-    }
+}  // namespace Slipper

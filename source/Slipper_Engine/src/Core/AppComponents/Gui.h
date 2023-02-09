@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine.h"
+#include "Core/AppComponent.h"
 
 namespace Slipper
 {
@@ -8,7 +9,7 @@ class RenderPass;
 class Device;
 class Window;
 
-class Gui
+class Gui : public AppComponent
 {
     struct ImGuiResources
     {
@@ -20,15 +21,19 @@ class Gui
     };
 
  public:
-    static void Init(const Window &Window, const RenderPass &RenderPass);
-    static void StartNewFrame();
-    static void EndNewFrame(VkCommandBuffer CommandBuffer);
-    static void Shutdown();
+    void StartNewFrame();
+    void EndNewFrame(VkCommandBuffer CommandBuffer);
 
  private:
     static void SetupDocksapce();
 
- private:
+public:
+    void Init() override;
+    void Shutdown() override;
+    void OnUpdate() override;
+    void OnGuiRender() override;
+
+private:
     static bool m_initialized;
     static Device *m_device;
     static ImGuiResources *m_resources;

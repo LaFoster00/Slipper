@@ -3,11 +3,11 @@
 
 namespace Slipper
 {
-class ProgramComponent
+class AppComponent
 {
  public:
-    ProgramComponent(const std::string_view Name = "ProgramComponent");
-    virtual ~ProgramComponent() = default;
+    AppComponent(const std::string_view Name = "AppComponent");
+    virtual ~AppComponent() = default;
     virtual void Init(){};
     virtual void Shutdown(){};
     virtual void OnUpdate(){};

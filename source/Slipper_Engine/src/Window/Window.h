@@ -42,9 +42,6 @@ class Window
 
     void OnUpdate();
 
-    void AddResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback);
-    void RemoveResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback);
-
  private:
     static void FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height);
 
@@ -54,7 +51,6 @@ class Window
  private:
     WindowInfo m_info;
     std::unique_ptr<Surface> m_surface;
-    std::unordered_map<void *, std::function<void(Window &, int, int)>> m_resizeCallbacks;
 
     static std::unordered_map<GLFWwindow *, Window *> m_windows;
 };

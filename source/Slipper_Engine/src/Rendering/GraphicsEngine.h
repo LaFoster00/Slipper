@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "DeviceDependentObject.h"
-#include "GUI/Gui.h"
 
 namespace Slipper
 {
@@ -46,10 +45,15 @@ class GraphicsEngine : DeviceDependentObject
     void AddWindow(Window &Window);
     void SetupDebugRender(Surface &Surface);
     void SetupSimpleDraw();
-    void AddRepeatedDrawCommand(
+
+    void SubmitDraw(const RenderPass *RenderPass, const Shader *Shader, const Mesh *Mesh, const glm::mat4 &Transform);
+    void SubmitSingleDrawCommand(const RenderPass *RenderPass,
+                                 std::function<void(const VkCommandBuffer &)> Command);
+    void SubmitRepeatedDrawCommand(
         std::function<void(const VkCommandBuffer &, const RenderPass &)> Command);
-    void DrawFrame();
-    void OnWindowResized();
+    void BeginFrame();
+    void EndFrame();
+    static void OnWindowResized(Window *Window, int Width, int Height);
 
  private:
     GraphicsEngine();
@@ -68,8 +72,10 @@ class GraphicsEngine : DeviceDependentObject
 
     // Render commands
     CommandPool *renderCommandPool;
+    std::unordered_map<const RenderPass *, std::vector<std::function<void(const VkCommandBuffer &)>>>
+        singleDrawCommand;
     std::vector<std::function<void(const VkCommandBuffer &, const RenderPass &)>>
-        repeatedRenderCommands;
+        repeatedDrawCommands;
 
     CommandPool *memoryCommandPool;
 
@@ -78,9 +84,14 @@ class GraphicsEngine : DeviceDependentObject
 
     static GraphicsEngine *m_graphicsInstance;
 
-    bool m_framebufferResized = false;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
     std::vector<VkFence> m_inFlightFences;
+
+ private:
+    uint32_t m_currentImageIndex = 0;
+    Surface *m_currentSurface = nullptr;
+    RenderPass *m_currentRenderPass = nullptr;
+    VkCommandBuffer m_currentCommandBuffer = VK_NULL_HANDLE;
 };
-}
+}  // namespace Slipper

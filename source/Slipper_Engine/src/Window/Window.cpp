@@ -43,28 +43,14 @@ void Window::OnUpdate()
     glfwPollEvents();
 }
 
-void Window::AddResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback)
-{
-    m_resizeCallbacks[Context] = Callback;
-}
-
-void Window::RemoveResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback)
-{
-    if (!m_resizeCallbacks.contains(Context))
-        return;
-
-    m_resizeCallbacks.erase(Context);
-}
-
 void Window::FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height)
 {
-    GraphicsEngine::Get().OnWindowResized();
-
     Slipper::Window *abstract_window = m_windows.at(Window);
+
+    Application::Get()
+        .OnWindowResize(abstract_window, Width, Height);
+
     abstract_window->m_info.width = Width;
     abstract_window->m_info.height = Height;
-    for (auto &callback : abstract_window->m_resizeCallbacks | std::views::values) {
-        callback(*abstract_window, Width, Height);
-    }
 }
 }

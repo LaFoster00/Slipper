@@ -34,7 +34,7 @@ class Surface
     // ONLY CALL BEFORE DEVICE IS DESTROYED
     void DestroyDeviceDependencies();
 
-    void RecreateSwapChain();
+    void RecreateSwapChain(int Width, int Height);
     void RegisterRenderPass(RenderPass &RenderPass);
 
  private:

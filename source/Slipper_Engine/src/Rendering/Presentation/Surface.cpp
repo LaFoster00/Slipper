@@ -44,14 +44,14 @@ void Surface::DestroyDeviceDependencies()
     swapChain.reset();
 }
 
-void Surface::RecreateSwapChain()
+void Surface::RecreateSwapChain(int Width, int Height)
 {
-    int width = 0, height = 0;
     const auto previous_render_passes = renderPasses;
-    glfwGetFramebufferSize(window, &width, &height);
-    while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window, &width, &height);
-        glfwWaitEvents();
+
+    // This case should not be reached make sure to wait till valid resolution is reached further up the pipeline
+    if (Width == 0 || Height == 0)
+    {
+        return;
     }
 
     vkDeviceWaitIdle(Device::Get());

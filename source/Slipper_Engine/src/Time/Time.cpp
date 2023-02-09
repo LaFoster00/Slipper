@@ -49,4 +49,9 @@ float Time::DeltaTimeSmooth()
 {
     return m_deltaSmooth;
 }
+
+float Time::TimeSinceStartup()
+{
+    return m_timeSinceStartup;
+}
 }  // namespace Slipper

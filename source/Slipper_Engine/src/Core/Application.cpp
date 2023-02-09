@@ -1,10 +1,11 @@
 #include "Application.h"
 
+#include "AppComponent.h"
 #include "GraphicsEngine.h"
-#include "Window.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
 #include "Time/Time.h"
+#include "Window.h"
 
 namespace Slipper
 {
@@ -31,19 +32,20 @@ Application::Application(ApplicationInfo &ApplicationInfo)
 
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
-    GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
 }
 
 Application::~Application()
 {
+    appComponents.clear();
     GraphicsEngine::Shutdown();
     Device::Destroy();
     window.reset();
     glfwTerminate();
 }
 
-void Application::AddProgramComponent(ProgramComponent* ProgramComponent)
+void Application::AddComponent(AppComponent *ProgramComponent)
 {
+    appComponents.push_back(std::unique_ptr<AppComponent>(ProgramComponent));
 }
 
 void Application::Close()
@@ -55,14 +57,35 @@ void Application::Run()
 {
     while (running) {
         window->OnUpdate();
-        Time::Tick(Engine::FRAME_COUNT);
-        Engine::FRAME_COUNT += 1;
-        if (!(Engine::FRAME_COUNT % 64)) {
-            std::cout << '\r' << std::setw(10) << 1.0f / Time::DeltaTimeSmooth() << "fps"
-                      << std::setw(2) << Time::DeltaTimeSmooth() << ' ' << std::setw(2) << "ms"
-                      << std::flush;
+
+        if (!minimized) {
+            Time::Tick(Engine::FRAME_COUNT);
+            Engine::FRAME_COUNT += 1;
+            if (!(Engine::FRAME_COUNT % 64)) {
+                std::cout << '\r' << std::setw(10) << 1.0f / Time::DeltaTimeSmooth() << "fps"
+                          << std::setw(2) << Time::DeltaTimeSmooth() << ' ' << std::setw(2) << "ms"
+                          << std::flush;
+            }
+
+            GraphicsEngine::Get().BeginFrame();
+
+            for (auto &app_component : appComponents)
+            {
+                app_component->OnUpdate();
+            }
+
+            GraphicsEngine::Get().EndFrame();
         }
-        GraphicsEngine::Get().DrawFrame();
     }
+}
+
+void Application::OnWindowResize(Window *Window, int Width, int Height)
+{
+    if (Width == 0 || Height == 0) {
+        minimized = true;
+        return;
+    }
+    minimized = false;
+    GraphicsEngine::OnWindowResized(Window, Width, Height);
 }
 }  // namespace Slipper

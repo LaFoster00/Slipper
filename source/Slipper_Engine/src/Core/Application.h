@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 #include "common_defines.h"
 
@@ -13,7 +14,7 @@ EXTERNC
         class Window;
     class GraphicsEngine;
 
-    class ProgramComponent;
+    class AppComponent;
 
     struct ApplicationInfo
     {
@@ -28,7 +29,7 @@ EXTERNC
         Application(ApplicationInfo &ApplicationInfo);
         virtual ~Application();
 
-        void AddProgramComponent(ProgramComponent *ProgramComponent);
+        void AddComponent(AppComponent *ProgramComponent);
 
         void Close();
         static Application &Get()
@@ -36,16 +37,21 @@ EXTERNC
             return *instance;
         }
 
-        void Run();
+        virtual void Run();
+        virtual void OnWindowResize(Window *Window, int Width, int Height);
+
+    public:
+        std::unique_ptr<Window> window;
 
      protected:
         static Application *instance;
 
         std::string name;
         bool running = true;
+        bool minimized = false;
 
         std::unique_ptr<VulkanInstance> vulkanInstance;
-        std::unique_ptr<Window> window;
+        std::vector<std::unique_ptr<AppComponent>> appComponents;
     };
     }  // namespace Slipper
 }

@@ -13,6 +13,8 @@ class Time
 
     [[nodiscard]] static float DeltaTimeSmooth();
 
+    [[nodiscard]] static float TimeSinceStartup();
+
  private:
     static float m_deltaTime;
 
