@@ -4,6 +4,8 @@
 #include "tiny_obj_loader.h"
 #include <unordered_map>
 
+namespace Slipper
+{
 Model::Model(std::string_view FilePath)
 {
     tinyobj::attrib_t attrib;
@@ -54,4 +56,5 @@ void Model::Draw(VkCommandBuffer CommandBuffer, uint32_t InstanceCount) const
 {
     m_mesh->Bind(CommandBuffer);
     vkCmdDrawIndexed(CommandBuffer, static_cast<uint32_t>(m_mesh->NumIndex()), InstanceCount, 0, 0, 0);
+}
 }

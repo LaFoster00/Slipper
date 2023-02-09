@@ -3,15 +3,15 @@
 #include <algorithm>
 
 #include "Data/Texture/Texture.h"
+#include "Window.h"
+#include "common_defines.h"
 #include "Surface.h"
 #include "Texture/DepthBuffer.h"
 #include "Texture/RenderTarget.h"
-#include "Texture/Texture2D.h"
-#include "Window.h"
-#include "common_defines.h"
 
-SwapChain::SwapChain(Surface &Surface)
-    : surface(Surface)
+namespace Slipper
+{
+SwapChain::SwapChain(Surface &Surface) : surface(Surface)
 {
     Create();
 }
@@ -165,3 +165,4 @@ VkExtent2D SwapChain::ChoseExtent(const Surface &Surface) const
         return actual_extent;
     }
 }
+}  // namespace Slipper

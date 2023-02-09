@@ -6,6 +6,8 @@
 
 #include <algorithm>
 
+namespace Slipper
+{
 CommandPool::CommandPool(const VkQueue Queue,
                          const uint32_t QueueFamilyIndex,
                          const int32_t BufferCount)
@@ -143,3 +145,4 @@ void CommandPool::DestroySingleUseCommandBuffer(const VkCommandBuffer CommandBuf
         m_singleUseVkCommandBuffers.erase(buffer_loc);
     }
 }
+}  // namespace Slipper

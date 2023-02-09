@@ -5,7 +5,9 @@
 #include <optional>
 #include <string>
 
-class Instance;
+namespace Slipper
+{
+class VulkanInstance;
 class Surface;
 class Window;
 
@@ -17,7 +19,8 @@ struct QueueFamilyIndices
 
     bool IsComplete() const
     {
-        return graphicsFamily.has_value() && presentFamily.has_value() && transferFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value() &&
+               transferFamily.has_value();
     }
 };
 
@@ -36,14 +39,6 @@ class Device
 
     static Device &Get()
     {
-        return *m_instance;
-    }
-
-    static Device &Create(const VkPhysicalDevice PhysicalDevice)
-    {
-        if (!m_instance) {
-            m_instance = new Device(PhysicalDevice);
-        }
         return *m_instance;
     }
 
@@ -75,7 +70,7 @@ class Device
 
     uint32_t FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const;
 
-private:
+ private:
     Device(VkPhysicalDevice PhysicalDevice);
     ~Device();
 
@@ -102,3 +97,4 @@ private:
  private:
     static Device *m_instance;
 };
+}  // namespace Slipper

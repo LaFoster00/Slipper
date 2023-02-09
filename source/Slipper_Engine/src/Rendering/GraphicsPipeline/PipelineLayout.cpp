@@ -9,6 +9,8 @@
 #include "Setup/GraphicsSettings.h"
 #include "common_defines.h"
 
+namespace Slipper
+{
 VkPipelineLayout PipelineLayout::CreatePipelineLayout(
     const Device &Device, const VkDescriptorSetLayout DescriptorSetLayout)
 {
@@ -175,3 +177,4 @@ VkPipelineDynamicStateCreateInfo PipelineLayout::SetupDynamicState(
 
     return dynamic_state;
 }
+}  // namespace Slipper

@@ -3,6 +3,8 @@
 
 #include "Buffer.h"
 
+namespace Slipper
+{
 class UniformBuffer : public Buffer
 {
  public:
@@ -25,3 +27,4 @@ class UniformBuffer : public Buffer
 private:
     std::unique_ptr<VkDescriptorBufferInfo> m_descriptorInfo;
 };
+}

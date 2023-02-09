@@ -9,6 +9,8 @@
 #include "common_defines.h"
 #include "spirv_reflect.h"
 
+namespace Slipper
+{
 const char *ShaderTypeNames[]{"UNDEFINED", "Vertex", "Fragment", "Compute"};
 
 Shader::Shader(std::string_view Name,
@@ -338,3 +340,4 @@ template<> void Shader::SetShaderUniform(const std::string Name, const Texture &
     }
     ASSERT(1, "No uniform texture with name '", Name, "' found.");
 }
+}  // namespace Slipper

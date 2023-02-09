@@ -4,6 +4,8 @@
 #include <string>
 #include <string_view>
 
+namespace Slipper
+{
 namespace String
 {
 inline std::string append(std::string String)
@@ -38,7 +40,7 @@ inline std::string format(const char *Base, ...)
 }
 
 template<typename... StringView>
-requires std::is_convertible_v<StringView..., std::string_view>
+    requires std::is_convertible_v<StringView..., std::string_view>
 int get_total_length_of_strings(const std::string_view &String, const StringView &...Strings)
 {
     return String.length() + GetTotalLength(Strings...);
@@ -48,3 +50,4 @@ extern void replace_substring(std::string &Str, const std::string &From, const s
 
 extern std::string to_lower(std::string_view String);
 }  // namespace String
+}  // namespace Slipper

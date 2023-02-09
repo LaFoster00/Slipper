@@ -4,10 +4,12 @@
 #include "Setup/Device.h"
 #include <array>
 
-#include "common_defines.h"
 #include "GraphicsEngine.h"
 #include "Shader/Shader.h"
+#include "common_defines.h"
 
+namespace Slipper
+{
 Buffer::Buffer(const VkDeviceSize Size,
                const VkBufferUsageFlags Usage,
                const VkMemoryPropertyFlags Properties)
@@ -79,3 +81,4 @@ void Buffer::SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer
     memcpy(data, DataObject->GetData(), Buffer.vkBufferSize);
     vkUnmapMemory(Device::Get(), Buffer);
 }
+}  // namespace Slipper

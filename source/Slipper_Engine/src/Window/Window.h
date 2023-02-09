@@ -1,13 +1,16 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <unordered_map>
 
 #include "Engine.h"
+#include "Presentation/Surface.h"
 
+namespace Slipper
+{
 struct WindowInfo
 {
- public:
     const char *name;
     uint32_t width;
     uint32_t height;
@@ -25,9 +28,9 @@ class Window
         glfwDestroyWindow(glfwWindow);
     }
 
-    bool ShouldClose() const
+    Surface &GetSurface() const
     {
-        return glfwWindowShouldClose(glfwWindow);
+        return *m_surface;
     }
 
     operator GLFWwindow *() const
@@ -36,6 +39,8 @@ class Window
     }
 
     glm::vec2 GetSize() const;
+
+    void OnUpdate();
 
     void AddResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback);
     void RemoveResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback);
@@ -48,6 +53,9 @@ class Window
 
  private:
     WindowInfo m_info;
-    static std::unordered_map<GLFWwindow *, Window *> m_windows;
+    std::unique_ptr<Surface> m_surface;
     std::unordered_map<void *, std::function<void(Window &, int, int)>> m_resizeCallbacks;
+
+    static std::unordered_map<GLFWwindow *, Window *> m_windows;
 };
+}  // namespace Slipper

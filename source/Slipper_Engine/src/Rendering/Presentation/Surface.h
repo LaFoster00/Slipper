@@ -2,19 +2,20 @@
 
 #include <memory>
 
-#include "DeviceDependentObject.h"
 #include "SwapChain.h"
 
+namespace Slipper
+{
 class RenderPass;
 class SwapChain;
-class Instance;
+class VulkanInstance;
 class Device;
 class Window;
 
 class Surface
 {
  public:
-	explicit Surface(const Window &Window);
+    Surface(const Window &Window);
     ~Surface();
 
     operator VkSurfaceKHR() const
@@ -38,13 +39,12 @@ class Surface
 
  private:
     void CleanupSwapChain(bool DestroySwapChain);
-    
- public:
-    Device *device;
 
+ public:
     VkSurfaceKHR surface;
     const Window &window;
 
     std::unique_ptr<SwapChain> swapChain;
     std::vector<RenderPass *> renderPasses;
 };
+}  // namespace Slipper

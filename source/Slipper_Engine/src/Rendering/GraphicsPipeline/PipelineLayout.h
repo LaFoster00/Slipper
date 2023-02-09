@@ -7,13 +7,17 @@
 struct VkViewport;
 struct VkRect2D;
 struct VkPipelineColorBlendAttachmentState;
+
+namespace Slipper
+{
 class SwapChain;
 class Device;
 
 class PipelineLayout
 {
  public:
-    static VkPipelineLayout CreatePipelineLayout(const Device &Device, const VkDescriptorSetLayout DescriptorSetLayout);
+    static VkPipelineLayout CreatePipelineLayout(const Device &Device,
+                                                 const VkDescriptorSetLayout DescriptorSetLayout);
 
     static VkPipelineVertexInputStateCreateInfo SetupVertexInputState();
 
@@ -34,3 +38,4 @@ class PipelineLayout
     static VkPipelineDynamicStateCreateInfo SetupDynamicState(
         std::optional<std::vector<VkDynamicState>> DynamicStates);
 };
+}  // namespace Slipper

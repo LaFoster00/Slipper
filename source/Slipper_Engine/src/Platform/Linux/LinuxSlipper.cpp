@@ -14,6 +14,8 @@
 #endif
 
 #ifdef LINUX
+namespace Slipper
+{
 std::string Linux::GetBinaryPath()
 {
     static std::string module_file_name_string;
@@ -33,5 +35,6 @@ std::string Linux::GetBinaryPath()
             module_file_name_string.find_last_of('/') + 1);
     }
     return std::string(module_file_name_string);
+}
 }
 #endif

@@ -1,11 +1,13 @@
 #include "Framebuffer.h"
 
-#include "common_defines.h"
 #include "GraphicsPipeline/RenderPass.h"
 #include "Setup/Device.h"
+#include "common_defines.h"
 
 #include <algorithm>
 
+namespace Slipper
+{
 Framebuffer::Framebuffer(const RenderPass *RenderPass,
                          const VkImageView *Attachments,
                          const uint32_t AttachmentCount,
@@ -36,3 +38,4 @@ Framebuffer::~Framebuffer()
 {
     vkDestroyFramebuffer(device, vkFramebuffer, nullptr);
 }
+}  // namespace Slipper

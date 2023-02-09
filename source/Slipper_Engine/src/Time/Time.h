@@ -2,18 +2,18 @@
 
 #include <chrono>
 
+namespace Slipper
+{
 class Time
 {
-public:
+ public:
     static void Tick(uint64_t FrameCount);
 
-    [[nodiscard]]
-    static float DeltaTime();
+    [[nodiscard]] static float DeltaTime();
 
-    [[nodiscard]]
-    static float DeltaTimeSmooth();
+    [[nodiscard]] static float DeltaTimeSmooth();
 
-private:
+ private:
     static float m_deltaTime;
 
     static float m_deltaSmooth;
@@ -24,3 +24,4 @@ private:
     static std::chrono::time_point<std::chrono::steady_clock> m_lastFrameTime;
     static std::chrono::time_point<std::chrono::steady_clock> m_startupTime;
 };
+}  // namespace Slipper

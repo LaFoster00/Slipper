@@ -2,7 +2,8 @@
 
 #include <array>
 
-
+namespace Slipper
+{
 std::chrono::time_point<std::chrono::steady_clock> Time::m_lastFrameTime =
     std::chrono::high_resolution_clock::now();
 
@@ -48,3 +49,4 @@ float Time::DeltaTimeSmooth()
 {
     return m_deltaSmooth;
 }
+}  // namespace Slipper

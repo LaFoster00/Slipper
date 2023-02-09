@@ -1,6 +1,8 @@
 #pragma once
 #include "Texture.h"
 
+namespace Slipper
+{
 class DepthBuffer : public Texture
 {
 public:
@@ -8,3 +10,4 @@ public:
     DepthBuffer(VkExtent2D Extent,
                 VkFormat Format);
 };
+}

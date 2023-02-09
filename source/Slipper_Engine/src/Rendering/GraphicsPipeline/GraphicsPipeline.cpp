@@ -1,16 +1,19 @@
 #include "GraphicsPipeline.h"
 
-#include "Window/Window.h"
-#include "Setup/Device.h"
 #include "PipelineLayout.h"
+#include "Setup/Device.h"
+#include "Window/Window.h"
 #include "common_defines.h"
 
 #include <algorithm>
 
-GraphicsPipeline::GraphicsPipeline(const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
-                                   const VkExtent2D Extent,
-                                   const RenderPass *RenderPass,
-                                   const VkDescriptorSetLayout DescriptorSetLayout)
+namespace Slipper
+{
+GraphicsPipeline::GraphicsPipeline(
+    const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
+    const VkExtent2D Extent,
+    const RenderPass *RenderPass,
+    const VkDescriptorSetLayout DescriptorSetLayout)
     : device(Device::Get()), m_renderPass(RenderPass), m_shaderStages(ShaderStages)
 {
     vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, DescriptorSetLayout);
@@ -25,12 +28,10 @@ GraphicsPipeline::~GraphicsPipeline()
 
 void GraphicsPipeline::Bind(const VkCommandBuffer &CommandBuffer) const
 {
-    vkCmdBindPipeline(CommandBuffer,
-                      VK_PIPELINE_BIND_POINT_GRAPHICS,
-                      vkGraphicsPipeline);
+    vkCmdBindPipeline(CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkGraphicsPipeline);
 }
 
-void GraphicsPipeline::ChangeResolution(const VkExtent2D& Resolution)
+void GraphicsPipeline::ChangeResolution(const VkExtent2D &Resolution)
 {
     vkDestroyPipeline(device, vkGraphicsPipeline, nullptr);
 
@@ -83,3 +84,4 @@ void GraphicsPipeline::Create(VkExtent2D Extent)
             device.logicalDevice, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &vkGraphicsPipeline),
         "Failed to create graphics pipeline!");
 }
+}  // namespace Slipper

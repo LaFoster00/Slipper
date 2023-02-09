@@ -2,6 +2,8 @@
 
 #include "DeviceDependentObject.h"
 
+namespace Slipper
+{
 class Device;
 class RenderPass;
 class SwapChain;
@@ -24,3 +26,4 @@ class Framebuffer : DeviceDependentObject
  public:
     VkFramebuffer vkFramebuffer;
 };
+}  // namespace Slipper

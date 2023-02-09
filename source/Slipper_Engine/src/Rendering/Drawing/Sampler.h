@@ -2,8 +2,8 @@
 
 #include "DeviceDependentObject.h"
 
-#include "Setup/Device.h"
-
+namespace Slipper
+{
 class Sampler : DeviceDependentObject
 {
  public:
@@ -16,16 +16,13 @@ class Sampler : DeviceDependentObject
         Other.sampler = VK_NULL_HANDLE;
     }
 
-    Sampler& operator=(Sampler &&Other) noexcept
+    Sampler &operator=(Sampler &&Other) noexcept
     {
         sampler = Other.sampler;
         Other.sampler = VK_NULL_HANDLE;
         return *this;
     }
-    ~Sampler()
-    {
-        vkDestroySampler(device, sampler, nullptr);
-    }
+    ~Sampler();
 
     operator VkSampler() const
     {
@@ -42,8 +39,7 @@ class Sampler : DeviceDependentObject
 
     static const Sampler &GetLinearSampler()
     {
-        if (!m_linearSampler)
-        {
+        if (!m_linearSampler) {
             m_linearSampler = new Sampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 0);
         }
         return *m_linearSampler;
@@ -51,8 +47,7 @@ class Sampler : DeviceDependentObject
 
     static const Sampler &GetNearestSampler()
     {
-        if (!m_nearestSampler)
-        {
+        if (!m_nearestSampler) {
             m_nearestSampler = new Sampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT, 0);
         }
         return *m_nearestSampler;
@@ -65,3 +60,4 @@ class Sampler : DeviceDependentObject
     static Sampler *m_linearSampler;
     static Sampler *m_nearestSampler;
 };
+}  // namespace Slipper

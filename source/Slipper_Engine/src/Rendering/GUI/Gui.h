@@ -2,6 +2,8 @@
 
 #include "Engine.h"
 
+namespace Slipper
+{
 class RenderPass;
 class Device;
 class Window;
@@ -12,7 +14,9 @@ class Gui
     {
         VkDescriptorPool imGuiDescriptorPool;
 
-        void CreateDescriptorPool(const VkDescriptorPoolSize *Sizes, uint32_t SizesCount, uint32_t MaxSets);
+        void CreateDescriptorPool(const VkDescriptorPoolSize *Sizes,
+                                  uint32_t SizesCount,
+                                  uint32_t MaxSets);
     };
 
  public:
@@ -21,7 +25,7 @@ class Gui
     static void EndNewFrame(VkCommandBuffer CommandBuffer);
     static void Shutdown();
 
-private:
+ private:
     static void SetupDocksapce();
 
  private:
@@ -30,3 +34,4 @@ private:
     static ImGuiResources *m_resources;
     static const Window *m_window;
 };
+}  // namespace Slipper

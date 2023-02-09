@@ -8,13 +8,14 @@
 #include "common_defines.h"
 #include "spirv_reflect.h"
 
+namespace Slipper
+{
 std::unique_ptr<ModuleDescriptorSetLayoutInfo> ShaderReflection::CreateShaderBindingInfo(
     const void *SpirvCode, size_t SpirvCodeByteCount)
 {
     SpvReflectShaderModule module;
     SpvReflectResult result = spvReflectCreateShaderModule(SpirvCodeByteCount, SpirvCode, &module);
-    ASSERT(result,
-           "Failed to create reflection data for shader code.")
+    ASSERT(result, "Failed to create reflection data for shader code.")
 
     // Descriptor Sets
     uint32_t descriptor_set_count = 0;
@@ -29,8 +30,8 @@ std::unique_ptr<ModuleDescriptorSetLayoutInfo> ShaderReflection::CreateShaderBin
     auto descriptor_sets_layout = std::make_unique<ModuleDescriptorSetLayoutInfo>();
 
     PopulateDescriptorSetLayoutInfo(ShaderReflectionUtil::to_shader_type(module.shader_stage),
-                              refl_descriptor_sets,
-                              descriptor_sets_layout);
+                                    refl_descriptor_sets,
+                                    descriptor_sets_layout);
 
     spvReflectDestroyShaderModule(&module);
 
@@ -45,16 +46,14 @@ void ShaderReflection::PopulateDescriptorSetLayoutInfo(
     for (const auto refl_descriptor_set : ReflSets) {
 
         for (uint32_t binding = 0; binding < refl_descriptor_set->binding_count; ++binding) {
-            LayoutInfo->bindings.push_back(
-            PopulateDescriptorSetLayoutBinding(ShaderType,
-                                               refl_descriptor_set->bindings[binding]));
+            LayoutInfo->bindings.push_back(PopulateDescriptorSetLayoutBinding(
+                ShaderType, refl_descriptor_set->bindings[binding]));
         }
     }
 }
 
 DescriptorSetLayoutBinding ShaderReflection::PopulateDescriptorSetLayoutBinding(
-    const ShaderType ShaderType,
-    const SpvReflectDescriptorBinding *ReflSetBinding)
+    const ShaderType ShaderType, const SpvReflectDescriptorBinding *ReflSetBinding)
 {
     DescriptorSetLayoutBinding set_binding{};
     set_binding.name = ReflSetBinding->name;
@@ -94,3 +93,4 @@ void ShaderReflection::create_descriptor_sets(const size_t Count,
                                               const VkDescriptorSetLayout DescriptorSetLayout)
 {
 }
+}  // namespace Slipper

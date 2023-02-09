@@ -6,6 +6,8 @@
 #include "Path.h"
 #include "Util/StringUtil.h"
 
+namespace Slipper
+{
 Texture::Texture(const VkImageType Type,
                  const VkExtent3D Extent,
                  const VkFormat Format,
@@ -425,3 +427,4 @@ bool Texture::HasStencilComponent(const VkFormat Format)
 {
     return Format == VK_FORMAT_D32_SFLOAT_S8_UINT || Format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
+}  // namespace Slipper

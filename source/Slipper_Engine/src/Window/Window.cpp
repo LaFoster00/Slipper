@@ -2,8 +2,12 @@
 
 #include <ranges>
 
+#include "Core/Application.h"
 #include "GraphicsEngine.h"
+#include "Presentation/Surface.h"
 
+namespace Slipper
+{
 std::unordered_map<GLFWwindow *, Window *> Window::m_windows{};
 
 Window::Window(WindowInfo CreateInfo)
@@ -19,12 +23,23 @@ Window::Window(WindowInfo CreateInfo)
     glfwSetFramebufferSizeCallback(glfwWindow, FramebufferResizeCallback);
 
     m_windows[glfwWindow] = this;
+
+    m_surface = std::make_unique<Surface>(*this);
 }
 
 glm::vec2 Window::GetSize() const
 {
     auto window = m_windows.at(glfwWindow);
     return {window->m_info.width, window->m_info.height};
+}
+
+void Window::OnUpdate()
+{
+    if (glfwWindowShouldClose(glfwWindow)) {
+        Slipper::Application::Get().Close();
+    }
+
+    glfwPollEvents();
 }
 
 void Window::AddResizeCallback(void *Context, std::function<void(Window &, int, int)> Callback)
@@ -44,10 +59,11 @@ void Window::FramebufferResizeCallback(GLFWwindow *Window, int Width, int Height
 {
     GraphicsEngine::Get().OnWindowResized();
 
-    ::Window *abstract_window = m_windows.at(Window);
+    Slipper::Window *abstract_window = m_windows.at(Window);
     abstract_window->m_info.width = Width;
     abstract_window->m_info.height = Height;
     for (auto &callback : abstract_window->m_resizeCallbacks | std::views::values) {
         callback(*abstract_window, Width, Height);
     }
+}
 }

@@ -2,13 +2,16 @@
 
 #include "Engine.h"
 
+namespace Slipper
+{
 class Device;
 
 class DeviceDependentObject
 {
-public:
+ public:
     DeviceDependentObject();
 
-public:
+ public:
     Device &device;
 };
+}  // namespace Slipper

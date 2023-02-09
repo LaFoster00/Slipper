@@ -7,9 +7,12 @@
 #endif
 
 #ifdef LINUX
+namespace Slipper
+{
 class Linux : public IPlatform
 {
  public:
     static std::string GetBinaryPath();
 };
+}
 #endif

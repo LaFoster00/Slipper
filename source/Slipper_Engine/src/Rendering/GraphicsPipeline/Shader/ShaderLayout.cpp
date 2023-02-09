@@ -7,6 +7,8 @@
 #include "Texture/Texture.h"
 #include "common_defines.h"
 
+namespace Slipper
+{
 std::vector<VkDescriptorSetLayoutBinding> ModuleDescriptorSetLayoutInfo::GetVkBindings() const
 {
     std::vector<VkDescriptorSetLayoutBinding> vkBindings(bindings.size());
@@ -33,3 +35,4 @@ void ShaderModuleLayout::PopulateNamesLayoutBindings()
         namedLayoutBindings.insert(std::make_pair(String::to_lower(binding.name), &binding));
     }
 }
+}  // namespace Slipper

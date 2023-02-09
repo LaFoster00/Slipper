@@ -4,6 +4,8 @@
 #include <string>
 #include <string_view>
 
+namespace Slipper
+{
 namespace String
 {
 void replace_substring(std::string &Str, const std::string &From, const std::string &To)
@@ -21,8 +23,9 @@ void replace_substring(std::string &Str, const std::string &From, const std::str
 std::string to_lower(std::string_view String)
 {
     std::string output(String);
-    std::ranges::transform(String, output.begin(),
-                           [](unsigned char c) { return std::tolower(c); });
+    std::ranges::transform(
+        String, output.begin(), [](unsigned char c) { return std::tolower(c); });
     return output;
 }
 }  // namespace String
+}  // namespace Slipper

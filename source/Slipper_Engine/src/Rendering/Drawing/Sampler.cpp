@@ -3,10 +3,14 @@
 #include "Setup/Device.h"
 #include "common_defines.h"
 
+namespace Slipper
+{
 Sampler *Sampler::m_linearSampler = nullptr;
 Sampler *Sampler::m_nearestSampler = nullptr;
 
-Sampler::Sampler(const VkFilter Filter, const VkSamplerAddressMode AddressMode, const uint32_t MipLevels)
+Sampler::Sampler(const VkFilter Filter,
+                 const VkSamplerAddressMode AddressMode,
+                 const uint32_t MipLevels)
 {
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -29,3 +33,9 @@ Sampler::Sampler(const VkFilter Filter, const VkSamplerAddressMode AddressMode, 
     VK_ASSERT(vkCreateSampler(device, &sampler_info, nullptr, &sampler),
               "Failed to create texture sampler!")
 }
+
+Sampler::~Sampler()
+{
+    vkDestroySampler(device, sampler, nullptr);
+}
+}  // namespace Slipper

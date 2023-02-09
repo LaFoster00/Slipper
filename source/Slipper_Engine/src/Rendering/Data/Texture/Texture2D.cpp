@@ -5,8 +5,11 @@
 #include "Buffer.h"
 #include "Path.h"
 
+namespace Slipper
+{
 Texture2D::Texture2D(const StbImage Image, const bool GenerateMipMaps)
-    : Texture(VK_IMAGE_TYPE_2D, Image.extent, Image.format, GenerateMipMaps), filepath(Image.filepath)
+    : Texture(VK_IMAGE_TYPE_2D, Image.extent, Image.format, GenerateMipMaps),
+      filepath(Image.filepath)
 {
     CreateTexture2D(Image.pixels);
     stbi_image_free(Image.pixels);
@@ -35,7 +38,8 @@ Texture2D::~Texture2D()
 {
 }
 
-std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath, const bool GenerateMipMaps)
+std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath,
+                                                  const bool GenerateMipMaps)
 {
     VkExtent3D tex_dimensions{0, 0, 1};
     std::string absolute_path = Path::make_engine_relative_path_absolute(Filepath);
@@ -69,3 +73,4 @@ void Texture2D::CreateTexture2D(void *Data, const VkMemoryPropertyFlags MemoryFl
         CopyBuffer(staging_buffer);
     }
 }
+}  // namespace Slipper

@@ -9,6 +9,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
+namespace Slipper
+{
 const std::string DEMO_MODEL_PATH = "./EngineContent/Models/VikingRoom/viking_room.obj";
 const std::string DEMO_TEXTURE_PATH = "./EngineContent/Models/VikingRoom/viking_room.png";
 
@@ -55,12 +57,13 @@ struct Vertex
         return &attribute_descriptions;
     }
 };
+}  // namespace Slipper
 
 namespace std
 {
-template<> struct hash<Vertex>
+template<> struct hash<Slipper::Vertex>
 {
-    size_t operator()(Vertex const &Vertex) const noexcept
+    size_t operator()(Slipper::Vertex const &Vertex) const noexcept
     {
         return ((hash<glm::vec3>()(Vertex.pos) ^ (hash<glm::vec3>()(Vertex.color) << 1)) >> 1) ^
                (hash<glm::vec2>()(Vertex.texCoord) << 1);
@@ -68,6 +71,8 @@ template<> struct hash<Vertex>
 };
 }  // namespace std
 
+namespace Slipper
+{
 const std::vector<Vertex> DEBUG_TRIANGLE_VERTICES = {
     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
@@ -104,3 +109,4 @@ class Mesh
     VertexBuffer m_vertexBuffer;
     IndexBuffer m_indexBuffer;
 };
+}  // namespace Slipper

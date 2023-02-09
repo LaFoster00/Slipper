@@ -4,6 +4,8 @@
 
 #include "Mesh/Mesh.h"
 
+namespace Slipper
+{
 class Model
 {
 public:
@@ -14,3 +16,4 @@ public:
 private:
     std::unique_ptr<Mesh> m_mesh;
 };
+}

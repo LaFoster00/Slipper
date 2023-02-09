@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <string>
 
+namespace Slipper
+{
 namespace Path
 {
 std::string get_engine_path()
@@ -48,3 +50,4 @@ std::string make_engine_relative_path_absolute(const std::string_view RelativePa
     return final_path;
 }
 }  // namespace Path
+}  // namespace Slipper

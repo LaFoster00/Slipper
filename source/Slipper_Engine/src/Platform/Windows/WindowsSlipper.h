@@ -11,6 +11,8 @@
 #endif
 
 #ifdef WINDOWS
+namespace Slipper
+{
 class Windows : public IPlatform
 {
  public:
@@ -43,4 +45,5 @@ class Windows : public IPlatform
         return module_file_name_string;
     }
 };
+}
 #endif

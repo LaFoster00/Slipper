@@ -7,6 +7,8 @@
 #include "DeviceDependentObject.h"
 #include "Setup/Device.h"
 
+namespace Slipper
+{
 class UniformBuffer;
 class Texture;
 class Buffer;
@@ -44,14 +46,14 @@ struct ModuleDescriptorSetLayoutInfo
 
 class ShaderModuleLayout : DeviceDependentObject
 {
-private:
-
- public :
+ private:
+ public:
     explicit ShaderModuleLayout(const std::vector<char> &BinaryCode);
     ~ShaderModuleLayout();
     void PopulateNamesLayoutBindings();
 
-public:
+ public:
     std::unique_ptr<ModuleDescriptorSetLayoutInfo> layoutInfo;
     std::unordered_map<std::string, DescriptorSetLayoutBinding *> namedLayoutBindings;
 };
+}  // namespace Slipper

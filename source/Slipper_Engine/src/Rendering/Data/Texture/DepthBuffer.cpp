@@ -2,8 +2,9 @@
 
 #include "Setup/GraphicsSettings.h"
 
-DepthBuffer::DepthBuffer(const VkExtent2D Extent,
-                         const VkFormat Format)
+namespace Slipper
+{
+DepthBuffer::DepthBuffer(const VkExtent2D Extent, const VkFormat Format)
     : Texture(VK_IMAGE_TYPE_2D,
               VkExtent3D(Extent.width, Extent.height, 1),
               Format,
@@ -15,3 +16,4 @@ DepthBuffer::DepthBuffer(const VkExtent2D Extent,
               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
 {
 }
+}  // namespace Slipper

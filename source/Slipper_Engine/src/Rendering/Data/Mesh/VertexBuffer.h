@@ -2,10 +2,10 @@
 
 #include "Buffer.h"
 
+namespace Slipper
+{
 struct Vertex;
 class CommandPool;
-
-class Device;
 
 class VertexBuffer : public Buffer
 {
@@ -15,3 +15,4 @@ class VertexBuffer : public Buffer
  public:
     size_t numVertex;
 };
+}  // namespace Slipper

@@ -5,6 +5,8 @@
 #include "DeviceDependentObject.h"
 #include "Setup/Device.h"
 
+namespace Slipper
+{
 class DepthBuffer;
 class RenderTarget;
 class Texture2D;
@@ -20,14 +22,14 @@ class SwapChain : DeviceDependentObject
     ~SwapChain();
 
     [[nodiscard]] const VkExtent2D &GetResolution() const
-	{
+    {
         return m_resolution;
-	}
+    }
 
     [[nodiscard]] const VkFormat &GetImageFormat() const
     {
         return m_imageFormat;
-	}
+    }
 
     [[nodiscard]] const VkFormat &GetDepthFormat() const
     {
@@ -37,7 +39,7 @@ class SwapChain : DeviceDependentObject
     operator VkSwapchainKHR() const
     {
         return vkSwapChain;
-	}
+    }
 
     void Recreate();
 
@@ -51,7 +53,7 @@ class SwapChain : DeviceDependentObject
  public:
     Surface &surface;
 
-	SwapChainSupportDetails swapChainSupport;
+    SwapChainSupportDetails swapChainSupport;
 
     VkSwapchainKHR vkSwapChain;
 
@@ -61,8 +63,9 @@ class SwapChain : DeviceDependentObject
     std::unique_ptr<RenderTarget> renderTarget;
     std::unique_ptr<DepthBuffer> depthBuffer;
 
-private:
+ private:
     VkFormat m_imageFormat;
     VkFormat m_depthFormat;
     VkExtent2D m_resolution;
 };
+}  // namespace Slipper

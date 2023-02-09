@@ -7,14 +7,15 @@
 
 #include "Drawing/Framebuffer.h"
 #include "Presentation/SwapChain.h"
+#include "Setup/GraphicsSettings.h"
+#include "common_defines.h"
 #include "Texture/DepthBuffer.h"
 #include "Texture/RenderTarget.h"
-#include "Texture/Texture2D.h"
-#include "common_defines.h"
-#include "Setup/GraphicsSettings.h"
 
-RenderPass::RenderPass(VkFormat AttachmentFormat, VkFormat DepthFormat)
-    : m_activeSwapChain(nullptr)
+namespace Slipper
+{
+RenderPass::RenderPass(std::string_view Name, VkFormat AttachmentFormat, VkFormat DepthFormat)
+    : name(Name), m_activeSwapChain(nullptr)
 {
     // Not used for presenting cause multisampled textures can not be presented
     // Presentation through color attachment resolve
@@ -193,3 +194,4 @@ void RenderPass::UnregisterShader(Shader *Shader)
         registeredShaders.erase(Shader);
     }
 }
+}  // namespace Slipper

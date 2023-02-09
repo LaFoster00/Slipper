@@ -15,80 +15,84 @@
 #include <stb_image.h>
 
 #include <filesystem>
-#include <imgui.h>
 
+#include "Window.h"
 #include "Model/Model.h"
 #include "Shader/Shader.h"
 
-GraphicsEngine *GraphicsEngine::instance = nullptr;
-bool GraphicsEngine::bSetupDefaultAssets = true;
-
-GraphicsEngine::GraphicsEngine() : DeviceDependentObject()
+namespace Slipper
 {
-    if (instance != nullptr)
+GraphicsEngine *GraphicsEngine::m_graphicsInstance = nullptr;
+Device *GraphicsEngine::m_device = nullptr;
+
+GraphicsEngine::GraphicsEngine()
+{
+    if (m_graphicsInstance != nullptr)
         return;
-
-    instance = this;
-
-    renderCommandPool = new CommandPool(device.graphicsQueue,
-                                        device.queueFamilyIndices.graphicsFamily.value(),
-                                        Engine::MAX_FRAMES_IN_FLIGHT);
-
-    memoryCommandPool = new CommandPool(
-        device.transferQueue ? device.transferQueue : device.graphicsQueue,
-        device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
-                               device.queueFamilyIndices.graphicsFamily.value());
-
-    if (bSetupDefaultAssets) {
-        SetupDefaultAssets();
-        CreateSyncObjects();
-    }
-}
-
-void GraphicsEngine::SetSetupDefaultAssets(const bool Value)
-{
-    bSetupDefaultAssets = Value;
+    m_graphicsInstance = this;
 }
 
 GraphicsEngine::~GraphicsEngine()
 {
-    ShutdownGui();
-
     renderPasses.clear();
 
     delete memoryCommandPool;
     delete renderCommandPool;
 
     for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
-        vkDestroySemaphore(device.logicalDevice, image_available_semaphore, nullptr);
+        vkDestroySemaphore(*m_device, image_available_semaphore, nullptr);
     }
 
     for (const auto render_finished_semaphore : m_renderFinishedSemaphores) {
-        vkDestroySemaphore(device.logicalDevice, render_finished_semaphore, nullptr);
+        vkDestroySemaphore(*m_device, render_finished_semaphore, nullptr);
     }
 
     for (const auto in_flight_fence : m_inFlightFences) {
-        vkDestroyFence(device.logicalDevice, in_flight_fence, nullptr);
+        vkDestroyFence(*m_device, in_flight_fence, nullptr);
     }
-    
+
     shaders.clear();
 
     models.clear();
     textures.clear();
+
+    Device::Destroy();
+
 }
 
-
-void GraphicsEngine::SetupGui(const Window &Window, const RenderPass &RenderPass)
+void GraphicsEngine::Init(const Surface& Surface)
 {
-    Gui::Init(Window, RenderPass);
+    auto &graphics_engine = Get();
+    
+    m_device = Device::PickPhysicalDevice(&Surface, true);
+
+        graphics_engine.renderCommandPool = new CommandPool(
+            m_device->graphicsQueue,
+                                            m_device->queueFamilyIndices.graphicsFamily.value(),
+                                            Engine::MAX_FRAMES_IN_FLIGHT);
+
+    graphics_engine.memoryCommandPool = new CommandPool(
+        m_device->transferQueue ? m_device->transferQueue : m_device->graphicsQueue,
+        m_device->transferQueue ? m_device->queueFamilyIndices.transferFamily.value() :
+                                  m_device->queueFamilyIndices.graphicsFamily.value());
+
+    graphics_engine.mainRenderPass = graphics_engine.CreateRenderPass(
+        "Main", VK_FORMAT_R8G8B8A8_SNORM, Texture2D::FindDepthFormat());
+
+    graphics_engine.SetupDebugResources();
+    graphics_engine.CreateSyncObjects();
 }
 
-void GraphicsEngine::ShutdownGui()
+void GraphicsEngine::Shutdown()
 {
-    Gui::Shutdown();
+    vkDeviceWaitIdle(*m_device);
+
+    Sampler::DestroyDefaultSamplers();
+    delete m_graphicsInstance;
+    m_graphicsInstance = nullptr;
 }
 
-void GraphicsEngine::SetupDefaultAssets()
+void GraphicsEngine::SetupDebugResources()
 {
     // The default shader depends on these so initialize them first
     textures.emplace_back(Texture2D::LoadTexture(DEMO_TEXTURE_PATH, true));
@@ -99,8 +103,7 @@ void GraphicsEngine::SetupDefaultAssets()
         {"./EngineContent/Shaders/Spir-V/Basic.vert.spv", ShaderType::VERTEX},
         {"./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::FRAGMENT}};
 
-    shaders.emplace_back(std::make_unique<Shader>("BasicVertex",
-                                                  shader_stages));
+    shaders.emplace_back(std::make_unique<Shader>("BasicVertex", shader_stages));
     shaders[0]->SetShaderUniform("texSampler", *textures[0]);
 }
 
@@ -119,47 +122,36 @@ void GraphicsEngine::CreateSyncObjects()
 
     for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
         VK_ASSERT(
-            vkCreateSemaphore(
-                device.logicalDevice, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
+            vkCreateSemaphore(*m_device, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
             "Failed to create semaphore!")
         VK_ASSERT(
-            vkCreateSemaphore(
-                device.logicalDevice, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
+            vkCreateSemaphore(*m_device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
             "Failed to create semaphore!")
-        VK_ASSERT(vkCreateFence(device.logicalDevice, &fence_info, nullptr, &m_inFlightFences[i]),
-                  "Failed to create fence!")
+        VK_ASSERT(vkCreateFence(*m_device, &fence_info, nullptr, &m_inFlightFences[i]),
+            "Failed to create fence!")
     }
 }
 
-RenderPass *GraphicsEngine::CreateRenderPass(const VkFormat AttachmentFormat,
+RenderPass *GraphicsEngine::CreateRenderPass(const std::string &Name,
+                                             const VkFormat AttachmentFormat,
                                              const VkFormat DepthFormat)
 {
-    return renderPasses.emplace_back(std::make_unique<RenderPass>(AttachmentFormat, DepthFormat)).get();
+    renderPasses[Name] = std::make_unique<RenderPass>(Name, AttachmentFormat, DepthFormat);
+    return renderPasses[Name].get();
 }
 
-void GraphicsEngine::SetupDebugRender(Surface &Surface, bool SetupGui)
+void GraphicsEngine::AddWindow(Window& Window)
 {
-    surfaces.insert(&Surface);
+    windows.insert(&Window);
+    Window.GetSurface().CreateSwapChain();
+}
 
-    const auto render_pass = CreateRenderPass(Surface.swapChain->GetImageFormat(), Surface.swapChain->GetDepthFormat());
-
-    Surface.RegisterRenderPass(*render_pass);
-    shaders[0]->RegisterForRenderPass(render_pass, Surface.GetResolution());
+void GraphicsEngine::SetupDebugRender(Surface &Surface)
+{
+    Surface.RegisterRenderPass(*mainRenderPass);
+    shaders[0]->RegisterForRenderPass(mainRenderPass, Surface.GetResolution());
 
     SetupSimpleDraw();
-
-    if (SetupGui)
-    {
-        this->SetupGui(Surface.window, *render_pass);
-        AddRepeatedDrawCommand([=, this](const VkCommandBuffer &CommandBuffer, const RenderPass &RenderPass)
-        {
-            Gui::StartNewFrame();
-
-            ImGui::ShowMetricsWindow();
-
-            Gui::EndNewFrame(CommandBuffer);
-        });
-    }
 }
 
 void GraphicsEngine::SetupSimpleDraw()
@@ -204,34 +196,35 @@ void GraphicsEngine::AddRepeatedDrawCommand(
 
 void GraphicsEngine::DrawFrame()
 {
-    vkWaitForFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(
+        *m_device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-    Surface &current_surface = **surfaces.begin();
-    RenderPass &current_render_pass = *current_surface.renderPasses[0];
+    Surface *current_surface = &(*windows.begin())->GetSurface();
+    RenderPass &current_render_pass = *current_surface->renderPasses[0];
     uint32_t image_index;
-    VkResult result = vkAcquireNextImageKHR(device.logicalDevice,
-                                            *current_surface.swapChain,
+    VkResult result = vkAcquireNextImageKHR(*m_device,
+                                            *current_surface->swapChain,
                                             UINT64_MAX,
                                             m_imageAvailableSemaphores[currentFrame],
                                             VK_NULL_HANDLE,
                                             &image_index);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        current_surface.RecreateSwapChain();
+        current_surface->RecreateSwapChain();
         return;
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to acquire swap chain image!");
     }
 
-    vkResetFences(device.logicalDevice, 1, &m_inFlightFences[currentFrame]);
+    vkResetFences(*m_device, 1, &m_inFlightFences[currentFrame]);
 
     const VkCommandBuffer command_buffer = renderCommandPool->vkCommandBuffers[currentFrame];
     renderCommandPool->BeginCommandBuffer(command_buffer);
 
-    for (const auto render_pass : current_surface.renderPasses) {
+    for (const auto render_pass : current_surface->renderPasses) {
         current_render_pass.BeginRenderPass(
-            current_surface.swapChain.get(), image_index, command_buffer);
+            current_surface->swapChain.get(), image_index, command_buffer);
 
         for (auto &command : repeatedRenderCommands) {
             command(command_buffer, *render_pass);
@@ -255,8 +248,9 @@ void GraphicsEngine::DrawFrame()
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
 
-    VK_ASSERT(vkQueueSubmit(device.graphicsQueue, 1, &submit_info, m_inFlightFences[currentFrame]),
-              "Failed to submit draw command buffer!");
+    VK_ASSERT(
+        vkQueueSubmit(m_device->graphicsQueue, 1, &submit_info, m_inFlightFences[currentFrame]),
+        "Failed to submit draw command buffer!");
 
     renderCommandPool->ClearSingleUseCommands();
     memoryCommandPool->ClearSingleUseCommands();
@@ -267,18 +261,18 @@ void GraphicsEngine::DrawFrame()
     present_info.waitSemaphoreCount = 1;
     present_info.pWaitSemaphores = signal_semaphores;
 
-    const VkSwapchainKHR present_swap_chains[] = {*current_surface.swapChain};
+    const VkSwapchainKHR present_swap_chains[] = {*current_surface->swapChain};
     present_info.swapchainCount = 1;
     present_info.pSwapchains = present_swap_chains;
     present_info.pImageIndices = &image_index;
     present_info.pResults = nullptr;  // Optional
 
-    result = vkQueuePresentKHR(device.presentQueue, &present_info);
+    result = vkQueuePresentKHR(m_device->presentQueue, &present_info);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
         m_framebufferResized) {
         m_framebufferResized = false;
-        current_surface.RecreateSwapChain();
+        current_surface->RecreateSwapChain();
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to present swap chain image!");
@@ -291,3 +285,4 @@ void GraphicsEngine::OnWindowResized()
 {
     m_framebufferResized = true;
 }
+    }

@@ -1,5 +1,7 @@
 #include "terminal_util.h"
 
+namespace Slipper
+{
 namespace TerminalUtil
 {
 const char *ansiColorEscape[]{
@@ -23,3 +25,4 @@ const char *ColorText(TextColor color, const char *text)
     return str.c_str();
 }
 }  // namespace TerminalUtil
+}  // namespace Slipper

@@ -1,7 +1,8 @@
 #include "IndexBuffer.h"
 
 #include "Setup/Device.h"
-
+namespace Slipper
+{
 IndexBuffer::IndexBuffer(const VertexIndex *Indices,
                          const size_t NumIndices)
     : Buffer(sizeof(Indices[0]) * NumIndices,
@@ -17,4 +18,5 @@ IndexBuffer::IndexBuffer(const VertexIndex *Indices,
     SetBufferData(Indices, staging_buffer);
 
     Buffer::CopyBuffer(staging_buffer, *this);
+}
 }

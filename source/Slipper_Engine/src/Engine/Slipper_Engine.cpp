@@ -1,9 +1,8 @@
-#include <cstring>
-#include <filesystem>
+#include "Slipper_Engine.h"
+
 #include <iostream>
 
-#include "Tutorial/HelloTriangleApplication.h"
-#include "common_defines.h"
+#include "Core/Application.h"
 
 EXTERNC
 {
@@ -11,8 +10,9 @@ EXTERNC
     {
 	    try
 	    {
-		    HelloTriangleApplication app;
-		    app.Run();
+            Slipper::ApplicationInfo app_info{ "Slipper Engine " };
+            auto app = new Slipper::SlipperEngine(app_info);
+            app->Run();
         }
         catch (const std::exception &e) {
             std::cerr << e.what() << std::endl;

@@ -2,6 +2,8 @@
 
 #include "RenderPass.h"
 
+namespace Slipper
+{
 class Device;
 class Window;
 class Surface;
@@ -32,3 +34,4 @@ class GraphicsPipeline
     const RenderPass *m_renderPass;
     const std::vector<VkPipelineShaderStageCreateInfo> m_shaderStages;
 };
+}  // namespace Slipper

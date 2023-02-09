@@ -1,6 +1,8 @@
 // NOT WORKING
 #include <string>
 
+namespace Slipper
+{
 namespace TerminalUtil
 {
 enum class TextColor
@@ -20,3 +22,4 @@ extern const char *ansiColorEscape[];
 extern const char *ColorText(TextColor color, const char *text);
 
 }  // namespace TerminalUtil
+}  // namespace Slipper

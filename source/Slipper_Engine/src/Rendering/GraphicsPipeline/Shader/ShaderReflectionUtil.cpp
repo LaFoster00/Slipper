@@ -8,6 +8,8 @@
 
 #include "Shader.h"
 
+namespace Slipper
+{
 namespace ShaderReflectionUtil
 {
 
@@ -967,3 +969,4 @@ void print_interface_variable(std::ostream &Os,
     }
 }
 }  // namespace ShaderReflectionUtil
+}  // namespace Slipper

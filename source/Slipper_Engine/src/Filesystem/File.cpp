@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <fstream>
 
+namespace Slipper
+{
 namespace File
 {
 // Mark relative path with "./"
@@ -39,3 +41,4 @@ std::string get_file_name_from_path(const std::string_view Filepath)
     return fp.substr(0, fp.find_last_of('.'));
 }
 }  // namespace File
+}  // namespace Slipper

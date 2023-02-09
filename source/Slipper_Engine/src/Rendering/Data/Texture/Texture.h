@@ -6,6 +6,8 @@
 #include "Drawing/CommandPool.h"
 #include "Drawing/Sampler.h"
 
+namespace Slipper
+{
 class Sampler;
 class Buffer;
 
@@ -106,3 +108,4 @@ class Texture : DeviceDependentObject
 
     VkDescriptorImageInfo imageInfo;
 };
+}

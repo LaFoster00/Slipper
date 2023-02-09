@@ -1,6 +1,8 @@
 #pragma once
 #include "Texture2D.h"
 
+namespace Slipper
+{
 class RenderTarget : public Texture
 {
 public:
@@ -9,3 +11,4 @@ public:
             VkExtent2D Extent,
             VkFormat Format);
 };
+}

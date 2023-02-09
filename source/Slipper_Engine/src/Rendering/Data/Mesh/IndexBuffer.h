@@ -2,6 +2,8 @@
 
 #include "Buffer.h"
 
+namespace Slipper
+{
 typedef uint16_t VertexIndex;
 
 class IndexBuffer : public Buffer
@@ -12,3 +14,4 @@ class IndexBuffer : public Buffer
  public:
     size_t numIndex;
 };
+}  // namespace Slipper

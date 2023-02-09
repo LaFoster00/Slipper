@@ -1,21 +1,23 @@
 #include "Surface.h"
 
 #include "RenderPass.h"
-#include "Setup/Instance.h"
+#include "Setup/VulkanInstance.h"
 #include "Shader/Shader.h"
 #include "SwapChain.h"
 #include "Window.h"
 #include "common_defines.h"
 
-Surface::Surface(const Window &Window)
-    : device(nullptr),
-      window(Window){
-          VK_ASSERT(glfwCreateWindowSurface(Instance::Get(), Window, nullptr, &surface),
-                    "Failed to create window suface!")}
-
-      Surface::~Surface()
+namespace Slipper
 {
-    vkDestroySurfaceKHR(Instance::Get(), surface, nullptr);
+Surface::Surface(const Window &Window) : window(Window)
+{
+    VK_ASSERT(glfwCreateWindowSurface(VulkanInstance::Get(), window, nullptr, &surface),
+              "Failed to create window suface!");
+}
+
+Surface::~Surface()
+{
+    vkDestroySurfaceKHR(VulkanInstance::Get(), surface, nullptr);
 }
 
 void Surface::CleanupSwapChain(const bool DestroySwapChain)
@@ -33,8 +35,8 @@ void Surface::CleanupSwapChain(const bool DestroySwapChain)
 
 void Surface::CreateSwapChain()
 {
-    device = &Device::Get();
-    swapChain = std::make_unique<SwapChain>(*this);
+    if (!swapChain)
+        swapChain = std::make_unique<SwapChain>(*this);
 }
 
 void Surface::DestroyDeviceDependencies()
@@ -52,7 +54,7 @@ void Surface::RecreateSwapChain()
         glfwWaitEvents();
     }
 
-    vkDeviceWaitIdle(*device);
+    vkDeviceWaitIdle(Device::Get());
 
     CleanupSwapChain(false);
 
@@ -75,3 +77,4 @@ void Surface::RegisterRenderPass(RenderPass &RenderPass)
     renderPasses.push_back(&RenderPass);
     RenderPass.CreateSwapChainFramebuffers(swapChain.get());
 }
+}  // namespace Slipper

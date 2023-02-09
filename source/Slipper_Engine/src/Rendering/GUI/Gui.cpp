@@ -4,15 +4,17 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <imgui.h>
 
-#include "Drawing/CommandPool.h"
-#include "GraphicsEngine.h"
 #include "RenderPass.h"
 #include "Setup/Device.h"
 #include "Setup/GraphicsSettings.h"
-#include "Setup/Instance.h"
+#include "Setup/VulkanInstance.h"
 #include "Window/Window.h"
 #include "common_defines.h"
+#include "GraphicsEngine.h"
+#include "Drawing/CommandPool.h"
 
+namespace Slipper
+{
 bool Gui::m_initialized = false;
 Gui::ImGuiResources *Gui::m_resources = nullptr;
 Device *Gui::m_device = nullptr;
@@ -53,7 +55,7 @@ void Gui::Init(const Window &Window, const RenderPass &RenderPass)
 
     ImGui_ImplGlfw_InitForVulkan(Window, true);
     ImGui_ImplVulkan_InitInfo info{};
-    info.Instance = Engine::Instance->instance;
+    info.Instance = VulkanInstance::Get();
     info.PhysicalDevice = *m_device;
     info.Device = *m_device;
     info.QueueFamily = m_device->queueFamilyIndices.graphicsFamily.value();
@@ -114,15 +116,17 @@ void Gui::SetupDocksapce()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     constexpr int window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
-                      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-                      ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                      ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+                                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                                 ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                 ImGuiWindowFlags_NoNavFocus;
 
     bool window_open = true;
-    ImGui::Begin("Dockspace",&window_open, window_flags);
+    ImGui::Begin("Dockspace", &window_open, window_flags);
     ImGui::PopStyleVar(2);
 
-    //Dockspace
+    // Dockspace
     ImGui::DockSpace(ImGui::GetID("Dockspace"));
     ImGui::End();
 }
+}  // namespace Slipper

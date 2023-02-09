@@ -11,6 +11,8 @@
 #include "ShaderLayout.h"
 #include "common_defines.h"
 
+namespace Slipper
+{
 class ShaderLayout;
 class ShaderReflection;
 class RenderPass;
@@ -117,7 +119,6 @@ class Shader
               const RenderPass *RenderPass,
               std::optional<uint32_t> CurrentFrame = {}) const;
 
-
     bool SetUniformBuffer(const std::string Name, const UniformBuffer &Buffer) const;
     bool SetTexture(const std::string Name, const Texture &Texture) const;
 
@@ -201,3 +202,4 @@ class Shader
 
 extern template void Shader::SetShaderUniform(const std::string Name, const UniformBuffer &Data);
 extern template void Shader::SetShaderUniform(const std::string Name, const Texture &Data);
+}  // namespace Slipper

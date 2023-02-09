@@ -6,6 +6,8 @@
 
 #include "Setup/Device.h"
 
+namespace Slipper
+{
 struct ShaderUniform;
 class CommandPool;
 
@@ -21,8 +23,8 @@ class Buffer : DeviceDependentObject
     /* Sets the buffers data to that of the supplied pointer based on the size specified during
      * creation. */
     template<typename TDataObject>
-    static void SetBufferData(const TDataObject DataObject,
-                              const Buffer &Buffer) requires std::is_pointer_v<TDataObject>
+    static void SetBufferData(const TDataObject DataObject, const Buffer &Buffer)
+        requires std::is_pointer_v<TDataObject>
     {
         void *data;
         vkMapMemory(Device::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
@@ -49,3 +51,4 @@ class Buffer : DeviceDependentObject
     VkDeviceMemory vkBufferMemory;
     VkDeviceSize vkBufferSize;
 };
+}  // namespace Slipper

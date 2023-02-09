@@ -1,12 +1,15 @@
 #pragma once
 
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "DeviceDependentObject.h"
 
+namespace Slipper
+{
 class Framebuffer;
 class Shader;
 class Device;
@@ -17,7 +20,7 @@ class RenderPass : DeviceDependentObject
 {
  public:
     RenderPass() = delete;
-    RenderPass(VkFormat AttachmentFormat, VkFormat DepthFormat);
+    RenderPass(std::string_view Name, VkFormat AttachmentFormat, VkFormat DepthFormat);
     ~RenderPass();
 
     void DestroyAllFrameBuffers();
@@ -37,6 +40,7 @@ class RenderPass : DeviceDependentObject
     }
 
  public:
+    std::string name;
     VkRenderPass vkRenderPass;
 
     std::unordered_map<SwapChain *, std::vector<std::unique_ptr<Framebuffer>>>
@@ -47,3 +51,4 @@ class RenderPass : DeviceDependentObject
  private:
     SwapChain *m_activeSwapChain;
 };
+}  // namespace Slipper

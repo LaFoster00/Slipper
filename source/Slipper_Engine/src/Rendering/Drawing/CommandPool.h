@@ -5,6 +5,8 @@
 #include "DeviceDependentObject.h"
 #include "Setup/Device.h"
 
+namespace Slipper
+{
 struct SingleUseCommandBuffer;
 class RenderPass;
 
@@ -115,3 +117,4 @@ struct SingleUseCommandBuffer
     CommandPool &m_commandPool;
     bool m_submitted = false;
 };
+}  // namespace Slipper

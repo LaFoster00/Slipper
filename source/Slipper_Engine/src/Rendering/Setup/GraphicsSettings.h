@@ -2,21 +2,23 @@
 
 #include "Engine.h"
 
+namespace Slipper
+{
 struct GraphicsSettings
 {
     static GraphicsSettings &Get()
     {
-        if (!m_instance)
-        {
+        if (!m_instance) {
             m_instance = new GraphicsSettings();
         }
 
         return *m_instance;
     }
 
-public:
+ public:
     VkSampleCountFlagBits MSAA_SAMPLES;
 
-private:
+ private:
     static GraphicsSettings *m_instance;
 };
+}  // namespace Slipper

@@ -1,12 +1,14 @@
 #include "Device.h"
 #include "../Presentation/Surface.h"
-#include "Instance.h"
+#include "VulkanInstance.h"
 #include "Window/Window.h"
 
 #include <iostream>
 #include <map>
 #include <set>
 
+namespace Slipper
+{
 Device *Device::m_instance = nullptr;
 
 Device::Device(const VkPhysicalDevice PhysicalDevice) : physicalDevice(PhysicalDevice)
@@ -79,14 +81,14 @@ Device *Device::PickPhysicalDevice(const Surface *Surface, const bool InitLogica
         std::cout << "\nFetching all physical devices!\n";
 
         uint32_t device_count = 0;
-        vkEnumeratePhysicalDevices(Instance::Get().instance, &device_count, nullptr);
+        vkEnumeratePhysicalDevices(VulkanInstance::Get().instance, &device_count, nullptr);
         if (device_count == 0) {
             throw std::runtime_error("Failed to find GPUs with Vulkan support!");
         }
 
         std::vector<VkPhysicalDevice> all_physical_devices(device_count);
         vkEnumeratePhysicalDevices(
-            Instance::Get().instance, &device_count, all_physical_devices.data());
+            VulkanInstance::Get().instance, &device_count, all_physical_devices.data());
 
         for (const auto &physical_device : all_physical_devices) {
             if (auto device = new Device(physical_device); device->IsDeviceSuitable(Surface)) {
@@ -175,7 +177,8 @@ VkExtent2D Device::GetSurfaceResolution(const Surface *Surface) const
 
 VkSampleCountFlagBits Device::GetMaxUsableSampleCount() const
 {
-    const VkSampleCountFlags counts = deviceProperties.limits.framebufferColorSampleCounts & deviceProperties.limits.framebufferDepthSampleCounts;
+    const VkSampleCountFlags counts = deviceProperties.limits.framebufferColorSampleCounts &
+                                      deviceProperties.limits.framebufferDepthSampleCounts;
     if (counts & VK_SAMPLE_COUNT_64_BIT) {
         return VK_SAMPLE_COUNT_64_BIT;
     }
@@ -323,3 +326,4 @@ const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface
     queueFamilyIndices = indices;
     return &queueFamilyIndices;
 }
+}  // namespace Slipper

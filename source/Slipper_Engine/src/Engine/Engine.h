@@ -6,11 +6,12 @@
 
 #include <vector>
 
-class Instance;
+namespace Slipper
+{
+class VulkanInstance;
 
 namespace Engine
 {
-inline Instance *Instance = nullptr;
 inline constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 inline uint64_t FRAME_COUNT = 0;
 
@@ -28,3 +29,4 @@ inline const std::vector<VkValidationFeatureEnableEXT> PRINTF_ENABLES = {
 };
 
 }  // namespace Engine
+}  // namespace Slipper
