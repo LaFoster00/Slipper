@@ -80,20 +80,17 @@ void Application::Run()
             }
 
             GraphicsEngine::Get().BeginFrame();
-
             for (auto &app_component : appComponents) {
                 app_component->OnUpdate();
             }
-
+            guiComponent->OnUpdate();
             GraphicsEngine::Get().EndUpdate();
 
-            guiComponent->OnUpdate();
             guiComponent->StartNewFrame();
-
+            guiComponent->OnGuiRender();
             for (auto &app_component : appComponents) {
                 app_component->OnGuiRender();
             }
-
             guiComponent->EndNewFrame(GraphicsEngine::Get().GetCurrentCommandBuffer());
 
             GraphicsEngine::Get().EndFrame();

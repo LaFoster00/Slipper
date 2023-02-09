@@ -4,15 +4,15 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <imgui.h>
 
+#include "Core/Application.h"
+#include "Drawing/CommandPool.h"
+#include "GraphicsEngine.h"
 #include "RenderPass.h"
 #include "Setup/Device.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
 #include "Window/Window.h"
 #include "common_defines.h"
-#include "GraphicsEngine.h"
-#include "Core/Application.h"
-#include "Drawing/CommandPool.h"
 
 namespace Slipper
 {
@@ -88,10 +88,7 @@ void Gui::StartNewFrame()
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-
-    ImGui::ShowDemoWindow();
-
-    //SetupDocksapce();
+    SetupDocksapce();
 }
 
 void Gui::EndNewFrame(VkCommandBuffer CommandBuffer)
@@ -122,28 +119,32 @@ void Gui::OnUpdate()
 void Gui::OnGuiRender()
 {
     AppComponent::OnGuiRender();
+    ImGui::ShowDemoWindow();
 }
 
 void Gui::SetupDocksapce()
 {
     ImGui::SetNextWindowPos({0.0f, 0.0f}, ImGuiCond_Always);
 
-    auto window_size = m_window->GetSize();
-    ImGui::SetNextWindowSize({window_size.x, window_size.y});
+    ImGuiWindowFlags window_flags =  ImGuiWindowFlags_NoDocking;
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    constexpr int window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
-                                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-                                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                                 ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                 ImGuiWindowFlags_NoNavFocus;
-
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    window_flags |= ImGuiWindowFlags_NoBackground;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     bool window_open = true;
-    ImGui::Begin("Dockspace", &window_open, window_flags);
-    ImGui::PopStyleVar(2);
-
+    ImGui::Begin("Dockspace Window", &window_open, window_flags);
+    ImGui::PopStyleVar(3);
+    
     // Dockspace
-    ImGui::DockSpace(ImGui::GetID("Dockspace"));
+    ImGui::DockSpace(
+        ImGui::GetID("Dockspace"), ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
     ImGui::End();
 }
 }  // namespace Slipper
