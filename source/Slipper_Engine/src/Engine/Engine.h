@@ -12,6 +12,8 @@ class VulkanInstance;
 
 namespace Engine
 {
+inline constexpr VkFormat TARGET_COLOR_FORMAT = VK_FORMAT_B8G8R8A8_SRGB;
+inline constexpr VkColorSpaceKHR TARGET_COLOR_SPACE = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 inline constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 inline uint64_t FRAME_COUNT = 0;
 

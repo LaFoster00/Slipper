@@ -16,6 +16,7 @@ Window::Window(WindowInfo CreateInfo)
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, CreateInfo.resizable);
+    glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
 
     glfwWindow = glfwCreateWindow(m_info.width, m_info.height, m_info.name, nullptr, nullptr);
 

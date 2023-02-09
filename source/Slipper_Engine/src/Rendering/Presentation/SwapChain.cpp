@@ -11,6 +11,8 @@
 
 namespace Slipper
 {
+VkFormat SwapChain::swapChainFormat = Engine::TARGET_COLOR_FORMAT;
+
 SwapChain::SwapChain(Surface &Surface) : surface(Surface)
 {
     Create();
@@ -120,15 +122,17 @@ void SwapChain::CreateImageViews()
     }
 }
 
-VkSurfaceFormatKHR SwapChain::ChooseSurfaceFormat()
+VkSurfaceFormatKHR SwapChain::ChooseSurfaceFormat() const
 {
     for (const auto &available_format : swapChainSupport.formats) {
-        if (available_format.format == VK_FORMAT_B8G8R8A8_SRGB &&
-            available_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+        if (available_format.format == Engine::TARGET_COLOR_FORMAT &&
+            available_format.colorSpace == Engine::TARGET_COLOR_SPACE) {
+            swapChainFormat = Engine::TARGET_COLOR_FORMAT;
             return available_format;
         }
     }
 
+    swapChainFormat = swapChainSupport.formats[0].format;
     return swapChainSupport.formats[0];
 }
 

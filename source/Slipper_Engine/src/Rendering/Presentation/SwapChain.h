@@ -46,11 +46,13 @@ class SwapChain : DeviceDependentObject
  private:
     void Create(VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
     void CreateImageViews();
-    VkSurfaceFormatKHR ChooseSurfaceFormat();
+    VkSurfaceFormatKHR ChooseSurfaceFormat() const;
     VkPresentModeKHR ChoosePresentMode() const;
     VkExtent2D ChoseExtent(const Surface &Surface) const;
 
  public:
+    static VkFormat swapChainFormat;
+
     Surface &surface;
 
     SwapChainSupportDetails swapChainSupport;

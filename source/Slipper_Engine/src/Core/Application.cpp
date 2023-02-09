@@ -2,6 +2,7 @@
 
 #include "GraphicsEngine.h"
 #include "Window.h"
+#include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
 #include "Time/Time.h"
 
@@ -25,7 +26,10 @@ Application::Application(ApplicationInfo &ApplicationInfo)
     window_create_info.name = name.c_str();
     window = std::make_unique<Window>(window_create_info);
 
-    GraphicsEngine::Init(window->GetSurface());
+    Device::PickPhysicalDevice(&window->GetSurface(), true);
+    GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableSampleCount();
+
+    GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
     GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
 }
@@ -33,6 +37,7 @@ Application::Application(ApplicationInfo &ApplicationInfo)
 Application::~Application()
 {
     GraphicsEngine::Shutdown();
+    Device::Destroy();
     window.reset();
     glfwTerminate();
 }

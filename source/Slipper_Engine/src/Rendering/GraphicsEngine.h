@@ -3,14 +3,13 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include "Drawing/Sampler.h"
-
 #include <functional>
 #include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
+#include "DeviceDependentObject.h"
 #include "GUI/Gui.h"
 
 namespace Slipper
@@ -27,18 +26,15 @@ class Device;
 class Window;
 class Surface;
 
-class GraphicsEngine
+class GraphicsEngine : DeviceDependentObject
 {
  public:
     static GraphicsEngine &Get()
     {
-        if (!m_graphicsInstance) {
-            m_graphicsInstance = new GraphicsEngine();
-        }
         return *m_graphicsInstance;
     }
 
-    static void Init(const Surface &Surface);
+    static void Init();
 
     static void Shutdown();
 
@@ -78,7 +74,6 @@ class GraphicsEngine
     CommandPool *memoryCommandPool;
 
  private:
-    static Device *m_device;
     Surface *surface = nullptr;
 
     static GraphicsEngine *m_graphicsInstance;

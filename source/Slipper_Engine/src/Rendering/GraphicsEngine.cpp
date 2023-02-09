@@ -23,12 +23,10 @@
 namespace Slipper
 {
 GraphicsEngine *GraphicsEngine::m_graphicsInstance = nullptr;
-Device *GraphicsEngine::m_device = nullptr;
 
 GraphicsEngine::GraphicsEngine()
 {
-    if (m_graphicsInstance != nullptr)
-        return;
+    ASSERT(m_graphicsInstance, "Graphics Engine allready created!");
     m_graphicsInstance = this;
 }
 
@@ -40,52 +38,48 @@ GraphicsEngine::~GraphicsEngine()
     delete renderCommandPool;
 
     for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
-        vkDestroySemaphore(*m_device, image_available_semaphore, nullptr);
+        vkDestroySemaphore(device, image_available_semaphore, nullptr);
     }
 
     for (const auto render_finished_semaphore : m_renderFinishedSemaphores) {
-        vkDestroySemaphore(*m_device, render_finished_semaphore, nullptr);
+        vkDestroySemaphore(device, render_finished_semaphore, nullptr);
     }
 
     for (const auto in_flight_fence : m_inFlightFences) {
-        vkDestroyFence(*m_device, in_flight_fence, nullptr);
+        vkDestroyFence(device, in_flight_fence, nullptr);
     }
 
     shaders.clear();
 
     models.clear();
     textures.clear();
-
-    Device::Destroy();
-
 }
 
-void GraphicsEngine::Init(const Surface& Surface)
+void GraphicsEngine::Init()
 {
-    auto &graphics_engine = Get();
-    
-    m_device = Device::PickPhysicalDevice(&Surface, true);
+    m_graphicsInstance = new GraphicsEngine();
+    auto &device = Device::Get();
 
-        graphics_engine.renderCommandPool = new CommandPool(
-            m_device->graphicsQueue,
-                                            m_device->queueFamilyIndices.graphicsFamily.value(),
+        m_graphicsInstance->renderCommandPool = new CommandPool(
+        device.graphicsQueue,
+        device.queueFamilyIndices.graphicsFamily.value(),
                                             Engine::MAX_FRAMES_IN_FLIGHT);
 
-    graphics_engine.memoryCommandPool = new CommandPool(
-        m_device->transferQueue ? m_device->transferQueue : m_device->graphicsQueue,
-        m_device->transferQueue ? m_device->queueFamilyIndices.transferFamily.value() :
-                                  m_device->queueFamilyIndices.graphicsFamily.value());
+    m_graphicsInstance->memoryCommandPool = new CommandPool(
+            device.transferQueue ? device.transferQueue : device.graphicsQueue,
+            device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
+                                      device.queueFamilyIndices.graphicsFamily.value());
 
-    graphics_engine.mainRenderPass = graphics_engine.CreateRenderPass(
-        "Main", VK_FORMAT_R8G8B8A8_SNORM, Texture2D::FindDepthFormat());
+    m_graphicsInstance->mainRenderPass = m_graphicsInstance->CreateRenderPass(
+        "Main", SwapChain::swapChainFormat, Texture2D::FindDepthFormat());
 
-    graphics_engine.SetupDebugResources();
-    graphics_engine.CreateSyncObjects();
+    m_graphicsInstance->SetupDebugResources();
+    m_graphicsInstance->CreateSyncObjects();
 }
 
 void GraphicsEngine::Shutdown()
 {
-    vkDeviceWaitIdle(*m_device);
+    vkDeviceWaitIdle(Device::Get());
 
     Sampler::DestroyDefaultSamplers();
     delete m_graphicsInstance;
@@ -122,12 +116,12 @@ void GraphicsEngine::CreateSyncObjects()
 
     for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
         VK_ASSERT(
-            vkCreateSemaphore(*m_device, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
+            vkCreateSemaphore(device, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
             "Failed to create semaphore!")
         VK_ASSERT(
-            vkCreateSemaphore(*m_device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
+            vkCreateSemaphore(device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
             "Failed to create semaphore!")
-        VK_ASSERT(vkCreateFence(*m_device, &fence_info, nullptr, &m_inFlightFences[i]),
+        VK_ASSERT(vkCreateFence(device, &fence_info, nullptr, &m_inFlightFences[i]),
             "Failed to create fence!")
     }
 }
@@ -196,13 +190,12 @@ void GraphicsEngine::AddRepeatedDrawCommand(
 
 void GraphicsEngine::DrawFrame()
 {
-    vkWaitForFences(
-        *m_device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     Surface *current_surface = &(*windows.begin())->GetSurface();
     RenderPass &current_render_pass = *current_surface->renderPasses[0];
     uint32_t image_index;
-    VkResult result = vkAcquireNextImageKHR(*m_device,
+    VkResult result = vkAcquireNextImageKHR(device,
                                             *current_surface->swapChain,
                                             UINT64_MAX,
                                             m_imageAvailableSemaphores[currentFrame],
@@ -217,7 +210,7 @@ void GraphicsEngine::DrawFrame()
         throw std::runtime_error("Failed to acquire swap chain image!");
     }
 
-    vkResetFences(*m_device, 1, &m_inFlightFences[currentFrame]);
+    vkResetFences(device, 1, &m_inFlightFences[currentFrame]);
 
     const VkCommandBuffer command_buffer = renderCommandPool->vkCommandBuffers[currentFrame];
     renderCommandPool->BeginCommandBuffer(command_buffer);
@@ -249,7 +242,7 @@ void GraphicsEngine::DrawFrame()
     submit_info.pSignalSemaphores = signal_semaphores;
 
     VK_ASSERT(
-        vkQueueSubmit(m_device->graphicsQueue, 1, &submit_info, m_inFlightFences[currentFrame]),
+        vkQueueSubmit(device.graphicsQueue, 1, &submit_info, m_inFlightFences[currentFrame]),
         "Failed to submit draw command buffer!");
 
     renderCommandPool->ClearSingleUseCommands();
@@ -267,7 +260,7 @@ void GraphicsEngine::DrawFrame()
     present_info.pImageIndices = &image_index;
     present_info.pResults = nullptr;  // Optional
 
-    result = vkQueuePresentKHR(m_device->presentQueue, &present_info);
+    result = vkQueuePresentKHR(device.presentQueue, &present_info);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
         m_framebufferResized) {

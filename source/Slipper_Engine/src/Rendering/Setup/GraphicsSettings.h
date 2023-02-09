@@ -16,7 +16,7 @@ struct GraphicsSettings
     }
 
  public:
-    VkSampleCountFlagBits MSAA_SAMPLES;
+    VkSampleCountFlagBits MSAA_SAMPLES = VK_SAMPLE_COUNT_1_BIT;
 
  private:
     static GraphicsSettings *m_instance;
