@@ -75,11 +75,14 @@ if( MSVC )
 endif()
 
 
-#Slipper
+#Slipper Engine
 message(STATUS "Configuring SLIPPER_ENGINE Lib")
-set(OUTPUT_LIB OFF CACHE BOOL "")
 set(PRINTF_IN_SHADERS OFF CACHE BOOL "")
 add_subdirectory(source/Slipper_Engine)
+
+#Slipper Editor
+message(STATUS "Configuring SLIPPER_ENGINE")
+add_subdirectory(source/Slipper_Editor)
 
 # option(BUILD_EDITOR OFF)
 # if(BUILD_EDITOR)

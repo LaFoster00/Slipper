@@ -7,10 +7,11 @@ project(SlipperEngine VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-string(CONCAT BUILD_TYPE ${CMAKE_BUILD_TYPE})
-message("Building with ${BUILD_TYPE} config!")
-
-set(BUILD_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/$<CONFIG>)
+set(OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/$<CONFIG>)
+# Set the output folder where your program will be created
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
 
 if ("${BUILD_TYPE}" STREQUAL "Debug")
     if(LINUX)
@@ -29,23 +30,6 @@ option(PRINTF_IN_SHADERS OFF)
     add_compile_definitions(SHADER_PRINTF_ENABLED)
     endif()
 
-# Fetch all source files
-file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES "*.h" "*.cpp") 
-
-set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
-    src
-    src/Engine
-    src/Filesystem
-    src/Rendering
-    src/Rendering/Data
-    src/Rendering/GraphicsPipeline
-    src/Tutorial
-    src/Window
-    src/Platform
-)
-GroupSources(src src Source)
-include_directories(${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
-
 #SPIRV-Reflect
 set(SPIRV_REFLECT_FILES 
     "${EXTERNAL_LIBS_DIR}/SPIRV-Reflect/spirv_reflect.h"
@@ -63,32 +47,55 @@ source_group(extern/tinyobjloader FILES ${TINY_OBJ_LOADER_FILES})
 #imgui
 source_group(extern/imgui FILES ${IMGUI_FILES})
 
+# Fetch all source files
+file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES src/*.h src/*.cpp)
 
-option(OUTPUT_LIB OFF)
-if(OUTPUT_LIB)
-    message("Building Engine Library")
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_library(SlipperEngine SHARED ${SLIPPER_ENGINE_SOURCE_FILES})
-else()
-    message("Building Engine Executable")    
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
-    add_executable(SlipperEngine ${SLIPPER_ENGINE_SOURCE_FILES} ${IMGUI_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
-endif()
+message("Building Engine Library")
+add_library(SlipperEngine STATIC ${SLIPPER_ENGINE_SOURCE_FILES} ${IMGUI_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
+
+# Fetch all source files
+file(GLOB_RECURSE SLIPPER_ENGINE_TEST_SOURCE_FILES test/*.h test/*.cpp)
+
+message("Building Engine Executable")
+add_executable(SlipperEngine_Test ${SLIPPER_ENGINE_TEST_SOURCE_FILES})
 
 set_property(TARGET SlipperEngine PROPERTY CXX_STANDARD 20)
+set_property(TARGET SlipperEngine_Test PROPERTY CXX_STANDARD 20)
+
+set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
+    src
+    src/Engine
+    src/Filesystem
+    src/Rendering
+    src/Rendering/Data
+    src/Rendering/GraphicsPipeline
+    src/Tutorial
+    src/Window
+    src/Platform
+)
+GroupSources(src src Source)
+target_include_directories(SlipperEngine PUBLIC ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
+
+GroupSources(test test Source)
+target_include_directories(SlipperEngine_Test PUBLIC test)
+#target_include_directories(SlipperEngine_Test PRIVATE ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
 
 #Make engine dependent on engine content
 add_dependencies(SlipperEngine SlipperEngine_EngineContent)
+add_dependencies(SlipperEngine_Test SlipperEngine)
 
 #Libs
 if(LINUX)
     target_link_libraries(SlipperEngine glfw dl pthread X11)
+    target_link_libraries(SlipperEngine_Test Slipper_Engine dl pthread)
 else()
     message("Linking for windows")    
     if (CMAKE_GENERATOR MATCHES "Visual Studio")
         target_link_libraries(SlipperEngine User32.lib glfw)
+        target_link_libraries(SlipperEngine_Test SlipperEngine User32.lib glfw)
     else()
         target_link_libraries(SlipperEngine User32.lib glfw msvcrt.lib)
+        target_link_libraries(SlipperEngine_Test SlipperEngine User32.lib glfw msvcrt.lib)
     endif()
 endif()
 
@@ -103,10 +110,13 @@ include_directories(SlipperEngine ${Vulkan_INCLUDE_DIRS})
 
 #glm
 target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
+target_include_directories(SlipperEngine_Test PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
 #stb
 target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/stb")
+target_include_directories(SlipperEngine_Test PUBLIC "${EXTERNAL_LIBS_DIR}/stb")
 #imgui
 target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/imgui")
+target_include_directories(SlipperEngine_Test PUBLIC "${EXTERNAL_LIBS_DIR}/imgui")
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

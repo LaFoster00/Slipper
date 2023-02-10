@@ -4,56 +4,54 @@
 
 #include "common_defines.h"
 
-EXTERNC {
-    SLIPPER_FUNCTION int main(int argc, char *argv[]);
+int main(int argc, char *argv[]);
 
-    namespace Slipper
+namespace Slipper
+{
+class Gui;
+class VulkanInstance;
+class Window;
+class GraphicsEngine;
+
+class AppComponent;
+
+struct ApplicationInfo
+{
+    std::string Name = "Slipper Engine";
+};
+
+// Program witch will start the render engine and open a window with ability to add more
+// functionality through ProgramComponents
+class Application
+{
+ public:
+    Application(ApplicationInfo &ApplicationInfo);
+    virtual ~Application();
+
+    void AddComponent(AppComponent *ProgramComponent);
+
+    void Close();
+    static Application &Get()
     {
-        class Gui;
-        class VulkanInstance;
-        class Window;
-    class GraphicsEngine;
+        return *instance;
+    }
 
-    class AppComponent;
+    virtual void Run();
+    virtual void OnWindowResize(Window *Window, int Width, int Height);
 
-    struct ApplicationInfo
-    {
-        std::string Name = "Slipper Engine";
-    };
+ public:
+    std::unique_ptr<Window> window;
 
-    // Program witch will start the render engine and open a window with ability to add more
-    // functionality through ProgramComponents
-    class Application
-    {
-     public:
-        Application(ApplicationInfo &ApplicationInfo);
-        virtual ~Application();
+ protected:
+    static Application *instance;
 
-        void AddComponent(AppComponent *ProgramComponent);
+    std::string name;
+    bool running = true;
+    bool minimized = false;
 
-        void Close();
-        static Application &Get()
-        {
-            return *instance;
-        }
+    std::unique_ptr<VulkanInstance> vulkanInstance;
 
-        virtual void Run();
-        virtual void OnWindowResize(Window *Window, int Width, int Height);
-
-    public:
-        std::unique_ptr<Window> window;
-
-     protected:
-        static Application *instance;
-
-        std::string name;
-        bool running = true;
-        bool minimized = false;
-
-        std::unique_ptr<VulkanInstance> vulkanInstance;
-
-        std::unique_ptr<Gui> guiComponent;
-        std::vector<std::unique_ptr<AppComponent>> appComponents;
-    };
-    }  // namespace Slipper
-}
+    std::unique_ptr<Gui> guiComponent;
+    std::vector<std::unique_ptr<AppComponent>> appComponents;
+};
+}  // namespace Slipper

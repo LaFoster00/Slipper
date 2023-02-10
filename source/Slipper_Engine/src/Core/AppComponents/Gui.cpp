@@ -119,7 +119,6 @@ void Gui::OnUpdate()
 void Gui::OnGuiRender()
 {
     AppComponent::OnGuiRender();
-    ImGui::ShowDemoWindow();
 }
 
 void Gui::SetupDocksapce()
