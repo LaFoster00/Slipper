@@ -14,7 +14,7 @@ class Window;
 class Device;
 class Surface;
 
-class SwapChain : DeviceDependentObject
+class SLIPPER_API SwapChain : DeviceDependentObject
 {
  public:
     SwapChain() = delete;
@@ -41,10 +41,10 @@ class SwapChain : DeviceDependentObject
         return vkSwapChain;
     }
 
-    void Recreate();
+    void Recreate(uint32_t Width, uint32_t Height);
 
  private:
-    void Create(VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+    void Create(uint32_t Width, uint32_t Height, VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
     void CreateImageViews();
     VkSurfaceFormatKHR ChooseSurfaceFormat() const;
     VkPresentModeKHR ChoosePresentMode() const;

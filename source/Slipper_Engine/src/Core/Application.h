@@ -15,14 +15,14 @@ class GraphicsEngine;
 
 class AppComponent;
 
-struct ApplicationInfo
+struct SLIPPER_API ApplicationInfo
 {
     std::string Name = "Slipper Engine";
 };
 
 // Program witch will start the render engine and open a window with ability to add more
 // functionality through ProgramComponents
-class Application
+class SLIPPER_API Application
 {
  public:
     Application(ApplicationInfo &ApplicationInfo);

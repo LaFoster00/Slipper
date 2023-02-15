@@ -99,6 +99,8 @@ else()
     endif()
 endif()
 
+target_compile_definitions(SlipperEngine PRIVATE LIBRARY_EXPORT)
+
 #Append external source files to project
 #include Vulkan
 find_package(Vulkan)

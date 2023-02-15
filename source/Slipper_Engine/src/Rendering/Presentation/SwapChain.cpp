@@ -29,7 +29,7 @@ SwapChain::~SwapChain()
     vkDestroySwapchainKHR(device.logicalDevice, vkSwapChain, nullptr);
 }
 
-void SwapChain::Recreate()
+void SwapChain::Recreate(uint32_t Width, uint32_t Height)
 {
     for (const auto image_view : vkImageViews) {
         vkDestroyImageView(device.logicalDevice, image_view, nullptr);
@@ -37,18 +37,18 @@ void SwapChain::Recreate()
     vkImageViews.clear();
     const VkSwapchainKHR old_swap_chain = vkSwapChain;
 
-    Create(old_swap_chain);
+    Create(Width, Height, old_swap_chain);
 
     vkDestroySwapchainKHR(device, old_swap_chain, nullptr);
 }
 
-void SwapChain::Create(VkSwapchainKHR oldSwapChain)
+void SwapChain::Create(uint32_t Width, uint32_t Height, VkSwapchainKHR oldSwapChain)
 {
     swapChainSupport = device.QuerySwapChainSupport(&surface);
 
     const auto [format, colorSpace] = ChooseSurfaceFormat();
     const VkPresentModeKHR present_mode = ChoosePresentMode();
-    const VkExtent2D extent = ChoseExtent(surface);
+    const VkExtent2D extent{Width, Height};
 
     uint32_t image_count = std::clamp(
         static_cast<uint32_t>(swapChainSupport.capabilities.minImageCount + 1),

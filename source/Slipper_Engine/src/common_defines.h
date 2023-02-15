@@ -8,7 +8,11 @@
 #    define MAX_PATH PATH_MAX
 #    define DEBUG_BREAK raise(SIGTRAP);
 #elif WINDOWS
-#    define SLIPPER_FUNCTION _declspec(dllexport)
+#    ifdef LIBRARY_EXPORT
+#        define SLIPPER_API _declspec(dllexport)
+#    else
+#        define SLIPPER_API _declspec(dllimport)
+#    endif
 #    define DEBUG_BREAK __debugbreak();
 #else
 #    define SLIPPER_FUNCTION
