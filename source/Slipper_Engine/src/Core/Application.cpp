@@ -7,6 +7,7 @@
 #include "Setup/VulkanInstance.h"
 #include "Time/Time.h"
 #include "Window.h"
+#include "Texture/RenderTarget.h"
 
 namespace Slipper
 {
@@ -65,6 +66,11 @@ void Application::Close()
     running = false;
 }
 
+VkImageView Application::GetViewportTextureView() const
+{
+    return window->GetSurface().swapChain->renderTarget->textureView;
+}
+
 void Application::Run()
 {
     while (running) {
@@ -79,21 +85,23 @@ void Application::Run()
                           << std::flush;
             }
 
-            GraphicsEngine::Get().BeginFrame();
+            GraphicsEngine::Get().BeginUpdate();
             for (auto &app_component : appComponents) {
                 app_component->OnUpdate();
             }
             guiComponent->OnUpdate();
             GraphicsEngine::Get().EndUpdate();
 
+            GraphicsEngine::Get().BeginGuiUpdate();
             guiComponent->StartNewFrame();
             guiComponent->OnGuiRender();
             for (auto &app_component : appComponents) {
                 app_component->OnGuiRender();
             }
             guiComponent->EndNewFrame(GraphicsEngine::Get().GetCurrentCommandBuffer());
+            GraphicsEngine::Get().EndGuiUpdate();
 
-            GraphicsEngine::Get().EndFrame();
+            GraphicsEngine::Get().Render();
         }
     }
 }

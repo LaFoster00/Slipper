@@ -8,9 +8,9 @@
 #include "Drawing/Framebuffer.h"
 #include "Presentation/SwapChain.h"
 #include "Setup/GraphicsSettings.h"
-#include "common_defines.h"
 #include "Texture/DepthBuffer.h"
 #include "Texture/RenderTarget.h"
+#include "common_defines.h"
 
 namespace Slipper
 {
@@ -157,6 +157,11 @@ void RenderPass::BeginRenderPass(SwapChain *SwapChain,
                                  const uint32_t ImageIndex,
                                  const VkCommandBuffer CommandBuffer)
 {
+    if (!swapChainFramebuffers.contains(SwapChain)) {
+        ASSERT(1,
+               "Swap chain has no framebuffers in this render pass. Did you call "
+               "CreateSwapChainFramebuffers for this SwapChain?")
+    }
     m_activeSwapChain = SwapChain;
 
     VkRenderPassBeginInfo render_pass_info{};

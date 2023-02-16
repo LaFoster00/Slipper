@@ -64,6 +64,7 @@ class Device
     [[nodiscard]] std::string DeviceInfoToString() const;
 
     VkSurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const;
+    uint32_t SurfaceSwapChainImagesCount(const Surface *Surface) const;
     SwapChainSupportDetails QuerySwapChainSupport(const Surface *Surface) const;
     VkExtent2D GetSurfaceResolution(const Surface *Surface) const;
     VkSampleCountFlagBits GetMaxUsableSampleCount() const;

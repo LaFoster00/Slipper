@@ -39,7 +39,7 @@ class Window
         return glfwWindow;
     }
 
-    glm::vec2 GetSize() const;
+    VkExtent2D GetSize() const;
 
     void OnUpdate();
 

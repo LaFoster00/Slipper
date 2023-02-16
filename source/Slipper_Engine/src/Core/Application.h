@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "Engine.h"
 
 #include "common_defines.h"
 
@@ -15,14 +16,14 @@ class GraphicsEngine;
 
 class AppComponent;
 
-struct SLIPPER_API ApplicationInfo
+struct ApplicationInfo
 {
     std::string Name = "Slipper Engine";
 };
 
 // Program witch will start the render engine and open a window with ability to add more
 // functionality through ProgramComponents
-class SLIPPER_API Application
+class Application
 {
  public:
     Application(ApplicationInfo &ApplicationInfo);
@@ -35,6 +36,8 @@ class SLIPPER_API Application
     {
         return *instance;
     }
+
+    VkImageView GetViewportTextureView() const;
 
     virtual void Run();
     virtual void OnWindowResize(Window *Window, int Width, int Height);

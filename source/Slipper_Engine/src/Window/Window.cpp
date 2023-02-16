@@ -28,7 +28,7 @@ Window::Window(WindowInfo CreateInfo)
     m_surface = std::make_unique<Surface>(*this);
 }
 
-glm::vec2 Window::GetSize() const
+VkExtent2D Window::GetSize() const
 {
     auto window = m_windows.at(glfwWindow);
     return {window->m_info.width, window->m_info.height};

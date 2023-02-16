@@ -288,15 +288,15 @@ SingleUseCommandBuffer Texture::CreateTransitionImageLayout(const VkImageLayout 
 
     if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
         NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-        command_pool = GraphicsEngine::Get().memoryCommandPool;
+        command_pool = GraphicsEngine::Get().memoryCommandPool.get();
     }
     else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
              NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-        command_pool = GraphicsEngine::Get().renderCommandPool;
+        command_pool = GraphicsEngine::Get().drawCommandPool.get();
     }
     else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
              NewLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) {
-        command_pool = GraphicsEngine::Get().renderCommandPool;
+        command_pool = GraphicsEngine::Get().drawCommandPool.get();
     }
     else {
         throw std::invalid_argument("Unsupported layout transition!");

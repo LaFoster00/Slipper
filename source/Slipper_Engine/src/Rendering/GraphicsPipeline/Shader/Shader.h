@@ -45,9 +45,9 @@ struct ShaderUniform
 
 struct UniformMVP : ShaderUniform
 {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 projection;
+    glm::mat4 model = {};
+    glm::mat4 view = {};
+    glm::mat4 projection = {};
 
     size_t GetDataSize() const override
     {

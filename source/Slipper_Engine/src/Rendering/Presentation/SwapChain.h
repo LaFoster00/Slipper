@@ -14,50 +14,45 @@ class Window;
 class Device;
 class Surface;
 
-class SLIPPER_API SwapChain : DeviceDependentObject
+class SwapChain : public DeviceDependentObject
 {
  public:
     SwapChain() = delete;
-    SwapChain(Surface &Surface);
-    ~SwapChain();
-
-    [[nodiscard]] const VkExtent2D &GetResolution() const
-    {
-        return m_resolution;
-    }
-
-    [[nodiscard]] const VkFormat &GetImageFormat() const
-    {
-        return m_imageFormat;
-    }
-
-    [[nodiscard]] const VkFormat &GetDepthFormat() const
-    {
-        return m_depthFormat;
-    }
+    virtual ~SwapChain();
 
     operator VkSwapchainKHR() const
     {
         return vkSwapChain;
     }
 
+    [[nodiscard]] const VkExtent2D &GetResolution() const
+    {
+        return resolution;
+    }
+
+    [[nodiscard]] const VkFormat &GetImageFormat() const
+    {
+        return imageFormat;
+    }
+
+    [[nodiscard]] const VkFormat &GetDepthFormat() const
+    {
+        return depthFormat;
+    }
+
     void Recreate(uint32_t Width, uint32_t Height);
 
- private:
-    void Create(uint32_t Width, uint32_t Height, VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
+ protected:
+    SwapChain(VkExtent2D Extent, VkFormat Format);
+    virtual void Create(VkSwapchainKHR OldSwapChain = VK_NULL_HANDLE);
     void CreateImageViews();
-    VkSurfaceFormatKHR ChooseSurfaceFormat() const;
-    VkPresentModeKHR ChoosePresentMode() const;
-    VkExtent2D ChoseExtent(const Surface &Surface) const;
 
  public:
     static VkFormat swapChainFormat;
 
-    Surface &surface;
+    VkSwapchainKHR vkSwapChain;
 
     SwapChainSupportDetails swapChainSupport;
-
-    VkSwapchainKHR vkSwapChain;
 
     std::vector<VkImage> vkImages;
     std::vector<VkImageView> vkImageViews;
@@ -65,9 +60,10 @@ class SLIPPER_API SwapChain : DeviceDependentObject
     std::unique_ptr<RenderTarget> renderTarget;
     std::unique_ptr<DepthBuffer> depthBuffer;
 
- private:
-    VkFormat m_imageFormat;
-    VkFormat m_depthFormat;
-    VkExtent2D m_resolution;
+ protected:
+    VkFormat imageFormat;
+    VkColorSpaceKHR imageColorSpace;
+    VkFormat depthFormat;
+    VkExtent2D resolution;
 };
 }  // namespace Slipper

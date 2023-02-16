@@ -2,15 +2,11 @@
 
 #include <memory>
 
-#include "SwapChain.h"
+#include "SurfaceSwapChain.h"
 
 namespace Slipper
 {
 class RenderPass;
-class SwapChain;
-class VulkanInstance;
-class Device;
-class Window;
 
 class Surface
 {
@@ -20,7 +16,7 @@ class Surface
 
     operator VkSurfaceKHR() const
     {
-        return surface;
+        return vkSurface;
     }
 
     [[nodiscard]] const VkExtent2D &GetResolution() const
@@ -41,10 +37,10 @@ class Surface
     void CleanupSwapChain(bool DestroySwapChain);
 
  public:
-    VkSurfaceKHR surface;
+    VkSurfaceKHR vkSurface;
     const Window &window;
 
-    std::unique_ptr<SwapChain> swapChain;
+    std::unique_ptr<SurfaceSwapChain> swapChain;
     std::vector<RenderPass *> renderPasses;
 };
 }  // namespace Slipper

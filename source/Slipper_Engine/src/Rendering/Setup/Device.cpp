@@ -1,4 +1,7 @@
 #include "Device.h"
+
+#include <algorithm>
+
 #include "../Presentation/Surface.h"
 #include "VulkanInstance.h"
 #include "Window/Window.h"
@@ -134,8 +137,18 @@ std::string Device::DeviceInfoToString() const
 VkSurfaceCapabilitiesKHR Device::GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const
 {
     VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, Surface->surface, &capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, Surface->vkSurface, &capabilities);
     return capabilities;
+}
+
+uint32_t Device::SurfaceSwapChainImagesCount(const Surface* Surface) const
+{
+    const auto swap_chain_support = QuerySwapChainSupport(Surface);
+    const uint32_t image_count = std::clamp(
+        static_cast<uint32_t>(swap_chain_support.capabilities.minImageCount + 1),
+        static_cast<uint32_t>(0),
+        static_cast<uint32_t>(swap_chain_support.capabilities.maxImageCount));
+    return image_count;
 }
 
 SwapChainSupportDetails Device::QuerySwapChainSupport(const Surface *Surface) const
@@ -145,24 +158,25 @@ SwapChainSupportDetails Device::QuerySwapChainSupport(const Surface *Surface) co
     swap_chain_support_details.capabilities = GetPhysicalDeviceSurfaceCapabilities(Surface);
 
     uint32_t format_count;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, Surface->surface, &format_count, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        physicalDevice, Surface->vkSurface, &format_count, nullptr);
 
     if (format_count != 0) {
         swap_chain_support_details.formats.resize(format_count);
         vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice,
-                                             Surface->surface,
+                                             Surface->vkSurface,
                                              &format_count,
                                              swap_chain_support_details.formats.data());
     }
 
     uint32_t present_mode_count;
     vkGetPhysicalDeviceSurfacePresentModesKHR(
-        physicalDevice, Surface->surface, &present_mode_count, nullptr);
+        physicalDevice, Surface->vkSurface, &present_mode_count, nullptr);
 
     if (present_mode_count != 0) {
         swap_chain_support_details.presentModes.resize(present_mode_count);
         vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice,
-                                                  Surface->surface,
+                                                  Surface->vkSurface,
                                                   &present_mode_count,
                                                   swap_chain_support_details.presentModes.data());
     }
@@ -307,7 +321,7 @@ const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface
     }
 
     VkBool32 present_support = false;
-    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, Surface->surface, &present_support);
+    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, Surface->vkSurface, &present_support);
     if (present_support) {
         indices.presentFamily = i;
     }

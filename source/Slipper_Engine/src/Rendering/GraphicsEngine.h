@@ -13,7 +13,8 @@
 
 namespace Slipper
 {
-class Model;
+    class OffscreenSwapChain;
+    class Model;
 class Texture2D;
 class Texture;
 class CommandPool;
@@ -51,9 +52,11 @@ class GraphicsEngine : DeviceDependentObject
                                  std::function<void(const VkCommandBuffer &)> Command);
     void SubmitRepeatedDrawCommand(
         std::function<void(const VkCommandBuffer &, const RenderPass &)> Command);
-    void BeginFrame();
+    void BeginUpdate();
     void EndUpdate();
-    void EndFrame();
+    void BeginGuiUpdate();
+    void EndGuiUpdate();
+    void Render();
     static void OnWindowResized(Window *Window, int Width, int Height);
 
     [[nodiscard]]VkCommandBuffer GetCurrentCommandBuffer() const { return m_currentCommandBuffer; };
@@ -69,18 +72,32 @@ class GraphicsEngine : DeviceDependentObject
     std::vector<std::unique_ptr<Shader>> shaders;
     std::vector<std::unique_ptr<Texture>> textures;
     std::unique_ptr<Texture2D> depthBuffer;
-    RenderPass *mainRenderPass = nullptr;
+
+    RenderPass *viewportRenderPass;
+    std::unique_ptr<OffscreenSwapChain> viewportSwapChain;
+
+    RenderPass *windowRenderPass;
     std::unordered_map<std::string, std::unique_ptr<RenderPass>> renderPasses;
     std::vector<std::unique_ptr<Model>> models;
 
-    // Render commands
-    CommandPool *renderCommandPool;
-    std::unordered_map<const RenderPass *, std::vector<std::function<void(const VkCommandBuffer &)>>>
-        singleDrawCommand;
+    // Draw Commands
+    std::unique_ptr<CommandPool> drawCommandPool;
+    std::unordered_map<const RenderPass *,
+                       std::vector<std::function<void(const VkCommandBuffer &)>>>
+        singleDrawCommands;
     std::vector<std::function<void(const VkCommandBuffer &, const RenderPass &)>>
         repeatedDrawCommands;
 
-    CommandPool *memoryCommandPool;
+    // Gui Commands
+    std::unique_ptr<CommandPool> guiCommandPool;
+    std::unordered_map<const RenderPass *,
+                       std::vector<std::function<void(const VkCommandBuffer &)>>>
+        singleGuiCommands;
+    std::vector<std::function<void(const VkCommandBuffer &, const RenderPass &)>>
+        repeatedGuiCommands;
+    
+    // Memory Transfer Commands
+    std::unique_ptr<CommandPool> memoryCommandPool;
 
  private:
     Surface *surface = nullptr;

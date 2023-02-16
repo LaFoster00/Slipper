@@ -3,7 +3,7 @@
 #include "RenderPass.h"
 #include "Setup/VulkanInstance.h"
 #include "Shader/Shader.h"
-#include "SwapChain.h"
+#include "SurfaceSwapChain.h"
 #include "Window.h"
 #include "common_defines.h"
 
@@ -11,14 +11,14 @@ namespace Slipper
 {
 Surface::Surface(const Window &Window) : window(Window)
 {
-    VK_ASSERT(glfwCreateWindowSurface(VulkanInstance::Get(), window, nullptr, &surface),
+    VK_ASSERT(glfwCreateWindowSurface(VulkanInstance::Get(), window, nullptr, &vkSurface),
               "Failed to create window suface!");
 }
 
 Surface::~Surface()
 {
     swapChain.reset();
-    vkDestroySurfaceKHR(VulkanInstance::Get(), surface, nullptr);
+    vkDestroySurfaceKHR(VulkanInstance::Get(), vkSurface, nullptr);
 }
 
 void Surface::CleanupSwapChain(const bool DestroySwapChain)
@@ -37,7 +37,7 @@ void Surface::CleanupSwapChain(const bool DestroySwapChain)
 void Surface::CreateSwapChain()
 {
     if (!swapChain)
-        swapChain = std::make_unique<SwapChain>(*this);
+        swapChain = std::make_unique<SurfaceSwapChain>(*this);
 }
 
 void Surface::DestroyDeviceDependencies()
@@ -49,9 +49,9 @@ void Surface::RecreateSwapChain(int Width, int Height)
 {
     const auto previous_render_passes = renderPasses;
 
-    // This case should not be reached make sure to wait till valid resolution is reached further up the pipeline
-    if (Width == 0 || Height == 0)
-    {
+    // This case should not be reached make sure to wait till valid resolution is reached further
+    // up the pipeline
+    if (Width == 0 || Height == 0) {
         return;
     }
 
@@ -59,7 +59,7 @@ void Surface::RecreateSwapChain(int Width, int Height)
 
     CleanupSwapChain(false);
 
-    swapChain->Recreate();
+    swapChain->Recreate(Width, Height);
 
     for (const auto render_pass : previous_render_passes) {
         /* Create frambuffers for this swap chain */

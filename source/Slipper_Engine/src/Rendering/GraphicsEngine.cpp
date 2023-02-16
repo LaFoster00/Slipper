@@ -16,7 +16,9 @@
 
 #include <filesystem>
 
+#include "Core/Application.h"
 #include "Model/Model.h"
+#include "Presentation/OffscreenSwapChain.h"
 #include "Shader/Shader.h"
 #include "Time/Time.h"
 #include "Window.h"
@@ -33,10 +35,12 @@ GraphicsEngine::GraphicsEngine()
 
 GraphicsEngine::~GraphicsEngine()
 {
+    viewportSwapChain.reset();
     renderPasses.clear();
 
-    delete memoryCommandPool;
-    delete renderCommandPool;
+    memoryCommandPool.reset();
+    guiCommandPool.reset();
+    drawCommandPool.reset();
 
     for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
         vkDestroySemaphore(device, image_available_semaphore, nullptr);
@@ -61,18 +65,32 @@ void GraphicsEngine::Init()
     m_graphicsInstance = new GraphicsEngine();
     auto &device = Device::Get();
 
-    m_graphicsInstance->renderCommandPool = new CommandPool(
+    m_graphicsInstance->drawCommandPool = std::make_unique<CommandPool>(
+        device.graphicsQueue,
+        device.queueFamilyIndices.graphicsFamily.value(),
+        Engine::MAX_FRAMES_IN_FLIGHT);
+    m_graphicsInstance->guiCommandPool = std::make_unique<CommandPool>(
         device.graphicsQueue,
         device.queueFamilyIndices.graphicsFamily.value(),
         Engine::MAX_FRAMES_IN_FLIGHT);
 
-    m_graphicsInstance->memoryCommandPool = new CommandPool(
+    m_graphicsInstance->memoryCommandPool = std::make_unique<CommandPool>(
         device.transferQueue ? device.transferQueue : device.graphicsQueue,
         device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
                                device.queueFamilyIndices.graphicsFamily.value());
 
-    m_graphicsInstance->mainRenderPass = m_graphicsInstance->CreateRenderPass(
-        "Main", SwapChain::swapChainFormat, Texture2D::FindDepthFormat());
+    m_graphicsInstance->windowRenderPass = m_graphicsInstance->CreateRenderPass(
+        "Window", SwapChain::swapChainFormat, Texture2D::FindDepthFormat());
+
+    m_graphicsInstance->viewportRenderPass = m_graphicsInstance->CreateRenderPass(
+        "Viewport", Engine::TARGET_VIEWPORT_COLOR_FORMAT, Texture2D::FindDepthFormat());
+
+    m_graphicsInstance->viewportSwapChain = std::make_unique<OffscreenSwapChain>(
+        Application::Get().window->GetSize(),
+        Engine::TARGET_VIEWPORT_COLOR_FORMAT,
+        device.SurfaceSwapChainImagesCount(&Application::Get().window->GetSurface()));
+
+    m_graphicsInstance->viewportRenderPass->CreateSwapChainFramebuffers(m_graphicsInstance->viewportSwapChain.get());
 
     m_graphicsInstance->SetupDebugResources();
     m_graphicsInstance->CreateSyncObjects();
@@ -139,12 +157,12 @@ void GraphicsEngine::AddWindow(Window &Window)
 {
     windows.insert(&Window);
     Window.GetSurface().CreateSwapChain();
-    Window.GetSurface().RegisterRenderPass(*mainRenderPass);
+    Window.GetSurface().RegisterRenderPass(*windowRenderPass);
 }
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface)
 {
-    shaders[0]->RegisterForRenderPass(mainRenderPass, Surface.GetResolution());
+    shaders[0]->RegisterForRenderPass(viewportRenderPass, Surface.GetResolution());
 
     SetupSimpleDraw();
 }
@@ -205,7 +223,7 @@ void GraphicsEngine::SubmitDraw(const RenderPass *RenderPass,
 void GraphicsEngine::SubmitSingleDrawCommand(const RenderPass *RenderPass,
                                              std::function<void(const VkCommandBuffer &)> Command)
 {
-    singleDrawCommand[RenderPass].push_back(Command);
+    singleDrawCommands[RenderPass].push_back(Command);
 }
 
 void GraphicsEngine::SubmitRepeatedDrawCommand(
@@ -214,81 +232,88 @@ void GraphicsEngine::SubmitRepeatedDrawCommand(
     repeatedDrawCommands.push_back(Command);
 }
 
-void GraphicsEngine::BeginFrame()
+void GraphicsEngine::BeginUpdate()
 {
     vkWaitForFences(device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     m_currentSurface = &(*windows.begin())->GetSurface();
-    const auto result = vkAcquireNextImageKHR(device,
-                                              *m_currentSurface->swapChain,
-                                              UINT64_MAX,
-                                              m_imageAvailableSemaphores[currentFrame],
-                                              VK_NULL_HANDLE,
-                                              &m_currentImageIndex);
+    auto result = vkAcquireNextImageKHR(device,
+                                        *m_currentSurface->swapChain,
+                                        UINT64_MAX,
+                                        m_imageAvailableSemaphores[currentFrame],
+                                        VK_NULL_HANDLE,
+                                        &m_currentImageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         // This should be handled by even OnWindowResize
         // current_surface->RecreateSwapChain();
+        ASSERT(1, "This should not be reached.")
     }
-    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to acquire swap chain image!");
     }
 
-    vkResetFences(device, 1, &m_inFlightFences[currentFrame]);
+    m_currentCommandBuffer = drawCommandPool->vkCommandBuffers[currentFrame];
+    drawCommandPool->BeginCommandBuffer(m_currentCommandBuffer);
 
-    m_currentCommandBuffer = renderCommandPool->vkCommandBuffers[currentFrame];
-    renderCommandPool->BeginCommandBuffer(m_currentCommandBuffer);
+    viewportRenderPass->BeginRenderPass(viewportSwapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
 }
 
 void GraphicsEngine::EndUpdate()
 {
-    for (const auto render_pass : m_currentSurface->renderPasses) {
-        if (render_pass != mainRenderPass)
-            continue;
-        render_pass->BeginRenderPass(
-            m_currentSurface->swapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
+    for (auto &single_draw_command : singleDrawCommands[viewportRenderPass]) {
+        single_draw_command(m_currentCommandBuffer);
+    }
+    singleDrawCommands.at(viewportRenderPass).clear();
 
-        for (auto &command : singleDrawCommand[render_pass]) {
-            command(m_currentCommandBuffer);
-        }
-        singleDrawCommand.at(render_pass).clear();
-
-        for (auto &command : repeatedDrawCommands) {
-            command(m_currentCommandBuffer, *render_pass);
-        }
-
-        render_pass->EndRenderPass(m_currentCommandBuffer);
+    for (auto &repeated_draw_command : repeatedDrawCommands) {
+        repeated_draw_command(m_currentCommandBuffer, *viewportRenderPass);
     }
 
-    m_currentRenderPass = mainRenderPass;
-    m_currentRenderPass->BeginRenderPass(
-        m_currentSurface->swapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
-
-    for (auto &command : singleDrawCommand[m_currentRenderPass]) {
-        command(m_currentCommandBuffer);
-    }
-    singleDrawCommand.at(m_currentRenderPass).clear();
-
-    for (auto &command : repeatedDrawCommands) {
-        command(m_currentCommandBuffer, *m_currentRenderPass);
-    }
+    viewportRenderPass->EndRenderPass(m_currentCommandBuffer);
+    drawCommandPool->EndCommandBuffer(m_currentCommandBuffer);
 }
 
-void GraphicsEngine::EndFrame()
+void GraphicsEngine::BeginGuiUpdate()
 {
-    mainRenderPass->EndRenderPass(m_currentCommandBuffer);
-    renderCommandPool->EndCommandBuffer(m_currentCommandBuffer);
+    m_currentCommandBuffer = guiCommandPool->vkCommandBuffers[currentFrame];
+    guiCommandPool->BeginCommandBuffer(m_currentCommandBuffer);
+    m_currentRenderPass = windowRenderPass;
+    m_currentRenderPass->BeginRenderPass(
+        m_currentSurface->swapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
+}
+
+void GraphicsEngine::EndGuiUpdate()
+{
+    for (auto &single_gui_command : singleGuiCommands[m_currentRenderPass]) {
+        single_gui_command(m_currentCommandBuffer);
+    }
+    singleGuiCommands.at(m_currentRenderPass).clear();
+
+    for (auto &repeated_gui_command : repeatedGuiCommands) {
+        repeated_gui_command(m_currentCommandBuffer, *m_currentRenderPass);
+    }
+
+    windowRenderPass->EndRenderPass(m_currentCommandBuffer);
+    guiCommandPool->EndCommandBuffer(m_currentCommandBuffer);
+}
+
+void GraphicsEngine::Render()
+{
+    vkResetFences(device, 1, &m_inFlightFences[currentFrame]);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    const std::array command_buffers = {drawCommandPool->vkCommandBuffers[currentFrame], guiCommandPool->vkCommandBuffers[currentFrame]};
 
     const VkSemaphore wait_semaphores[] = {m_imageAvailableSemaphores[currentFrame]};
     constexpr VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submit_info.waitSemaphoreCount = 1;
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &m_currentCommandBuffer;
+    submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
+    submit_info.pCommandBuffers = command_buffers.data();
     const VkSemaphore signal_semaphores[] = {m_renderFinishedSemaphores[currentFrame]};
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
@@ -296,8 +321,11 @@ void GraphicsEngine::EndFrame()
     VK_ASSERT(vkQueueSubmit(device.graphicsQueue, 1, &submit_info, m_inFlightFences[currentFrame]),
               "Failed to submit draw command buffer!");
 
-    renderCommandPool->ClearSingleUseCommands();
+    /*
+    drawCommandPool->ClearSingleUseCommands();
+    guiCommandPool->ClearSingleUseCommands();
     memoryCommandPool->ClearSingleUseCommands();
+    */
 
     VkPresentInfoKHR present_info{};
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

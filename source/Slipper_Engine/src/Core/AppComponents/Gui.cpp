@@ -69,7 +69,7 @@ void Gui::Init()
     info.MinImageCount = Engine::MAX_FRAMES_IN_FLIGHT;
     info.ImageCount = Engine::MAX_FRAMES_IN_FLIGHT;
     info.MSAASamples = GraphicsSettings::Get().MSAA_SAMPLES;
-    ImGui_ImplVulkan_Init(&info, m_window->GetSurface().renderPasses[0]->vkRenderPass);
+    ImGui_ImplVulkan_Init(&info, GraphicsEngine::Get().windowRenderPass->vkRenderPass);
 
     SingleUseCommandBuffer command_buffer(*GraphicsEngine::Get().memoryCommandPool);
     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
