@@ -56,7 +56,7 @@ void Gui::Init()
     imgui_pool_size.descriptorCount = 1;
 
     m_resources = new ImGuiResources();
-    m_resources->CreateDescriptorPool(&imgui_pool_size, 1, Engine::MAX_FRAMES_IN_FLIGHT);
+    m_resources->CreateDescriptorPool(&imgui_pool_size, 1, 1024);
 
     ImGui_ImplGlfw_InitForVulkan(*m_window, true);
     ImGui_ImplVulkan_InitInfo info{};

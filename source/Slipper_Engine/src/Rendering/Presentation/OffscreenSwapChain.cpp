@@ -52,7 +52,7 @@ void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
     image_info.format = imageFormat;
     image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    image_info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     if (queue_families.size() > 1) {
         image_info.sharingMode = VK_SHARING_MODE_CONCURRENT;
         image_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_families.size());
