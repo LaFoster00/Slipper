@@ -12,7 +12,7 @@ class VulkanInstance;
 
 namespace Engine
 {
-inline constexpr bool LINEAR_WINDOW_COLOR = false;
+inline constexpr bool LINEAR_WINDOW_COLOR = true;
 inline constexpr VkFormat TARGET_WINDOW_COLOR_FORMAT = VK_FORMAT_B8G8R8A8_UNORM;
 inline constexpr VkFormat TARGET_VIEWPORT_COLOR_FORMAT = LINEAR_WINDOW_COLOR ?
                                                              VK_FORMAT_B8G8R8A8_SRGB :
