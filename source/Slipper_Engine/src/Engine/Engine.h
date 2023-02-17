@@ -12,8 +12,15 @@ class VulkanInstance;
 
 namespace Engine
 {
+inline constexpr bool LINEAR_WINDOW_COLOR = false;
 inline constexpr VkFormat TARGET_WINDOW_COLOR_FORMAT = VK_FORMAT_B8G8R8A8_UNORM;
-inline constexpr VkFormat TARGET_VIEWPORT_COLOR_FORMAT = VK_FORMAT_B8G8R8A8_SRGB;
+inline constexpr VkFormat TARGET_VIEWPORT_COLOR_FORMAT = LINEAR_WINDOW_COLOR ?
+                                                             VK_FORMAT_B8G8R8A8_SRGB :
+                                                             VK_FORMAT_B8G8R8A8_UNORM;
+inline constexpr VkFormat TARGET_VIEWPORT_TEXTURE_FORMAT = TARGET_VIEWPORT_COLOR_FORMAT ==
+                                                                   VK_FORMAT_B8G8R8A8_SRGB ?
+                                                               VK_FORMAT_R8G8B8A8_SRGB :
+                                                               VK_FORMAT_R8G8B8A8_UNORM;
 inline constexpr VkColorSpaceKHR TARGET_COLOR_SPACE = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 inline constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 inline uint64_t FRAME_COUNT = 0;

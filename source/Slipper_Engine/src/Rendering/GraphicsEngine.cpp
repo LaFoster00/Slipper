@@ -178,7 +178,7 @@ void GraphicsEngine::CreateViewportSwapChain()
     m_graphicsInstance->viewportPresentationTextures.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
     for (uint32_t i = 0; i < m_graphicsInstance->viewportSwapChain->numImages; ++i) {
         m_graphicsInstance->viewportPresentationTextures.push_back(std::make_unique<Texture2D>(
-            Application::Get().window->GetSize(), VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_R8G8B8A8_UNORM, false));
+            Application::Get().window->GetSize(), Engine::TARGET_VIEWPORT_COLOR_FORMAT, SwapChain::swapChainFormat, false));
     }
 }
 

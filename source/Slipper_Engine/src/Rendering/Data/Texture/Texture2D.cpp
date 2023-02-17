@@ -60,7 +60,7 @@ std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepat
     }
 
     auto image = StbImage(
-        pixels, tex_dimensions, VK_FORMAT_R8G8B8A8_SRGB, std::move(absolute_path));
+        pixels, tex_dimensions, Engine::TARGET_VIEWPORT_TEXTURE_FORMAT, std::move(absolute_path));
     return std::make_unique<Texture2D>(image, GenerateMipMaps);
 }
 
