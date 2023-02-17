@@ -5,9 +5,9 @@
 #include "GraphicsEngine.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
+#include "Texture/RenderTarget.h"
 #include "Time/Time.h"
 #include "Window.h"
-#include "Texture/RenderTarget.h"
 
 namespace Slipper
 {
@@ -66,15 +66,16 @@ void Application::Close()
     running = false;
 }
 
-VkImageView Application::GetViewportTextureView() const
-{
-    return window->GetSurface().swapChain->renderTarget->textureView;
-}
-
 void Application::Run()
 {
     while (running) {
         window->OnUpdate();
+        if (windowResize.resized) {
+            WindowResize();
+        }
+        if (viewportResize.resized) {
+            ViewportResize();
+        }
 
         if (!minimized) {
             Time::Tick(Engine::FRAME_COUNT);
@@ -98,7 +99,7 @@ void Application::Run()
             for (auto &app_component : appComponents) {
                 app_component->OnGuiRender();
             }
-            guiComponent->EndNewFrame(GraphicsEngine::Get().GetCurrentCommandBuffer());
+            guiComponent->EndNewFrame(GraphicsEngine::Get().GetCurrentGuiCommandBuffer());
             GraphicsEngine::Get().EndGuiUpdate();
 
             GraphicsEngine::Get().Render();
@@ -113,6 +114,39 @@ void Application::OnWindowResize(Window *Window, int Width, int Height)
         return;
     }
     minimized = false;
-    GraphicsEngine::OnWindowResized(Window, Width, Height);
+
+    windowResize.context = Window;
+    windowResize.resized = true;
+    windowResize.width = Width;
+    windowResize.height = Height;
+}
+
+void Application::OnViewportResize(uint32_t Width, uint32_t Height)
+{
+    viewportResize.resized = true;
+    viewportResize.width = Width;
+    viewportResize.height = Height;
+}
+
+void Application::AddViewportResizeCallback(std::function<void(uint32_t, uint32_t)> Callback)
+{
+    viewportResizeCallbacks.push_back(Callback);
+}
+
+void Application::WindowResize()
+{
+    windowResize.resized = false;
+    GraphicsEngine::OnWindowResized(
+        std::any_cast<Window *>(windowResize.context), windowResize.width, windowResize.height);
+}
+
+void Application::ViewportResize()
+{
+    viewportResize.resized = false;
+    GraphicsEngine::OnViewportResize(viewportResize.width, viewportResize.height);
+    for (auto viewport_resize_callback : viewportResizeCallbacks)
+    {
+        viewport_resize_callback(viewportResize.width, viewportResize.height);
+    }
 }
 }  // namespace Slipper

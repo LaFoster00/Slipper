@@ -11,27 +11,38 @@
 #include "Texture/DepthBuffer.h"
 #include "Texture/RenderTarget.h"
 #include "common_defines.h"
+#include "Shader/Shader.h"
 
 namespace Slipper
 {
-RenderPass::RenderPass(std::string_view Name, VkFormat AttachmentFormat, VkFormat DepthFormat)
-    : name(Name), m_activeSwapChain(nullptr)
+static char8_t ActiveRenderPasses = 0;
+
+RenderPass::RenderPass(std::string_view Name,
+                       VkFormat RenderingFormat,
+                       VkFormat DepthFormat,
+                       bool ForPresentation)
+    : name(Name), m_activeSwapChain(nullptr), m_currentImage(nullptr)
 {
     // Not used for presenting cause multisampled textures can not be presented
     // Presentation through color attachment resolve
     VkAttachmentDescription color_attachment{};
-    color_attachment.format = AttachmentFormat;
+    color_attachment.format = RenderingFormat;
     color_attachment.samples = GraphicsSettings::Get().MSAA_SAMPLES;
     color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT)
+    {
         color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
-    else {
-        color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    else
+    {
+        if (ForPresentation)
+            color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        else
+            color_attachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
     }
 
     VkAttachmentReference color_attachment_ref{};
@@ -40,19 +51,24 @@ RenderPass::RenderPass(std::string_view Name, VkFormat AttachmentFormat, VkForma
 
     // Used for presentation
     VkAttachmentDescription color_attachment_resolve{};
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
-        color_attachment_resolve.format = AttachmentFormat;
+    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT)
+    {
+        color_attachment_resolve.format = RenderingFormat;
         color_attachment_resolve.samples = VK_SAMPLE_COUNT_1_BIT;
         color_attachment_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         color_attachment_resolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         color_attachment_resolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         color_attachment_resolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         color_attachment_resolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        if (ForPresentation)
+            color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        else
+            color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
     }
 
     VkAttachmentReference color_attachment_resolve_ref{};
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT)
+    {
         color_attachment_resolve_ref.attachment = 2;
         color_attachment_resolve_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
@@ -76,7 +92,8 @@ RenderPass::RenderPass(std::string_view Name, VkFormat AttachmentFormat, VkForma
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &color_attachment_ref;
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT)
+    {
         subpass.pResolveAttachments = &color_attachment_resolve_ref;
     }
 
@@ -85,14 +102,15 @@ RenderPass::RenderPass(std::string_view Name, VkFormat AttachmentFormat, VkForma
     dependency.dstSubpass = 0;
     dependency.srcAccessMask = 0;
     dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-                              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-                              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
-                               VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
     std::vector attachments = {color_attachment, depth_attachment};
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT)
+    {
         attachments.push_back(color_attachment_resolve);
     }
     VkRenderPassCreateInfo render_pass_info{};
@@ -139,13 +157,13 @@ void RenderPass::CreateSwapChainFramebuffers(SwapChain *SwapChain)
     for (size_t i = 0; i < SwapChain->vkImageViews.size(); i++) {
         std::vector<VkImageView> attachments;
         if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
-            attachments.push_back(SwapChain->renderTarget->textureView);
-            attachments.push_back(SwapChain->depthBuffer->textureView);
+            attachments.push_back(SwapChain->renderTarget->imageInfo.view);
+            attachments.push_back(SwapChain->depthBuffer->imageInfo.view);
             attachments.push_back(SwapChain->vkImageViews[i]);
         }
         else {
             attachments.push_back(SwapChain->vkImageViews[i]);
-            attachments.push_back(SwapChain->depthBuffer->textureView);
+            attachments.push_back(SwapChain->depthBuffer->imageInfo.view);
         }
         VkExtent2D extent = SwapChain->GetResolution();
         swapChainFramebuffers[SwapChain].emplace_back(std::make_unique<Framebuffer>(
@@ -153,10 +171,26 @@ void RenderPass::CreateSwapChainFramebuffers(SwapChain *SwapChain)
     }
 }
 
+void RenderPass::RecreateSwapChainResources(SwapChain* SwapChain)
+{
+    DestroySwapChainFramebuffers(SwapChain);
+    CreateSwapChainFramebuffers(SwapChain);
+    for (const auto registered_shader : registeredShaders)
+    {
+        registered_shader->ChangeResolutionForRenderPass(this, SwapChain->GetResolution());
+    }
+}
+
+VkImage RenderPass::GetCurrentImage() const
+{
+    return m_currentImage;
+}
+
 void RenderPass::BeginRenderPass(SwapChain *SwapChain,
                                  const uint32_t ImageIndex,
                                  const VkCommandBuffer CommandBuffer)
 {
+    ActiveRenderPasses++;
     if (!swapChainFramebuffers.contains(SwapChain)) {
         ASSERT(1,
                "Swap chain has no framebuffers in this render pass. Did you call "
@@ -168,6 +202,7 @@ void RenderPass::BeginRenderPass(SwapChain *SwapChain,
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_info.renderPass = vkRenderPass;
     render_pass_info.framebuffer = swapChainFramebuffers.at(SwapChain)[ImageIndex]->vkFramebuffer;
+    m_currentImage = SwapChain->vkImages[ImageIndex];
 
     render_pass_info.renderArea.offset = {0, 0};
     render_pass_info.renderArea.extent = SwapChain->GetResolution();
@@ -184,6 +219,7 @@ void RenderPass::BeginRenderPass(SwapChain *SwapChain,
 
 void RenderPass::EndRenderPass(VkCommandBuffer commandBuffer)
 {
+    ActiveRenderPasses--;
     m_activeSwapChain = nullptr;
     vkCmdEndRenderPass(commandBuffer);
 }

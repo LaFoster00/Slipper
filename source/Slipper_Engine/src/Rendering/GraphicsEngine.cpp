@@ -7,7 +7,6 @@
 #include "Mesh/UniformBuffer.h"
 #include "Presentation/Surface.h"
 #include "Setup/Device.h"
-#include "Texture/Texture2D.h"
 #include "common_defines.h"
 
 #include "glm/gtc/matrix_transform.hpp"
@@ -17,9 +16,11 @@
 #include <filesystem>
 
 #include "Core/Application.h"
+#include "Drawing/Sampler.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Shader/Shader.h"
+#include "Texture/Texture2D.h"
 #include "Time/Time.h"
 #include "Window.h"
 
@@ -35,7 +36,10 @@ GraphicsEngine::GraphicsEngine()
 
 GraphicsEngine::~GraphicsEngine()
 {
+    viewportPresentationTextures.clear();
     viewportSwapChain.reset();
+
+    renderPassNames.clear();
     renderPasses.clear();
 
     memoryCommandPool.reset();
@@ -80,17 +84,12 @@ void GraphicsEngine::Init()
                                device.queueFamilyIndices.graphicsFamily.value());
 
     m_graphicsInstance->windowRenderPass = m_graphicsInstance->CreateRenderPass(
-        "Window", SwapChain::swapChainFormat, Texture2D::FindDepthFormat());
+        "Window", SwapChain::swapChainFormat, Texture2D::FindDepthFormat(), true);
 
     m_graphicsInstance->viewportRenderPass = m_graphicsInstance->CreateRenderPass(
-        "Viewport", Engine::TARGET_VIEWPORT_COLOR_FORMAT, Texture2D::FindDepthFormat());
+        "Viewport", Engine::TARGET_VIEWPORT_COLOR_FORMAT, Texture2D::FindDepthFormat(), false);
 
-    m_graphicsInstance->viewportSwapChain = std::make_unique<OffscreenSwapChain>(
-        Application::Get().window->GetSize(),
-        Engine::TARGET_VIEWPORT_COLOR_FORMAT,
-        device.SurfaceSwapChainImagesCount(&Application::Get().window->GetSurface()));
-
-    m_graphicsInstance->viewportRenderPass->CreateSwapChainFramebuffers(m_graphicsInstance->viewportSwapChain.get());
+    m_graphicsInstance->CreateViewportSwapChain();
 
     m_graphicsInstance->SetupDebugResources();
     m_graphicsInstance->CreateSyncObjects();
@@ -146,11 +145,52 @@ void GraphicsEngine::CreateSyncObjects()
 }
 
 RenderPass *GraphicsEngine::CreateRenderPass(const std::string &Name,
-                                             const VkFormat AttachmentFormat,
-                                             const VkFormat DepthFormat)
+                                             const VkFormat RenderingFormat,
+                                             const VkFormat DepthFormat,
+                                             const bool ForPresentation)
 {
-    renderPasses[Name] = std::make_unique<RenderPass>(Name, AttachmentFormat, DepthFormat);
+    renderPasses[Name] = std::make_unique<RenderPass>(
+        Name, RenderingFormat, DepthFormat, ForPresentation);
+    renderPassNames[renderPasses[Name].get()] = Name;
     return renderPasses[Name].get();
+}
+
+void GraphicsEngine::DestroyRenderPass(RenderPass* RenderPass)
+{
+    if (renderPassNames.contains(RenderPass))
+    {
+        const auto name = renderPassNames.at(RenderPass);
+        renderPassNames.erase(RenderPass);
+        renderPasses.erase(name);
+    }
+}
+
+void GraphicsEngine::CreateViewportSwapChain()
+{
+    m_graphicsInstance->viewportSwapChain = std::make_unique<OffscreenSwapChain>(
+        Application::Get().window->GetSize(),
+        Engine::TARGET_VIEWPORT_COLOR_FORMAT,
+        device.SurfaceSwapChainImagesCount(&Application::Get().window->GetSurface()));
+
+    m_graphicsInstance->viewportRenderPass->CreateSwapChainFramebuffers(
+        m_graphicsInstance->viewportSwapChain.get());
+
+    m_graphicsInstance->viewportPresentationTextures.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
+    for (uint32_t i = 0; i < m_graphicsInstance->viewportSwapChain->numImages; ++i) {
+        m_graphicsInstance->viewportPresentationTextures.push_back(std::make_unique<Texture2D>(
+            Application::Get().window->GetSize(), VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_R8G8B8A8_UNORM, false));
+    }
+}
+
+void GraphicsEngine::RecreateViewportSwapChain(uint32_t Width, uint32_t Height)
+{
+    m_graphicsInstance->viewportSwapChain->Recreate(Width, Height);
+    viewportRenderPass->RecreateSwapChainResources(viewportSwapChain.get());
+
+    for (const auto &viewport_presentation_texture :
+         m_graphicsInstance->viewportPresentationTextures) {
+        viewport_presentation_texture->Resize({Width, Height, 1});
+    }
 }
 
 void GraphicsEngine::AddWindow(Window &Window)
@@ -253,49 +293,64 @@ void GraphicsEngine::BeginUpdate()
         throw std::runtime_error("Failed to acquire swap chain image!");
     }
 
-    m_currentCommandBuffer = drawCommandPool->vkCommandBuffers[currentFrame];
-    drawCommandPool->BeginCommandBuffer(m_currentCommandBuffer);
+    const auto draw_command_buffer = drawCommandPool->vkCommandBuffers[currentFrame];
+    drawCommandPool->BeginCommandBuffer(draw_command_buffer);
 
-    viewportRenderPass->BeginRenderPass(viewportSwapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
+    viewportRenderPass->BeginRenderPass(
+        viewportSwapChain.get(), m_currentImageIndex, draw_command_buffer);
 }
 
 void GraphicsEngine::EndUpdate()
 {
+    const auto draw_command_buffer = drawCommandPool->vkCommandBuffers[currentFrame];
+
     for (auto &single_draw_command : singleDrawCommands[viewportRenderPass]) {
-        single_draw_command(m_currentCommandBuffer);
+        single_draw_command(draw_command_buffer);
     }
     singleDrawCommands.at(viewportRenderPass).clear();
 
     for (auto &repeated_draw_command : repeatedDrawCommands) {
-        repeated_draw_command(m_currentCommandBuffer, *viewportRenderPass);
+        repeated_draw_command(draw_command_buffer, *viewportRenderPass);
     }
 
-    viewportRenderPass->EndRenderPass(m_currentCommandBuffer);
-    drawCommandPool->EndCommandBuffer(m_currentCommandBuffer);
+    viewportRenderPass->EndRenderPass(draw_command_buffer);
+
+    {
+        const auto viewport_resolution = viewportSwapChain->GetResolution();
+        viewportPresentationTextures[m_currentImageIndex]->EnqueueCopyImage(
+            draw_command_buffer,
+            viewportRenderPass->GetCurrentImage(),
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            {viewport_resolution.width, viewport_resolution.height, 1},
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    }
+    drawCommandPool->EndCommandBuffer(draw_command_buffer);
 }
 
 void GraphicsEngine::BeginGuiUpdate()
 {
-    m_currentCommandBuffer = guiCommandPool->vkCommandBuffers[currentFrame];
-    guiCommandPool->BeginCommandBuffer(m_currentCommandBuffer);
+    const auto gui_command_buffer = guiCommandPool->vkCommandBuffers[currentFrame];
+    guiCommandPool->BeginCommandBuffer(gui_command_buffer);
     m_currentRenderPass = windowRenderPass;
     m_currentRenderPass->BeginRenderPass(
-        m_currentSurface->swapChain.get(), m_currentImageIndex, m_currentCommandBuffer);
+        m_currentSurface->swapChain.get(), m_currentImageIndex, gui_command_buffer);
 }
 
 void GraphicsEngine::EndGuiUpdate()
 {
+    const auto gui_command_buffer = guiCommandPool->vkCommandBuffers[currentFrame];
+
     for (auto &single_gui_command : singleGuiCommands[m_currentRenderPass]) {
-        single_gui_command(m_currentCommandBuffer);
+        single_gui_command(gui_command_buffer);
     }
     singleGuiCommands.at(m_currentRenderPass).clear();
 
     for (auto &repeated_gui_command : repeatedGuiCommands) {
-        repeated_gui_command(m_currentCommandBuffer, *m_currentRenderPass);
+        repeated_gui_command(gui_command_buffer, *m_currentRenderPass);
     }
 
-    windowRenderPass->EndRenderPass(m_currentCommandBuffer);
-    guiCommandPool->EndCommandBuffer(m_currentCommandBuffer);
+    windowRenderPass->EndRenderPass(gui_command_buffer);
+    guiCommandPool->EndCommandBuffer(gui_command_buffer);
 }
 
 void GraphicsEngine::Render()
@@ -305,7 +360,8 @@ void GraphicsEngine::Render()
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    const std::array command_buffers = {drawCommandPool->vkCommandBuffers[currentFrame], guiCommandPool->vkCommandBuffers[currentFrame]};
+    const std::array command_buffers = {drawCommandPool->vkCommandBuffers[currentFrame],
+                                        guiCommandPool->vkCommandBuffers[currentFrame]};
 
     const VkSemaphore wait_semaphores[] = {m_imageAvailableSemaphores[currentFrame]};
     constexpr VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -350,6 +406,12 @@ void GraphicsEngine::Render()
     }
 
     currentFrame = (currentFrame + 1) % Engine::MAX_FRAMES_IN_FLIGHT;
+}
+
+// Dont call while rendering
+void GraphicsEngine::OnViewportResize(uint32_t Width, uint32_t Height)
+{
+    m_graphicsInstance->RecreateViewportSwapChain(Width, Height);
 }
 
 void GraphicsEngine::OnWindowResized(Window *Window, int Width, int Height)

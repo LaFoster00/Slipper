@@ -164,7 +164,8 @@ bool Shader::SetTexture(const std::string Name, const Texture &Texture) const
             descriptor_write.dstArrayElement = 0;
             descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             descriptor_write.descriptorCount = binding->binding.descriptorCount;
-            descriptor_write.pImageInfo = Texture.GetDescriptorImageInfo();
+            const auto image_info = Texture.GetDescriptorImageInfo();
+            descriptor_write.pImageInfo = &image_info;
 
             std::vector<VkWriteDescriptorSet> descriptor_writes;
             descriptor_writes.reserve(m_vkDescriptorSets.size() * Engine::MAX_FRAMES_IN_FLIGHT);

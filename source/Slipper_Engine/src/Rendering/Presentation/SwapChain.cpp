@@ -1,20 +1,18 @@
 #include "SwapChain.h"
 
-#include <algorithm>
-
 #include "Data/Texture/Texture.h"
 #include "Texture/DepthBuffer.h"
 #include "Texture/RenderTarget.h"
 #include "Window.h"
-#include "common_defines.h"
 
 namespace Slipper
 {
 VkFormat SwapChain::swapChainFormat = Engine::TARGET_WINDOW_COLOR_FORMAT;
 
-SwapChain::SwapChain(VkExtent2D Extent, VkFormat Format)
+SwapChain::SwapChain(VkExtent2D Extent,
+                     VkFormat RenderingFormat)
     : vkSwapChain(nullptr),
-      imageFormat(Format),
+      imageRenderingFormat(RenderingFormat),
       imageColorSpace(VK_COLOR_SPACE_SRGB_NONLINEAR_KHR),
       depthFormat(Texture2D::FindDepthFormat()),
       resolution(Extent)
@@ -23,21 +21,25 @@ SwapChain::SwapChain(VkExtent2D Extent, VkFormat Format)
 
 SwapChain::~SwapChain()
 {
-    for (const auto image_view : vkImageViews) {
-        vkDestroyImageView(device, image_view, nullptr);
-    }
-    vkImageViews.clear();
-
+    // Call ClearImages in derived desctructors for correct behaviour
     depthBuffer.reset();
     renderTarget.reset();
 }
 
-void SwapChain::Recreate(uint32_t Width, uint32_t Height)
+void SwapChain::ClearImages()
 {
+
     for (const auto image_view : vkImageViews) {
         vkDestroyImageView(device, image_view, nullptr);
     }
     vkImageViews.clear();
+}
+
+void SwapChain::Recreate(uint32_t Width, uint32_t Height)
+{
+    vkDeviceWaitIdle(device);
+
+    ClearImages();
     const VkSwapchainKHR old_swap_chain = vkSwapChain;
 
     resolution = {Width, Height};
@@ -51,7 +53,7 @@ void SwapChain::Create(VkSwapchainKHR OldSwapChain)
     CreateImageViews();
 
     if (!renderTarget) {
-        renderTarget = std::make_unique<RenderTarget>(resolution, imageFormat);
+        renderTarget = std::make_unique<RenderTarget>(resolution, imageRenderingFormat);
     }
     else {
         renderTarget->Resize(VkExtent3D(resolution.width, resolution.height, 1));
@@ -69,7 +71,8 @@ void SwapChain::CreateImageViews()
 {
     vkImageViews.resize(vkImages.size());
     for (size_t i = 0; i < vkImages.size(); i++) {
-        vkImageViews[i] = Texture::CreateImageView(vkImages[i], VK_IMAGE_TYPE_2D, imageFormat, 1);
+        vkImageViews[i] = Texture::CreateImageView(
+            vkImages[i], VK_IMAGE_TYPE_2D, imageRenderingFormat, 1);
     }
 }
 }  // namespace Slipper

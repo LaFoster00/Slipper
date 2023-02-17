@@ -17,21 +17,27 @@ Surface::Surface(const Window &Window) : window(Window)
 
 Surface::~Surface()
 {
-    swapChain.reset();
+    CleanupSwapChain(true);
     vkDestroySurfaceKHR(VulkanInstance::Get(), vkSurface, nullptr);
 }
 
 void Surface::CleanupSwapChain(const bool DestroySwapChain)
 {
-    for (const auto &render_pass : renderPasses) {
-        render_pass->DestroySwapChainFramebuffers(swapChain.get());
+    if (&GraphicsEngine::Get() != nullptr) {
+        for (const auto &render_pass : renderPasses) {
+            if (GraphicsEngine::Get().renderPassNames.contains(render_pass)) {
+                render_pass->DestroySwapChainFramebuffers(swapChain.get());
+            }
+            else {
+                renderPasses.erase(std::ranges::find(renderPasses, render_pass));
+            }
+        }
     }
+    renderPasses.clear();
 
     if (DestroySwapChain) {
         swapChain.reset();
     }
-
-    renderPasses.clear();
 }
 
 void Surface::CreateSwapChain()
@@ -40,36 +46,16 @@ void Surface::CreateSwapChain()
         swapChain = std::make_unique<SurfaceSwapChain>(*this);
 }
 
-void Surface::DestroyDeviceDependencies()
+void Surface::RecreateSwapChain(uint32_t Width, uint32_t Height)
 {
-    swapChain.reset();
-}
-
-void Surface::RecreateSwapChain(int Width, int Height)
-{
-    const auto previous_render_passes = renderPasses;
-
-    // This case should not be reached make sure to wait till valid resolution is reached further
-    // up the pipeline
-    if (Width == 0 || Height == 0) {
-        return;
-    }
-
     vkDeviceWaitIdle(Device::Get());
 
-    CleanupSwapChain(false);
-
+    // CleanupSwapChain(false);
     swapChain->Recreate(Width, Height);
 
-    for (const auto render_pass : previous_render_passes) {
+    for (const auto render_pass : renderPasses) {
         /* Create frambuffers for this swap chain */
-        render_pass->CreateSwapChainFramebuffers(swapChain.get());
-        renderPasses.push_back(render_pass);
-
-        for (const auto render_pass_shader : render_pass->registeredShaders) {
-            render_pass_shader->ChangeResolutionForRenderPass(render_pass,
-                                                              swapChain->GetResolution());
-        }
+        render_pass->RecreateSwapChainResources(swapChain.get());
     }
 }
 
@@ -77,5 +63,14 @@ void Surface::RegisterRenderPass(RenderPass &RenderPass)
 {
     renderPasses.push_back(&RenderPass);
     RenderPass.CreateSwapChainFramebuffers(swapChain.get());
+}
+
+void Surface::UnregisterRenderPass(RenderPass &RenderPass)
+{
+    auto render_pass_it(std::ranges::find(renderPasses, &RenderPass));
+    if (render_pass_it != renderPasses.end()) {
+        renderPasses.erase(render_pass_it);
+        RenderPass.DestroySwapChainFramebuffers(swapChain.get());
+    }
 }
 }  // namespace Slipper

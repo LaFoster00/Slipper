@@ -15,7 +15,7 @@ class SurfaceSwapChain : public SwapChain
     VkPresentModeKHR ChoosePresentMode() const;
     VkSurfaceFormatKHR ChooseSurfaceFormat() const;
 
- public:
+public:
     Surface &surface;
     SwapChainSupportDetails swapChainSupport;
 

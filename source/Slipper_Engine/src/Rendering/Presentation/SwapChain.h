@@ -32,7 +32,7 @@ class SwapChain : public DeviceDependentObject
 
     [[nodiscard]] const VkFormat &GetImageFormat() const
     {
-        return imageFormat;
+        return imageRenderingFormat;
     }
 
     [[nodiscard]] const VkFormat &GetDepthFormat() const
@@ -40,10 +40,12 @@ class SwapChain : public DeviceDependentObject
         return depthFormat;
     }
 
-    void Recreate(uint32_t Width, uint32_t Height);
+    virtual void ClearImages();
+    virtual void Recreate(uint32_t Width, uint32_t Height);
 
  protected:
-    SwapChain(VkExtent2D Extent, VkFormat Format);
+    SwapChain(VkExtent2D Extent,
+              VkFormat RenderingFormat);
     virtual void Create(VkSwapchainKHR OldSwapChain = VK_NULL_HANDLE);
     void CreateImageViews();
 
@@ -61,7 +63,7 @@ class SwapChain : public DeviceDependentObject
     std::unique_ptr<DepthBuffer> depthBuffer;
 
  protected:
-    VkFormat imageFormat;
+    VkFormat imageRenderingFormat;
     VkColorSpaceKHR imageColorSpace;
     VkFormat depthFormat;
     VkExtent2D resolution;

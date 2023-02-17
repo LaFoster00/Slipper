@@ -10,11 +10,12 @@
 #include <vector>
 
 #include "DeviceDependentObject.h"
+#include "Drawing/CommandPool.h"
 
 namespace Slipper
 {
-    class OffscreenSwapChain;
-    class Model;
+class OffscreenSwapChain;
+class Model;
 class Texture2D;
 class Texture;
 class CommandPool;
@@ -41,13 +42,22 @@ class GraphicsEngine : DeviceDependentObject
     void SetupDebugResources();
     void CreateSyncObjects();
     RenderPass *CreateRenderPass(const std::string &Name,
-                                 VkFormat AttachmentFormat,
-                                 VkFormat DepthFormat);
+                                 VkFormat RenderingFormat,
+                                 VkFormat DepthFormat,
+                                 bool ForPresentation);
+    void DestroyRenderPass(RenderPass *RenderPass);
+
+    void CreateViewportSwapChain();
+    void RecreateViewportSwapChain(uint32_t Width, uint32_t Height);
+
     void AddWindow(Window &Window);
     void SetupDebugRender(Surface &Surface);
     void SetupSimpleDraw();
 
-    void SubmitDraw(const RenderPass *RenderPass, const Shader *Shader, const Mesh *Mesh, const glm::mat4 &Transform);
+    void SubmitDraw(const RenderPass *RenderPass,
+                    const Shader *Shader,
+                    const Mesh *Mesh,
+                    const glm::mat4 &Transform);
     void SubmitSingleDrawCommand(const RenderPass *RenderPass,
                                  std::function<void(const VkCommandBuffer &)> Command);
     void SubmitRepeatedDrawCommand(
@@ -57,9 +67,18 @@ class GraphicsEngine : DeviceDependentObject
     void BeginGuiUpdate();
     void EndGuiUpdate();
     void Render();
+    static void OnViewportResize(uint32_t Width, uint32_t Height);
     static void OnWindowResized(Window *Window, int Width, int Height);
 
-    [[nodiscard]]VkCommandBuffer GetCurrentCommandBuffer() const { return m_currentCommandBuffer; };
+    [[nodiscard]] VkCommandBuffer GetCurrentGuiCommandBuffer() const
+    {
+        return guiCommandPool->vkCommandBuffers[currentFrame];
+    }
+
+    [[nodiscard]] uint32_t GetCurrentImageIndex() const
+    {
+        return m_currentImageIndex;
+    }
 
  private:
     GraphicsEngine();
@@ -73,11 +92,13 @@ class GraphicsEngine : DeviceDependentObject
     std::vector<std::unique_ptr<Texture>> textures;
     std::unique_ptr<Texture2D> depthBuffer;
 
-    RenderPass *viewportRenderPass;
+    RenderPass *viewportRenderPass = nullptr;
     std::unique_ptr<OffscreenSwapChain> viewportSwapChain;
+    std::vector<std::unique_ptr<Texture2D>> viewportPresentationTextures;
 
-    RenderPass *windowRenderPass;
+    RenderPass *windowRenderPass = nullptr;
     std::unordered_map<std::string, std::unique_ptr<RenderPass>> renderPasses;
+    std::unordered_map<RenderPass *, std::string> renderPassNames;
     std::vector<std::unique_ptr<Model>> models;
 
     // Draw Commands
@@ -95,7 +116,7 @@ class GraphicsEngine : DeviceDependentObject
         singleGuiCommands;
     std::vector<std::function<void(const VkCommandBuffer &, const RenderPass &)>>
         repeatedGuiCommands;
-    
+
     // Memory Transfer Commands
     std::unique_ptr<CommandPool> memoryCommandPool;
 
@@ -112,6 +133,5 @@ class GraphicsEngine : DeviceDependentObject
     uint32_t m_currentImageIndex = 0;
     Surface *m_currentSurface = nullptr;
     RenderPass *m_currentRenderPass = nullptr;
-    VkCommandBuffer m_currentCommandBuffer = VK_NULL_HANDLE;
 };
 }  // namespace Slipper

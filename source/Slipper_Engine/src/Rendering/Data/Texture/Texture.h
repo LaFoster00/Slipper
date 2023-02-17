@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "DeviceDependentObject.h"
 #include "Drawing/CommandPool.h"
 #include "Drawing/Sampler.h"
@@ -11,12 +9,31 @@ namespace Slipper
 class Sampler;
 class Buffer;
 
+struct ImageInfo
+{
+    VkSampler sampler = VK_NULL_HANDLE;
+    VkImageView view = VK_NULL_HANDLE;
+    VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkImageType type = VK_IMAGE_TYPE_2D;
+    VkExtent3D extent = {0, 0, 0};
+    VkFormat viewFormat = VK_FORMAT_UNDEFINED;
+    VkFormat imageFormat = VK_FORMAT_UNDEFINED;
+    VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
+    VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    VkSampleCountFlagBits numSamples = VK_SAMPLE_COUNT_1_BIT;
+    VkImageAspectFlags imageAspect = VK_IMAGE_ASPECT_COLOR_BIT;
+    uint32_t arrayLayerCount = 1;
+    bool generateMipMaps = false;
+    uint32_t mipLevels = 1;
+};
+
 class Texture : DeviceDependentObject
 {
  public:
     Texture(VkImageType Type,
             VkExtent3D Extent,
-            VkFormat Format,
+            VkFormat ImageFormat,
+            std::optional<VkFormat> ViewFormat = {},
             bool GenerateMipMaps = true,
             VkSampleCountFlagBits NumSamples = VK_SAMPLE_COUNT_1_BIT,
             VkImageTiling Tiling = VK_IMAGE_TILING_OPTIMAL,
@@ -27,44 +44,65 @@ class Texture : DeviceDependentObject
     Texture(const Texture &Other) = delete;
 
     Texture(Texture &&Other) noexcept
-        : generateMipMaps(Other.generateMipMaps),
-          mipLevels(Other.mipLevels),
-          texture(Other.texture),
-          textureMemory(Other.textureMemory),
-          sampler(std::move(Other.sampler)),
-          textureView(Other.textureView),
-          type(Other.type),
-          extent(Other.extent),
-          format(Other.format),
-          tiling(Other.tiling),
-          usage(Other.usage),
-          numSamples(Other.numSamples),
-          imageAspect(0),
-          arrayLayerCount(Other.arrayLayerCount),
-          imageInfo(std::move(Other.imageInfo))
+        : vkImage(Other.vkImage),
+          vkImageMemory(Other.vkImageMemory),
+          imageInfo(std::move(Other.imageInfo)),
+          sampler(std::move(Other.sampler))
     {
-        Other.texture = VK_NULL_HANDLE;
-        Other.textureMemory = VK_NULL_HANDLE;
-        Other.textureView = VK_NULL_HANDLE;
+        Other.vkImage = VK_NULL_HANDLE;
+        Other.vkImageMemory = VK_NULL_HANDLE;
+        Other.imageInfo.view = VK_NULL_HANDLE;
     }
 
     virtual ~Texture();
 
     virtual void Resize(const VkExtent3D Extent);
+    VkDescriptorImageInfo GetDescriptorImageInfo() const
+    {
+        return VkDescriptorImageInfo{imageInfo.sampler, imageInfo.view, imageInfo.layout};
+    }
 
-    void EnqueueTransitionImageLayout(VkCommandBuffer CommandBuffer, VkImageLayout NewLayout);
-    SingleUseCommandBuffer CreateTransitionImageLayout(VkImageLayout NewLayout);
+    static void EnqueueTransitionImageLayout(VkImage Image,
+                                             ImageInfo &ImageInfo,
+                                             VkCommandBuffer CommandBuffer,
+                                             VkImageLayout NewLayout);
+    static SingleUseCommandBuffer CreateTransitionImageLayout(VkImage Image,
+                                                              ImageInfo &ImageInfo,
+                                                              VkImageLayout NewLayout);
+
     void CopyBuffer(const Buffer &Buffer, bool TransitionToShaderUse = true);
-    const VkDescriptorImageInfo *GetDescriptorImageInfo() const;
+    void EnqueueCopyImage(VkCommandBuffer CommandBuffer,
+                          VkImage SrcImage,
+                          VkImageLayout SrcLayout,
+                          VkExtent3D SrcExtent,
+                          VkImageLayout TargetLayout);
+    void CopyImage(VkImage SrcImage,
+                   VkImageLayout SrcLayout,
+                   VkExtent3D SrcExtent,
+                   VkImageLayout TargetLayout);
+    void EnqueueCopyTexture(VkCommandBuffer CommandBuffer,
+                            Texture &Texture,
+                            VkImageLayout TargetLayout);
+    void CopyTexture(Texture Texture, VkImageLayout TargetLayout);
+
+    const ImageInfo GetImageInfo() const
+    {
+        return imageInfo;
+    }
+
+    const VkImageLayout GetCurrentLayout() const
+    {
+        return imageInfo.layout;
+    }
 
     operator VkImage() const
     {
-        return texture;
+        return vkImage;
     }
 
     operator VkImageView() const
     {
-        return textureView;
+        return imageInfo.view;
     }
 
     [[nodiscard]] static VkImageView CreateImageView(
@@ -87,25 +125,9 @@ class Texture : DeviceDependentObject
     void EnqueueGenerateMipMaps(VkCommandBuffer CommandBuffer);
 
  public:
-    bool generateMipMaps;
-    uint32_t mipLevels;
-
-    VkImage texture;
-    VkDeviceMemory textureMemory;
+    VkImage vkImage;
+    VkDeviceMemory vkImageMemory;
+    ImageInfo imageInfo;
     Sampler sampler;
-
-    VkImageView textureView;
-
-    VkImageType type;
-    VkExtent3D extent;
-    VkFormat format;
-    VkImageTiling tiling;
-    VkImageUsageFlags usage;
-    VkSampleCountFlagBits numSamples;
-
-    VkImageAspectFlags imageAspect;
-    uint32_t arrayLayerCount;
-
-    VkDescriptorImageInfo imageInfo;
 };
-}
+}  // namespace Slipper

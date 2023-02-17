@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include "common_defines.h"
 #include "DeviceDependentObject.h"
 #include "Setup/Device.h"
 
@@ -67,7 +68,6 @@ struct SingleUseCommandBuffer
         const VkCommandBufferUsageFlags Flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
         : m_commandPool(CommandPool)
     {
-        int32_t buffer_index = 0;
         buffer = m_commandPool.CreateSingleUseCommandBuffer();
         m_commandPool.BeginCommandBuffer(buffer.value(), true, true, Flags);
     }
@@ -75,7 +75,13 @@ struct SingleUseCommandBuffer
     ~SingleUseCommandBuffer() noexcept
     {
         if (buffer.has_value())
+        {
+            if (!m_submitted)
+            {
+                DEBUG_BREAK
+            }
             m_commandPool.DestroySingleUseCommandBuffer(buffer.value());
+            }
     }
 
     SingleUseCommandBuffer(const SingleUseCommandBuffer &Other) = delete;

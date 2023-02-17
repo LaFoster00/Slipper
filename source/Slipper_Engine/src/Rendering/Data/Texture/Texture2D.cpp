@@ -8,7 +8,7 @@
 namespace Slipper
 {
 Texture2D::Texture2D(const StbImage Image, const bool GenerateMipMaps)
-    : Texture(VK_IMAGE_TYPE_2D, Image.extent, Image.format, GenerateMipMaps),
+    : Texture(VK_IMAGE_TYPE_2D, Image.extent, Image.format, {}, GenerateMipMaps),
       filepath(Image.filepath)
 {
     CreateTexture2D(Image.pixels);
@@ -16,7 +16,8 @@ Texture2D::Texture2D(const StbImage Image, const bool GenerateMipMaps)
 }
 
 Texture2D::Texture2D(const VkExtent2D Extent,
-                     const VkFormat Format,
+                     const VkFormat ImageFormat,
+                     std::optional<VkFormat> ViewFormat,
                      const bool GenerateMipMaps,
                      const VkImageTiling Tiling,
                      const VkImageUsageFlags Usage,
@@ -24,7 +25,8 @@ Texture2D::Texture2D(const VkExtent2D Extent,
                      const VkMemoryPropertyFlags MemoryFlags)
     : Texture(VK_IMAGE_TYPE_2D,
               VkExtent3D(Extent.width, Extent.height, 1),
-              Format,
+              ImageFormat,
+              ViewFormat,
               GenerateMipMaps,
               VK_SAMPLE_COUNT_1_BIT,
               Tiling,
@@ -64,7 +66,7 @@ std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepat
 
 void Texture2D::CreateTexture2D(void *Data, const VkMemoryPropertyFlags MemoryFlags)
 {
-    const VkDeviceSize texture_size = extent.width * extent.height * 4;
+    const VkDeviceSize texture_size = imageInfo.extent.width * imageInfo.extent.height * 4;
 
     const Buffer staging_buffer(texture_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, MemoryFlags);
 

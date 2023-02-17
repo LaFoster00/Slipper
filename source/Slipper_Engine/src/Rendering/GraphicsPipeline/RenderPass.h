@@ -4,9 +4,9 @@
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 #include "DeviceDependentObject.h"
+
 
 namespace Slipper
 {
@@ -20,13 +20,16 @@ class RenderPass : DeviceDependentObject
 {
  public:
     RenderPass() = delete;
-    RenderPass(std::string_view Name, VkFormat AttachmentFormat, VkFormat DepthFormat);
+    RenderPass(std::string_view Name, VkFormat RenderingFormat, VkFormat DepthFormat, bool ForPresentation = true);
     ~RenderPass();
 
     void DestroyAllFrameBuffers();
     bool DestroySwapChainFramebuffers(SwapChain *SwapChain);
-
     void CreateSwapChainFramebuffers(SwapChain *SwapChain);
+
+    void RecreateSwapChainResources(SwapChain *SwapChain);
+
+    VkImage GetCurrentImage() const;
 
     void BeginRenderPass(SwapChain *SwapChain, uint32_t ImageIndex, VkCommandBuffer CommandBuffer);
     void EndRenderPass(VkCommandBuffer commandBuffer);
@@ -50,5 +53,6 @@ class RenderPass : DeviceDependentObject
 
  private:
     SwapChain *m_activeSwapChain;
+    VkImage m_currentImage;
 };
 }  // namespace Slipper

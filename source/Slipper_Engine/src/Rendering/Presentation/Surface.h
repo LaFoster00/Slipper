@@ -27,11 +27,9 @@ class Surface
     // ONLY CALL AFTER DEVICE IS CREATED
     void CreateSwapChain();
 
-    // ONLY CALL BEFORE DEVICE IS DESTROYED
-    void DestroyDeviceDependencies();
-
-    void RecreateSwapChain(int Width, int Height);
+    void RecreateSwapChain(uint32_t Width, uint32_t Height);
     void RegisterRenderPass(RenderPass &RenderPass);
+    void UnregisterRenderPass(RenderPass &RenderPass);
 
  private:
     void CleanupSwapChain(bool DestroySwapChain);

@@ -15,7 +15,7 @@ SurfaceSwapChain::SurfaceSwapChain(Surface &Surface)
     swapChainSupport = device.QuerySwapChainSupport(&Surface);
     resolution = ChoseExtent(Surface);
     auto [format, color_space] = ChooseSurfaceFormat();
-    imageFormat = format;
+    imageRenderingFormat = format;
     imageColorSpace = color_space;
 
     SurfaceSwapChain::Create(VK_NULL_HANDLE);
@@ -23,6 +23,7 @@ SurfaceSwapChain::SurfaceSwapChain(Surface &Surface)
 
 SurfaceSwapChain::~SurfaceSwapChain()
 {
+    SwapChain::ClearImages();
     vkDestroySwapchainKHR(device.logicalDevice, vkSwapChain, nullptr);
 }
 
@@ -63,7 +64,7 @@ void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
     create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     create_info.surface = surface;
     create_info.minImageCount = image_count;
-    create_info.imageFormat = imageFormat;
+    create_info.imageFormat = imageRenderingFormat;
     create_info.imageColorSpace = imageColorSpace;
     create_info.imageExtent = resolution;
     create_info.imageArrayLayers = 1;
@@ -96,7 +97,7 @@ void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
     vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, nullptr);
     vkImages.resize(image_count);
     vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, vkImages.data());
-    imageFormat = create_info.imageFormat;
+    imageRenderingFormat = create_info.imageFormat;
     resolution = create_info.imageExtent;
 
     SwapChain::Create(OldSwapChain);
