@@ -2,6 +2,8 @@
 
 #include "AppComponent.h"
 #include "AppComponents/Gui.h"
+#include "AppEvents.h"
+#include "Event.h"
 #include "GraphicsEngine.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
@@ -26,8 +28,9 @@ Application::Application(ApplicationInfo &ApplicationInfo)
     WindowInfo window_create_info;
     window_create_info.width = 1280;
     window_create_info.height = 720;
-    window_create_info.name = name.c_str();
+    window_create_info.name = name;
     window = std::make_unique<Window>(window_create_info);
+    window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
     Device::PickPhysicalDevice(&window->GetSurface(), true);
     GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableSampleCount();
@@ -66,6 +69,13 @@ void Application::Close()
     running = false;
 }
 
+void Application::CloseWindow(Window *Window)
+{
+    if (Window == window.get()) {
+        window.reset();
+    }
+}
+
 void Application::Run()
 {
     while (running) {
@@ -77,13 +87,18 @@ void Application::Run()
             ViewportResize();
         }
 
+        if (!running)
+            return;
+
         if (!minimized) {
             Time::Tick(Engine::FRAME_COUNT);
             Engine::FRAME_COUNT += 1;
-            if (!(Engine::FRAME_COUNT % 64)) {
-                std::cout << '\r' << std::setw(10) << 1.0f / Time::DeltaTimeSmooth() << "fps"
-                          << std::setw(2) << Time::DeltaTimeSmooth() << ' ' << std::setw(2) << "ms"
-                          << std::flush;
+            if (!(Engine::FRAME_COUNT % DELTA_SMOOTH_FRAMES)) {
+                std::stringstream ss;
+                ss << name << " " << std::setw(10) << 1.0f / Time::DeltaTimeSmooth() << "fps  "
+                   << std::setw(2) << Time::DeltaTimeSmooth() << ' ' << std::setw(2) << "ms"
+                   << std::flush;
+                window->SetTitle(ss.str());
             }
 
             GraphicsEngine::Get().BeginUpdate();
@@ -104,6 +119,21 @@ void Application::Run()
 
             GraphicsEngine::Get().Render();
         }
+    }
+}
+
+void Application::OnEvent(Event &Event)
+{
+    std::cout << Event.ToString() << '\n';
+    switch (Event.GetEventType()) {
+        case EventType::WindowClose: {
+            WindowCloseEvent &window_close_event = *static_cast<WindowCloseEvent *>(&Event);
+            CloseWindow(&window_close_event.window);
+            if (!window) {
+                Close();
+            }
+        }
+    default: ;
     }
 }
 
@@ -144,8 +174,7 @@ void Application::ViewportResize()
 {
     viewportResize.resized = false;
     GraphicsEngine::OnViewportResize(viewportResize.width, viewportResize.height);
-    for (auto viewport_resize_callback : viewportResizeCallbacks)
-    {
+    for (auto viewport_resize_callback : viewportResizeCallbacks) {
         viewport_resize_callback(viewportResize.width, viewportResize.height);
     }
 }

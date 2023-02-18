@@ -13,7 +13,7 @@ std::chrono::time_point<std::chrono::steady_clock> Time::m_startupTime =
 float Time::m_deltaTime = 0;
 
 float Time::m_deltaSmooth = 0;
-std::array<float, 16> Time::m_lastDeltaTimes{};
+std::array<float, DELTA_SMOOTH_FRAMES> Time::m_lastDeltaTimes{};
 
 float Time::m_timeSinceStartup = 0;
 

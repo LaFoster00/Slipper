@@ -4,6 +4,8 @@
 
 namespace Slipper
 {
+
+#define DELTA_SMOOTH_FRAMES 2048
 class Time
 {
  public:
@@ -19,7 +21,7 @@ class Time
     static float m_deltaTime;
 
     static float m_deltaSmooth;
-    static std::array<float, 16> m_lastDeltaTimes;
+    static std::array<float, 2048> m_lastDeltaTimes;
 
     static float m_timeSinceStartup;
 
