@@ -16,6 +16,8 @@
 #include <filesystem>
 
 #include "Core/Application.h"
+#include "Core/SlipperObject/Camera.h"
+#include "Core/Transform.h"
 #include "Drawing/Sampler.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
@@ -155,10 +157,9 @@ RenderPass *GraphicsEngine::CreateRenderPass(const std::string &Name,
     return renderPasses[Name].get();
 }
 
-void GraphicsEngine::DestroyRenderPass(RenderPass* RenderPass)
+void GraphicsEngine::DestroyRenderPass(RenderPass *RenderPass)
 {
-    if (renderPassNames.contains(RenderPass))
-    {
+    if (renderPassNames.contains(RenderPass)) {
         const auto name = renderPassNames.at(RenderPass);
         renderPassNames.erase(RenderPass);
         renderPasses.erase(name);
@@ -177,8 +178,11 @@ void GraphicsEngine::CreateViewportSwapChain()
 
     m_graphicsInstance->viewportPresentationTextures.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
     for (uint32_t i = 0; i < m_graphicsInstance->viewportSwapChain->numImages; ++i) {
-        m_graphicsInstance->viewportPresentationTextures.push_back(std::make_unique<Texture2D>(
-            Application::Get().window->GetSize(), Engine::TARGET_VIEWPORT_COLOR_FORMAT, SwapChain::swapChainFormat, false));
+        m_graphicsInstance->viewportPresentationTextures.push_back(
+            std::make_unique<Texture2D>(Application::Get().window->GetSize(),
+                                        Engine::TARGET_VIEWPORT_COLOR_FORMAT,
+                                        SwapChain::swapChainFormat,
+                                        false));
     }
 }
 
@@ -214,20 +218,15 @@ void GraphicsEngine::SetupSimpleDraw()
         const auto debug_shader = *RenderPass.registeredShaders.begin();
         debug_shader->Bind(CommandBuffer, &RenderPass);
 
-        UniformMVP mvp;
-        mvp.model = glm::rotate(glm::mat4(1.0f),
-                                Time::TimeSinceStartup() * glm::radians(90.0f),
-                                glm::vec3(0.0f, 0.0f, 1.0f));
-        mvp.view = glm::lookAt(
-            glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        mvp.projection = glm::perspective(
-            glm::radians(45.0f),
-            RenderPass.GetActiveSwapChain()->GetResolution().width /
-                (float)RenderPass.GetActiveSwapChain()->GetResolution().height,
-            0.1f,
-            10.0f);
+        Camera camera;
+        Transform transform({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
 
-        mvp.projection[1][1] *= -1;
+        UniformMVP mvp;
+        mvp.model = transform.GetModelMatrix();
+        mvp.view = camera.GetView();
+        mvp.projection = camera.GetProjection(
+            RenderPass.GetActiveSwapChain()->GetResolution().width /
+            static_cast<float>(RenderPass.GetActiveSwapChain()->GetResolution().height));
 
         debug_shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
 

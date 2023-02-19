@@ -32,8 +32,10 @@ enum class ShaderType
 
 struct ShaderUniform
 {
-    virtual ~ShaderUniform() = default;
+protected:
+    ShaderUniform() = default;
 
+public:
     // This is reuqired since the virtual function table takes up additional memory and only the
     // actual data is interesting to vulkan
     virtual size_t GetDataSize() const = 0;
@@ -43,7 +45,7 @@ struct ShaderUniform
     virtual void const *GetData() const = 0;
 };
 
-struct UniformMVP : ShaderUniform
+struct UniformMVP final : ShaderUniform
 {
     glm::mat4 model = {};
     glm::mat4 view = {};
@@ -51,7 +53,7 @@ struct UniformMVP : ShaderUniform
 
     size_t GetDataSize() const override
     {
-        return sizeof(glm::mat4) * 3;
+        return sizeof(UniformMVP);
     }
 
     void const *GetData() const override

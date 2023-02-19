@@ -3,11 +3,11 @@
 class SlipperObject
 {
 public:
-    virtual void OnCreate() {};
+    virtual void OnInit() {};
     virtual void OnUpdate() {};
     virtual void OnDestroy() {};
 
-private:
-   SlipperObject() = default;
-   virtual ~SlipperObject() = default;
+protected:
+    SlipperObject() = default;
+    virtual ~SlipperObject() = default;
 };
