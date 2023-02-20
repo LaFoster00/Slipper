@@ -1,12 +1,8 @@
 #include "Buffer.h"
 
 #include "Drawing/CommandPool.h"
-#include "Setup/Device.h"
-#include <array>
-
 #include "GraphicsEngine.h"
 #include "Shader/Shader.h"
-#include "common_defines.h"
 
 namespace Slipper
 {

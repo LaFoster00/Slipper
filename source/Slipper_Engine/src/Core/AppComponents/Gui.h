@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Engine.h"
 #include "Core/AppComponent.h"
 
 namespace Slipper

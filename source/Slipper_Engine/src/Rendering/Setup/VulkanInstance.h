@@ -1,9 +1,5 @@
 #pragma once
 
-#include "Engine.h"
-#include "common_defines.h"
-#include <vector>
-
 namespace Slipper
 {
 extern VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,

@@ -1,11 +1,5 @@
 #pragma once
 
-#include "DeviceDependentObject.h"
-
-#include <cstring>
-
-#include "Setup/Device.h"
-
 namespace Slipper
 {
 struct ShaderUniform;

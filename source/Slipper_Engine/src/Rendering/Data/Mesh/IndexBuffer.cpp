@@ -1,6 +1,5 @@
 #include "IndexBuffer.h"
 
-#include "Setup/Device.h"
 namespace Slipper
 {
 IndexBuffer::IndexBuffer(const VertexIndex *Indices,

@@ -2,11 +2,8 @@
 
 #include "File.h"
 #include "GraphicsPipeline.h"
-#include "Mesh/Mesh.h"
 #include "Mesh/UniformBuffer.h"
-#include "Setup/Device.h"
 #include "Texture/Texture.h"
-#include "common_defines.h"
 #include "spirv_reflect.h"
 
 namespace Slipper

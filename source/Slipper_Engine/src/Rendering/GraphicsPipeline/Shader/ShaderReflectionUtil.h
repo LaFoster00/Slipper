@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Engine.h"
 #include "spirv_reflect.h"
 
 namespace Slipper

@@ -1,16 +1,9 @@
 #include "RenderPass.h"
 
-#include "../Setup/Device.h"
-
-#include <algorithm>
-#include <array>
-
 #include "Drawing/Framebuffer.h"
 #include "Presentation/SwapChain.h"
-#include "Setup/GraphicsSettings.h"
 #include "Texture/DepthBuffer.h"
 #include "Texture/RenderTarget.h"
-#include "common_defines.h"
 #include "Shader/Shader.h"
 
 namespace Slipper

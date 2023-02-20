@@ -1,10 +1,5 @@
 #include "OffscreenSwapChain.h"
 
-#include <unordered_set>
-
-#include "Setup/GraphicsSettings.h"
-#include "common_defines.h"
-
 namespace Slipper
 {
 OffscreenSwapChain::OffscreenSwapChain(const VkExtent2D &Extent,

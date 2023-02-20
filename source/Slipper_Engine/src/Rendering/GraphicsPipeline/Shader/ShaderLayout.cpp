@@ -1,11 +1,6 @@
 #include "ShaderLayout.h"
 
-#include <ranges>
-
-#include "Mesh/UniformBuffer.h"
 #include "ShaderReflection.h"
-#include "Texture/Texture.h"
-#include "common_defines.h"
 
 namespace Slipper
 {

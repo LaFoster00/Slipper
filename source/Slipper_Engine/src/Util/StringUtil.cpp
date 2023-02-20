@@ -1,9 +1,5 @@
 #include "StringUtil.h"
 
-#include <algorithm>
-#include <string>
-#include <string_view>
-
 namespace Slipper
 {
 namespace String

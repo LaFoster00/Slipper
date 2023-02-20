@@ -7,7 +7,6 @@
 #include "GraphicsEngine.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
-#include "Texture/RenderTarget.h"
 #include "Time/Time.h"
 #include "Window.h"
 

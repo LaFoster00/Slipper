@@ -1,23 +1,14 @@
 #pragma once
-#include <any>
-#include <functional>
-
-#include "Engine.h"
-#include <string>
-#include <vector>
-
-#include "common_defines.h"
 
 int main(int argc, char *argv[]);
 
 namespace Slipper
 {
-    class Event;
-    class Gui;
+class Event;
+class Gui;
 class VulkanInstance;
 class Window;
 class GraphicsEngine;
-
 class AppComponent;
 
 struct ApplicationInfo
@@ -43,7 +34,7 @@ class Application
     void AddComponent(AppComponent *ProgramComponent);
 
     void Close();
-    void CloseWindow(Window* Window);
+    void CloseWindow(Window *Window);
 
     static Application &Get()
     {
@@ -51,7 +42,7 @@ class Application
     }
 
     virtual void Run();
-    virtual void OnEvent(Event & Event);
+    virtual void OnEvent(Event &Event);
     virtual void OnWindowResize(Window *Window, int Width, int Height);
     virtual void OnViewportResize(uint32_t Width, uint32_t Height);
     void AddViewportResizeCallback(std::function<void(uint32_t, uint32_t)> Callback);

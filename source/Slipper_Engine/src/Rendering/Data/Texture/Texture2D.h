@@ -1,9 +1,6 @@
 #pragma once
 
-#include "Engine.h"
 #include "Texture.h"
-#include <memory>
-#include <string>
 
 namespace Slipper
 {

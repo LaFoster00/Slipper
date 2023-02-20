@@ -1,15 +1,8 @@
 #pragma once
 
-#include <algorithm>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <unordered_map>
-
 #include "Buffer.h"
 #include "GraphicsEngine.h"
 #include "ShaderLayout.h"
-#include "common_defines.h"
 
 namespace Slipper
 {

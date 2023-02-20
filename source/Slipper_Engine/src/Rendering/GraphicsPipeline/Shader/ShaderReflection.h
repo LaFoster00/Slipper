@@ -1,8 +1,4 @@
 #pragma once
-#include <memory>
-
-#include "Engine.h"
-
 struct SpvReflectDescriptorBinding;
 struct SpvReflectDescriptorSet;
 struct SpvReflectBlockVariable;

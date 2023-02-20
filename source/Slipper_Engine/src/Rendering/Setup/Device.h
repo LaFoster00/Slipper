@@ -1,10 +1,5 @@
 #pragma once
 
-#include "Engine.h"
-
-#include <optional>
-#include <string>
-
 namespace Slipper
 {
 class VulkanInstance;

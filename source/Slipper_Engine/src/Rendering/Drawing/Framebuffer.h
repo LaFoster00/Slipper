@@ -1,7 +1,5 @@
 #pragma once
 
-#include "DeviceDependentObject.h"
-
 namespace Slipper
 {
 class Device;

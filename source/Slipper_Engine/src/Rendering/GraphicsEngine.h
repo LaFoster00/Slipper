@@ -1,12 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <unordered_set>
-#include <vector>
-
-#include "DeviceDependentObject.h"
 #include "Drawing/CommandPool.h"
 
 namespace Slipper

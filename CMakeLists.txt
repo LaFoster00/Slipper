@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.16.0)
 project(Slipper VERSION 0.1.0)
 
 include(CTest)
@@ -69,6 +69,7 @@ add_subdirectory(${EXTERNAL_LIBS_DIR}/glfw)
 #imgui
 message(STATUS "Configuring imgui")
 set(IMGUI_FILES ${EXTERNAL_LIBS_DIR}/imgui/imgui.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_demo.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_draw.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_tables.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_widgets.cpp ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_vulkan.cpp)
+set(IMGUIZMO_FILES ${EXTERNAL_LIBS_DIR}/ImGuizmo/ImGuizmo.cpp)
 
 if( MSVC )
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )

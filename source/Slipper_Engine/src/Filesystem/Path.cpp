@@ -7,10 +7,6 @@
 #    include "Linux/LinuxSlipper.h"
 #endif
 
-#include <algorithm>
-#include <stdio.h>
-#include <string>
-
 namespace Slipper
 {
 namespace Path

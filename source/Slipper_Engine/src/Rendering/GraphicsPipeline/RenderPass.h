@@ -1,13 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <string_view>
-#include <unordered_map>
-#include <unordered_set>
-
-#include "DeviceDependentObject.h"
-
-
 namespace Slipper
 {
 class Framebuffer;

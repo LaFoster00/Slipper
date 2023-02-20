@@ -1,7 +1,5 @@
 #include "Texture2D.h"
 
-#include <stb_image.h>
-
 #include "Buffer.h"
 #include "Path.h"
 

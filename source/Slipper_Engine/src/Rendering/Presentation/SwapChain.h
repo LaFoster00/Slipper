@@ -1,10 +1,5 @@
 #pragma once
 
-#include <memory>
-
-#include "DeviceDependentObject.h"
-#include "Setup/Device.h"
-
 namespace Slipper
 {
 class DepthBuffer;

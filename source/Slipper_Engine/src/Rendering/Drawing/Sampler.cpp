@@ -1,8 +1,5 @@
 #include "Sampler.h"
 
-#include "Setup/Device.h"
-#include "common_defines.h"
-
 namespace Slipper
 {
 Sampler *Sampler::m_linearSampler = nullptr;

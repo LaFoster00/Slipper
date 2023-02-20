@@ -1,13 +1,8 @@
 #include "PipelineLayout.h"
 
-#include "../Presentation/SwapChain.h"
-#include "../Setup/Device.h"
-
-#include <optional>
+#include "Presentation/SwapChain.h"
 
 #include "Mesh/Mesh.h"
-#include "Setup/GraphicsSettings.h"
-#include "common_defines.h"
 
 namespace Slipper
 {

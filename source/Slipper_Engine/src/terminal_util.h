@@ -1,6 +1,4 @@
 // NOT WORKING
-#include <string>
-
 namespace Slipper
 {
 namespace TerminalUtil

@@ -1,8 +1,4 @@
 #pragma once
-#include "signal.h"
-#include <iostream>
-#include <stdexcept>
-
 #ifdef LINUX
 #    define SLIPPER_FUNCTION __attribute__((dllexport))
 #    define MAX_PATH PATH_MAX
@@ -17,8 +13,6 @@
 #else
 #    define SLIPPER_FUNCTION
 #endif
-
-#include "Util/StringUtil.h"
 
 #define VK_ASSERT(func, message)                                                            \
     if (func != VK_SUCCESS) {                                                               \

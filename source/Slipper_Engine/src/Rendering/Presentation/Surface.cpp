@@ -1,11 +1,9 @@
 #include "Surface.h"
 
 #include "RenderPass.h"
-#include "Setup/VulkanInstance.h"
 #include "Shader/Shader.h"
 #include "SurfaceSwapChain.h"
 #include "Window.h"
-#include "common_defines.h"
 
 namespace Slipper
 {

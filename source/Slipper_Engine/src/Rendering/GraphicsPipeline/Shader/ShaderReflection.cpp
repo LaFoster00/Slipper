@@ -1,11 +1,7 @@
 #include "ShaderReflection.h"
 
-#include <cassert>
-
-#include "Setup/Device.h"
 #include "Shader.h"
 #include "ShaderReflectionUtil.h"
-#include "common_defines.h"
 #include "spirv_reflect.h"
 
 namespace Slipper

@@ -1,9 +1,5 @@
 #pragma once
 
-#include <functional>
-
-#include "Engine.h"
-
 namespace Slipper
 {
 using TransformChangeCallback = std::function<void()>;

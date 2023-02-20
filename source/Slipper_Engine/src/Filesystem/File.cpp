@@ -1,10 +1,6 @@
 #include "File.h"
 
 #include "Path.h"
-#include "common_defines.h"
-
-#include <algorithm>
-#include <fstream>
 
 namespace Slipper
 {

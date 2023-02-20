@@ -1,21 +1,5 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
-#include "glm/glm.hpp"
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/euler_angles.hpp>
-
-#include <GLFW/glfw3.h>
-
-#include <vector>
-
 namespace Slipper
 {
 class VulkanInstance;

@@ -1,11 +1,7 @@
 #include "SurfaceSwapChain.h"
 
-#include <algorithm>
-
 #include "Surface.h"
-#include "Util/StringUtil.h"
 #include "Window.h"
-#include "common_defines.h"
 
 namespace Slipper
 {

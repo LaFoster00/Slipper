@@ -1,11 +1,5 @@
 #pragma once
 
-#include <optional>
-
-#include "common_defines.h"
-#include "DeviceDependentObject.h"
-#include "Setup/Device.h"
-
 namespace Slipper
 {
 struct SingleUseCommandBuffer;

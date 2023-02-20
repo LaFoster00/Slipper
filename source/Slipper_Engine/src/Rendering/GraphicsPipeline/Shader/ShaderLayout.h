@@ -1,12 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-
-#include "DeviceDependentObject.h"
-#include "Setup/Device.h"
-
 namespace Slipper
 {
 class UniformBuffer;

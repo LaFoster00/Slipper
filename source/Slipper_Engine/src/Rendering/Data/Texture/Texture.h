@@ -1,6 +1,5 @@
 #pragma once
 
-#include "DeviceDependentObject.h"
 #include "Drawing/CommandPool.h"
 #include "Drawing/Sampler.h"
 

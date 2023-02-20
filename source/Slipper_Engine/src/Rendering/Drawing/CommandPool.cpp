@@ -1,10 +1,6 @@
 #include "CommandPool.h"
 
 #include "GraphicsPipeline/RenderPass.h"
-#include "Setup/Device.h"
-#include "common_defines.h"
-
-#include <algorithm>
 
 namespace Slipper
 {

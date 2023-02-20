@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9.0)
+cmake_minimum_required(VERSION 3.16.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -51,7 +51,7 @@ source_group(extern/imgui FILES ${IMGUI_FILES})
 file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES src/*.h src/*.cpp)
 
 message("Building Engine Library")
-add_library(SlipperEngine STATIC ${SLIPPER_ENGINE_SOURCE_FILES} ${IMGUI_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
+add_library(SlipperEngine STATIC ${SLIPPER_ENGINE_SOURCE_FILES} ${IMGUI_FILES} ${IMGUIZMO_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
 
 # Fetch all source files
 file(GLOB_RECURSE SLIPPER_ENGINE_TEST_SOURCE_FILES test/*.h test/*.cpp)
@@ -84,22 +84,27 @@ target_include_directories(SlipperEngine_Test PUBLIC test)
 add_dependencies(SlipperEngine SlipperEngine_EngineContent)
 add_dependencies(SlipperEngine_Test SlipperEngine)
 
+set(COMMOND_LINK_LIBRARIES glfw)
+
 #Libs
 if(LINUX)
-    target_link_libraries(SlipperEngine glfw dl pthread X11)
+    target_link_libraries(SlipperEngine ${COMMOND_LINK_LIBRARIES} dl pthread X11)
     target_link_libraries(SlipperEngine_Test Slipper_Engine dl pthread)
 else()
     message("Linking for windows")    
     if (CMAKE_GENERATOR MATCHES "Visual Studio")
-        target_link_libraries(SlipperEngine User32.lib glfw)
-        target_link_libraries(SlipperEngine_Test SlipperEngine User32.lib glfw)
+        target_link_libraries(SlipperEngine ${COMMOND_LINK_LIBRARIES} User32.lib)
+        target_link_libraries(SlipperEngine_Test SlipperEngine User32.lib)
     else()
-        target_link_libraries(SlipperEngine User32.lib glfw msvcrt.lib)
-        target_link_libraries(SlipperEngine_Test SlipperEngine User32.lib glfw msvcrt.lib)
+        target_link_libraries(SlipperEngine ${COMMOND_LINK_LIBRARIES} User32.lib msvcrt.lib)
+        target_link_libraries(SlipperEngine_Test SlipperEngine User32.lib msvcrt.lib)
     endif()
 endif()
 
 target_compile_definitions(SlipperEngine PRIVATE LIBRARY_EXPORT)
+target_precompile_headers(SlipperEngine PUBLIC
+    src/pch.h
+)
 
 #Append external source files to project
 #include Vulkan
@@ -119,6 +124,9 @@ target_include_directories(SlipperEngine_Test PUBLIC "${EXTERNAL_LIBS_DIR}/stb")
 #imgui
 target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/imgui")
 target_include_directories(SlipperEngine_Test PUBLIC "${EXTERNAL_LIBS_DIR}/imgui")
+#ImGuizmo
+target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/ImGuizmo")
+target_include_directories(SlipperEngine_Test PUBLIC "${EXTERNAL_LIBS_DIR}/ImGuizmo")
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

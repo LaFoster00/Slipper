@@ -6,14 +6,6 @@
 #include "Mesh/Mesh.h"
 #include "Mesh/UniformBuffer.h"
 #include "Presentation/Surface.h"
-#include "Setup/Device.h"
-#include "common_defines.h"
-
-#include "glm/gtc/matrix_transform.hpp"
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
-#include <filesystem>
 
 #include "Core/Application.h"
 #include "Core/SlipperObject/Camera.h"

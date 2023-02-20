@@ -1,5 +1,4 @@
 #pragma once
-#include "common_defines.h"
 
 // Thanks to the Cherno for this simple but effective event system
 

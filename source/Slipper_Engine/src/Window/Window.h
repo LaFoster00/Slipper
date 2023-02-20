@@ -1,11 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <memory>
-#include <string_view>
-
-#include "Engine.h"
-
 #define DECLARE_GLFW_CALLBACK(FnName, ...) \
     static void FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
 #define IMPLEMENT_GLFW_CALLBACK(FnName, ...) \

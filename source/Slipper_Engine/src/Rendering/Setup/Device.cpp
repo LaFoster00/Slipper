@@ -1,14 +1,8 @@
 #include "Device.h"
 
-#include <algorithm>
-
 #include "../Presentation/Surface.h"
 #include "VulkanInstance.h"
 #include "Window/Window.h"
-
-#include <iostream>
-#include <map>
-#include <set>
 
 namespace Slipper
 {

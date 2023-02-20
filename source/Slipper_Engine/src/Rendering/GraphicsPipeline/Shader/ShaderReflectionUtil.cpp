@@ -1,11 +1,5 @@
 #include "ShaderReflectionUtil.h"
 
-#include "common_defines.h"
-
-#include <cstring>
-#include <fstream>
-#include <sstream>
-
 #include "Shader.h"
 
 namespace Slipper

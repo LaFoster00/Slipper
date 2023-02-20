@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/SlipperSceneObject.h"
-#include "Engine.h"
 
 namespace Slipper
 {

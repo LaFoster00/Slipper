@@ -1,7 +1,5 @@
 #pragma once
 
-#include "common_defines.h"
-
 namespace Slipper
 {
 namespace Path

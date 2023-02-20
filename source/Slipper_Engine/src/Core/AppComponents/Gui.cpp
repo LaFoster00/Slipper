@@ -1,18 +1,11 @@
 #include "Gui.h"
 
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_vulkan.h>
-#include <imgui.h>
-
 #include "Core/Application.h"
 #include "Drawing/CommandPool.h"
 #include "GraphicsEngine.h"
 #include "RenderPass.h"
-#include "Setup/Device.h"
 #include "Setup/GraphicsSettings.h"
-#include "Setup/VulkanInstance.h"
-#include "Window/Window.h"
-#include "common_defines.h"
+#include "Window.h"
 
 namespace Slipper
 {
@@ -88,6 +81,7 @@ void Gui::StartNewFrame()
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
     SetupDocksapce();
 }
 
@@ -125,7 +119,7 @@ void Gui::SetupDocksapce()
 {
     ImGui::SetNextWindowPos({0.0f, 0.0f}, ImGuiCond_Always);
 
-    ImGuiWindowFlags window_flags =  ImGuiWindowFlags_NoDocking;
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -140,7 +134,7 @@ void Gui::SetupDocksapce()
     bool window_open = true;
     ImGui::Begin("Dockspace Window", &window_open, window_flags);
     ImGui::PopStyleVar(3);
-    
+
     // Dockspace
     ImGui::DockSpace(
         ImGui::GetID("Dockspace"), ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);

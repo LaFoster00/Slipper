@@ -1,12 +1,7 @@
 #include "GraphicsPipeline.h"
 
 #include "PipelineLayout.h"
-#include "Setup/Device.h"
 #include "Window/Window.h"
-#include "common_defines.h"
-
-#include <algorithm>
-
 namespace Slipper
 {
 GraphicsPipeline::GraphicsPipeline(

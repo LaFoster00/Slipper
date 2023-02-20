@@ -1,9 +1,5 @@
 #pragma once
 
-#include "Engine.h"
-
-#include <optional>
-
 struct VkViewport;
 struct VkRect2D;
 struct VkPipelineColorBlendAttachmentState;

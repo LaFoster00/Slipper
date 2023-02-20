@@ -1,10 +1,11 @@
 #include "Texture.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "Buffer.h"
 #include "Drawing/CommandPool.h"
 #include "GraphicsEngine.h"
-#include "Path.h"
-#include "Util/StringUtil.h"
 
 namespace Slipper
 {
