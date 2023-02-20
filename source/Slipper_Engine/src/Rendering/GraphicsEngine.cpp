@@ -166,7 +166,7 @@ void GraphicsEngine::DestroyRenderPass(RenderPass *RenderPass)
     }
 }
 
-void GraphicsEngine::CreateViewportSwapChain()
+void GraphicsEngine::CreateViewportSwapChain() const
 {
     m_graphicsInstance->viewportSwapChain = std::make_unique<OffscreenSwapChain>(
         Application::Get().window->GetSize(),
@@ -186,7 +186,7 @@ void GraphicsEngine::CreateViewportSwapChain()
     }
 }
 
-void GraphicsEngine::RecreateViewportSwapChain(uint32_t Width, uint32_t Height)
+void GraphicsEngine::RecreateViewportSwapChain(uint32_t Width, uint32_t Height) const
 {
     m_graphicsInstance->viewportSwapChain->Recreate(Width, Height);
     viewportRenderPass->RecreateSwapChainResources(viewportSwapChain.get());
@@ -195,6 +195,14 @@ void GraphicsEngine::RecreateViewportSwapChain(uint32_t Width, uint32_t Height)
          m_graphicsInstance->viewportPresentationTextures) {
         viewport_presentation_texture->Resize({Width, Height, 1});
     }
+}
+
+Camera &GraphicsEngine::GetDefaultCamera()
+{
+    if (!m_defaultCamera)
+        m_defaultCamera = std::make_unique<Camera>();
+
+    return *m_defaultCamera;
 }
 
 void GraphicsEngine::AddWindow(Window &Window)
@@ -213,25 +221,25 @@ void GraphicsEngine::SetupDebugRender(Surface &Surface)
 
 void GraphicsEngine::SetupSimpleDraw()
 {
-    SubmitRepeatedDrawCommand([=, this](const VkCommandBuffer &CommandBuffer,
-                                        const RenderPass &RenderPass) {
-        const auto debug_shader = *RenderPass.registeredShaders.begin();
-        debug_shader->Bind(CommandBuffer, &RenderPass);
+    SubmitRepeatedDrawCommand(
+        [=, this](const VkCommandBuffer &CommandBuffer, const RenderPass &RenderPass) {
+            const auto debug_shader = *RenderPass.registeredShaders.begin();
+            debug_shader->Bind(CommandBuffer, &RenderPass);
 
-        Camera camera;
-        Transform transform({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
+            Camera &camera = GetDefaultCamera();
+            Transform transform({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
 
-        UniformMVP mvp;
-        mvp.model = transform.GetModelMatrix();
-        mvp.view = camera.GetView();
-        mvp.projection = camera.GetProjection(
-            RenderPass.GetActiveSwapChain()->GetResolution().width /
-            static_cast<float>(RenderPass.GetActiveSwapChain()->GetResolution().height));
+            UniformMVP mvp;
+            mvp.model = transform.GetModelMatrix();
+            mvp.view = camera.GetView();
+            mvp.projection = camera.GetProjection(
+                RenderPass.GetActiveSwapChain()->GetResolution().width /
+                static_cast<float>(RenderPass.GetActiveSwapChain()->GetResolution().height));
 
-        debug_shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
+            debug_shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
 
-        models[0]->Draw(CommandBuffer);
-    });
+            models[0]->Draw(CommandBuffer);
+        });
 }
 
 void GraphicsEngine::SubmitDraw(const RenderPass *RenderPass,

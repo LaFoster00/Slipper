@@ -11,7 +11,8 @@
 
 namespace Slipper
 {
-class OffscreenSwapChain;
+    class Camera;
+    class OffscreenSwapChain;
 class Model;
 class Texture2D;
 class Texture;
@@ -37,19 +38,19 @@ class GraphicsEngine : DeviceDependentObject
     static void Shutdown();
 
     void SetupDebugResources();
+    void SetupDebugRender(Surface &Surface);
+    void SetupSimpleDraw();
     void CreateSyncObjects();
     RenderPass *CreateRenderPass(const std::string &Name,
                                  VkFormat RenderingFormat,
                                  VkFormat DepthFormat,
                                  bool ForPresentation);
     void DestroyRenderPass(RenderPass *RenderPass);
-
-    void CreateViewportSwapChain();
-    void RecreateViewportSwapChain(uint32_t Width, uint32_t Height);
+    void CreateViewportSwapChain() const;
+    void RecreateViewportSwapChain(uint32_t Width, uint32_t Height) const;
+    Camera& GetDefaultCamera();
 
     void AddWindow(Window &Window);
-    void SetupDebugRender(Surface &Surface);
-    void SetupSimpleDraw();
 
     void SubmitDraw(const RenderPass *RenderPass,
                     const Shader *Shader,
@@ -59,11 +60,13 @@ class GraphicsEngine : DeviceDependentObject
                                  std::function<void(const VkCommandBuffer &)> Command);
     void SubmitRepeatedDrawCommand(
         std::function<void(const VkCommandBuffer &, const RenderPass &)> Command);
+
     void BeginUpdate();
     void EndUpdate();
     void BeginGuiUpdate();
     void EndGuiUpdate();
     void Render();
+
     static void OnViewportResize(uint32_t Width, uint32_t Height);
     static void OnWindowResized(Window *Window, int Width, int Height);
 
@@ -126,9 +129,10 @@ class GraphicsEngine : DeviceDependentObject
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
     std::vector<VkFence> m_inFlightFences;
 
- private:
     uint32_t m_currentImageIndex = 0;
     Surface *m_currentSurface = nullptr;
     RenderPass *m_currentRenderPass = nullptr;
+
+    std::unique_ptr<Camera> m_defaultCamera;
 };
 }  // namespace Slipper
