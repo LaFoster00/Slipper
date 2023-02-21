@@ -3,6 +3,8 @@
 
 class SlipperEngineTest : public Slipper::Application
 {
-public:
-    explicit SlipperEngineTest(Slipper::ApplicationInfo& ApplicationInfo);
+ public:
+    using Application::Application;
+
+    void Init() override;
 };

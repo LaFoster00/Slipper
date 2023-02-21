@@ -31,6 +31,8 @@ class Application
     Application(ApplicationInfo &ApplicationInfo);
     virtual ~Application();
 
+    virtual void Init();
+
     void AddComponent(AppComponent *ProgramComponent);
 
     void Close();

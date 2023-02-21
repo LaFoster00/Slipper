@@ -20,7 +20,26 @@ Application::Application(ApplicationInfo &ApplicationInfo)
     instance = this;
 
     name = ApplicationInfo.Name;
+}
 
+Application::~Application()
+{
+    vkDeviceWaitIdle(Device::Get());
+
+    guiComponent->Shutdown();
+
+    for (auto &app_component : appComponents) {
+        app_component->Shutdown();
+    }
+    appComponents.clear();
+    GraphicsEngine::Shutdown();
+    window.reset();
+    Device::Destroy();
+    glfwTerminate();
+}
+
+void Application::Init()
+{
     glfwInit();
     vulkanInstance = std::make_unique<VulkanInstance>();
 
@@ -39,22 +58,6 @@ Application::Application(ApplicationInfo &ApplicationInfo)
 
     guiComponent = std::make_unique<Gui>("Gui");
     guiComponent->Init();
-}
-
-Application::~Application()
-{
-    vkDeviceWaitIdle(Device::Get());
-
-    guiComponent->Shutdown();
-
-    for (auto &app_component : appComponents) {
-        app_component->Shutdown();
-    }
-    appComponents.clear();
-    GraphicsEngine::Shutdown();
-    window.reset();
-    Device::Destroy();
-    glfwTerminate();
 }
 
 void Application::AddComponent(AppComponent *ProgramComponent)
@@ -123,7 +126,7 @@ void Application::Run()
 
 void Application::OnEvent(Event &Event)
 {
-    //std::cout << Event.ToString() << '\n';
+    // std::cout << Event.ToString() << '\n';
     switch (Event.GetEventType()) {
         case EventType::WindowClose: {
             WindowCloseEvent &window_close_event = *static_cast<WindowCloseEvent *>(&Event);
@@ -132,7 +135,7 @@ void Application::OnEvent(Event &Event)
                 Close();
             }
         }
-    default: ;
+        default:;
     }
 }
 

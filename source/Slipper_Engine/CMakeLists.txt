@@ -7,7 +7,6 @@ project(SlipperEngine VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-set(OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/$<CONFIG>)
 # Set the output folder where your program will be created
 SetBuildDirectory()
 #set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})

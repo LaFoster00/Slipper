@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
     try {
         Slipper::ApplicationInfo app_info{"Slipper Engine "};
         auto app = new SlipperEngineTest(app_info);
+        app->Init();
         TestGui *TestGui = new ::TestGui();
         app->AddComponent(TestGui);
         app->Run();
@@ -22,8 +23,8 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-SlipperEngineTest::SlipperEngineTest(Slipper::ApplicationInfo &ApplicationInfo)
-    : Application(ApplicationInfo)
+void SlipperEngineTest::Init()
 {
+    Application::Init();
     Slipper::GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
 }
