@@ -1,6 +1,6 @@
-/[Oo]bj/
-/[Bb]in/
-/[Dd]ebug/
-/[Bb]uild/
-/.vs/
-/out/
+**/[Oo]bj/
+**/[Bb]in/
+**/[Dd]ebug/
+**/[Bb]uild/
+**/.vs/
+**/out/
