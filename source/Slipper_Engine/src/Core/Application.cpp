@@ -123,7 +123,7 @@ void Application::Run()
 
 void Application::OnEvent(Event &Event)
 {
-    std::cout << Event.ToString() << '\n';
+    //std::cout << Event.ToString() << '\n';
     switch (Event.GetEventType()) {
         case EventType::WindowClose: {
             WindowCloseEvent &window_close_event = *static_cast<WindowCloseEvent *>(&Event);

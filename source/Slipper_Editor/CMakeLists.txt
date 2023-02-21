@@ -28,7 +28,7 @@ file(GLOB_RECURSE SLIPPER_EDITOR_SOURCE_FILES "*.h" "*.cpp")
 set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
     src
 )
-GroupSources(src src Source)
+GroupSources(src Source)
 
 set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     ../Slipper_Engine/src
@@ -36,7 +36,7 @@ set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
 include_directories(${SLIPPER_EDITOR_INCLUDE_DIRECTORIES} ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
 
 message("Building Engine Executable")    
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_OUTPUT_DIRECTORY})
+SetBuildDirectory()
 add_executable(SlipperEditor ${SLIPPER_EDITOR_SOURCE_FILES})
 
 set_property(TARGET SlipperEditor PROPERTY CXX_STANDARD 20)

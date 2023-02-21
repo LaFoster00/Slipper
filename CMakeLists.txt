@@ -19,8 +19,8 @@ string(CONCAT BUILD_TYPE ${CMAKE_BUILD_TYPE})
 find_package(Git QUIET)
 if (GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
 #Udate submodule as needed
-    option(GIT_SUBMODULE "Check submodules during build" ON)
-    if(GIT_SUBMODULE)
+    option(SLIPPER_GIT_SUBMODULE_UPDATE "Check submodules during build" ON)
+    if(SLIPPER_GIT_SUBMODULE_UPDATE)
         message(STATUS "Submodule update")
         execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
                         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -35,25 +35,48 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/glfw/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 
+option(SLIPPER_IN_SOURCE_BUILD Off)
+if (SLIPPER_IN_SOURCE_BUILD)
+    macro(SetBuildDirectory)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin)
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin)
+    endmacro()
+else()
+    macro(SetBuildDirectory)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+    endmacro()
+endif()
+
 # Special thanks to Luca Gherardi who wrote this special little peace of code :)
-function(GroupSources curdir rootfiledir rootsolutiondir)
+# Only used for VS since it does not sort source files based on their directory otherwise
+function(GroupSources_Internal curdir originaldir rootsolutiondir)
     file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR}/${curdir} ${CMAKE_CURRENT_LIST_DIR}/${curdir}/*)
     foreach(child ${children})
         if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
-            GroupSources(${curdir}/${child} ${rootfiledir} ${rootsolutiondir})
+            GroupSources_Internal(${curdir}/${child} ${originaldir} ${rootsolutiondir})
         else()
             if(NOT ${child} STREQUAL CMakeLists.txt)
-                string(REPLACE "/" "\\" groupname ${curdir})
+                string(REPLACE "${originaldir}" "${rootsolutiondir}" groupname ${curdir})
                 #message("Child dir ${groupname}")
                 #message("Child entry ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child}")
-                # I would like to call the src root folder in a different name, only in visual studio (not mandatory requirement)
-                string(REPLACE "${rootfiledir}" "${rootsolutiondir}" groupname ${groupname})
-                #message("Groupname entry ${groupname}")
+                #message("Group entry ${groupname}/${child}")
                 source_group(${groupname} FILES ${CMAKE_CURRENT_LIST_DIR}/${curdir}/${child})
             endif()
         endif()
     endforeach()
 endfunction()
+
+function(GroupSources curdir rootsolutiondir)
+    GroupSources_Internal(${curdir} ${curdir} ${rootsolutiondir}) 
+endfunction()
+
+
+#Vulkan
+find_package(Vulkan)
+if(NOT ${Vulkan_FOUND})
+    message( FATAL_ERROR "Vulkan was not found!")
+endif()
 
 #GLM
 message(STATUS "Configuring GLM")
@@ -66,42 +89,46 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(${EXTERNAL_LIBS_DIR}/glfw)
 
-#imgui
+#imgui and ImGuizmo
 message(STATUS "Configuring imgui")
-set(IMGUI_FILES ${EXTERNAL_LIBS_DIR}/imgui/imgui.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_demo.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_draw.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_tables.cpp ${EXTERNAL_LIBS_DIR}/imgui/imgui_widgets.cpp ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_vulkan.cpp)
-set(IMGUIZMO_FILES ${EXTERNAL_LIBS_DIR}/ImGuizmo/ImGuizmo.cpp)
+set(IMGUI_FILES
+    ${EXTERNAL_LIBS_DIR}/imgui/imgui.h 
+    ${EXTERNAL_LIBS_DIR}/imgui/imgui.cpp 
+    ${EXTERNAL_LIBS_DIR}/imgui/imgui_demo.cpp
+    ${EXTERNAL_LIBS_DIR}/imgui/imgui_draw.cpp 
+    ${EXTERNAL_LIBS_DIR}/imgui/imgui_tables.cpp 
+    ${EXTERNAL_LIBS_DIR}/imgui/imgui_widgets.cpp
+    ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_glfw.h
+    ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp
+    ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_vulkan.h
+    ${EXTERNAL_LIBS_DIR}/imgui/backends/imgui_impl_vulkan.cpp
+
+    #ImGuizmo
+    ${EXTERNAL_LIBS_DIR}/ImGuizmo/ImGuizmo.h
+    ${EXTERNAL_LIBS_DIR}/ImGuizmo/ImGuizmo.cpp)
+
+add_library(IMGUI STATIC ${IMGUI_FILES})
+# private link and include dependencies so that users of this library can use their own linking
+target_link_libraries(IMGUI PRIVATE ${Vulkan_LIBRARIES} glfw)
+target_include_directories(IMGUI PRIVATE ${Vulkan_INCLUDE_DIRS})
+# public include for convinient usage later on
+target_include_directories(IMGUI PUBLIC
+    ${EXTERNAL_LIBS_DIR}/imgui
+    ${EXTERNAL_LIBS_DIR}/ImGuizmo
+    )
+#group sources in project overview
+GroupSources(extern/imgui Source/Iimgui)
+GroupSources(extern/ImGuizmo Source/ImGuizmo)
+
 
 if( MSVC )
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
 endif()
 
-
 #Slipper Engine
 message(STATUS "Configuring SLIPPER_ENGINE Lib")
-set(PRINTF_IN_SHADERS OFF CACHE BOOL "")
 add_subdirectory(source/Slipper_Engine)
 
 #Slipper Editor
 message(STATUS "Configuring SLIPPER_ENGINE")
 add_subdirectory(source/Slipper_Editor)
-
-# option(BUILD_EDITOR OFF)
-# if(BUILD_EDITOR)
-#     message(STATUS "Configuring SLIPPER_EDITOR")
-#     if (BUILD_TYPE STREQUAL "Release")
-#         message(STATUS "Configuring Editor In Release Config")
-#         add_custom_target(
-#                 BuildEditor ALL
-#                 COMMAND dotnet build --configuration Release
-#                 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/source/Slipper_Editor
-#         )
-#     elseif(BUILD_TYPE STREQUAL "Debug")
-#         message(STATUS "Configuring Editor In Debug Config")
-#         add_custom_target(
-#                 BuildEditor ALL
-#                 COMMAND dotnet build --configuration Debug
-#                 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/source/Slipper_Editor
-#         )
-#     endif()
-# endif()
-

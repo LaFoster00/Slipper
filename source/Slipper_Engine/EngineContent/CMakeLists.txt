@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16.0)
 file(GLOB_RECURSE ENGINE_CONTENT *.*)
 list(FILTER ENGINE_CONTENT EXCLUDE REGEX ".spv|CMakeLists.txt")
 
-option(COMPILE_SHADERS ON)
+option(SLIPPER_COMPILE_SHADERS ON)
 if(COMPILE_SHADERS)
     message("Compiling Shaders")
     set(SHADER_DIR ${CMAKE_CURRENT_LIST_DIR}/Shaders)
@@ -31,12 +31,15 @@ list(APPEND ENGINE_CONTENT ${SPV_SHADERS})
 add_custom_target(SlipperEngine_EngineContent ALL SOURCES ${ENGINE_CONTENT})
 
 # Importet from SlipperEngine
-GroupSources(..\\EngineContent ..\\EngineContent EngineContent)
+GroupSources(..\\EngineContent EngineContent)
 
 if(NOT DEFINED OUTPUT_DIRECTORY)
 # Use $^<CONFIG^> instead of $<CONFIG> since the later one simply doesnt work when the only this target is build
 set(OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../bin")
 endif()
+
+set(OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}/$<CONFIG>)
+message(STATUS ${OUTPUT_DIRECTORY})
 
 add_custom_command(TARGET SlipperEngine_EngineContent POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR} ${OUTPUT_DIRECTORY}/EngineContent/

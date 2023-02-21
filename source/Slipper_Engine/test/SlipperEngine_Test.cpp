@@ -22,7 +22,8 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-SlipperEngineTest::SlipperEngineTest(Slipper::ApplicationInfo& ApplicationInfo): Application(ApplicationInfo)
+SlipperEngineTest::SlipperEngineTest(Slipper::ApplicationInfo &ApplicationInfo)
+    : Application(ApplicationInfo)
 {
     Slipper::GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
 }
