@@ -2,18 +2,24 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "Build Debug",
-            "command": "cmake --build ${workspaceRoot}/build --config Debug --target all -j 18 --",
-            "options": {
-                
-            },
+            "label": "Build Slipper Debug",
+            //--build --config Debug --target all -j 18 --"
+            "command": "cmake --build ${command:cmake.buildDirectory} --config Debug --target ALL_BUILD",
+            "args": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "type": "shell",
-            "label": "Build Release",
-            "command": "cmake --build ${workspaceRoot}/build --config Release --target all -j 18 --",
-            "options": {
-            },
+            "label": "Build Slipper Release",
+            //--build --config Debug --target all -j 18 --"
+            "command": "cmake --build ${command:cmake.buildDirectory} --config Release --target ALL_BUILD",
+            "args": [],
+            "group": {
+                "kind": "build",
+            }
         }
     ],
     "version": "2.0.0"

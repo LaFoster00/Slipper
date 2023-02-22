@@ -67,5 +67,6 @@
         "shared_mutex": "cpp",
         "stop_token": "cpp",
         "variant": "cpp"
-    }
+    },
+    "cmake.buildDirectory" : "${workspaceFolder}/../SlipperBin"
 }

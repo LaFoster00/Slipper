@@ -7,12 +7,6 @@ project(SlipperEngine VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-# Set the output folder where your program will be created
-SetBuildDirectory()
-#set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
-#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
-#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY})
-
 if ("${BUILD_TYPE}" STREQUAL "Debug")
     if(LINUX)
         set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
@@ -23,12 +17,14 @@ if ("${BUILD_TYPE}" STREQUAL "Debug")
     endif()
 endif()
 
-set(OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 add_subdirectory(EngineContent)
+
+# Set the output folder where your program will be created
+SetBuildDirectory()
 
 option(SLIPPER_PRINTF_IN_SHADERS OFF)
     if(PRINTF_IN_SHADERS)
-    add_compile_definitions(SHADER_PRINTF_ENABLED)
+        add_compile_definitions(SHADER_PRINTF_ENABLED)
     endif()
 
 #SPIRV-Reflect
@@ -49,11 +45,12 @@ source_group(extern/tinyobjloader FILES ${TINY_OBJ_LOADER_FILES})
 # Fetch all source files
 file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES src/*.h src/*.cpp)
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/helloworld")
+
 message("Building Engine Library")
-add_library(SlipperEngine STATIC ${SLIPPER_ENGINE_SOURCE_FILES} ${IMGUIZMO_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
+add_library(SlipperEngine STATIC ${SLIPPER_ENGINE_SOURCE_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
 
 set_property(TARGET SlipperEngine PROPERTY CXX_STANDARD 20)
-
 
 set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     src

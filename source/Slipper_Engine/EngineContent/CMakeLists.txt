@@ -33,13 +33,10 @@ add_custom_target(SlipperEngine_EngineContent ALL SOURCES ${ENGINE_CONTENT})
 # Importet from SlipperEngine
 GroupSources(..\\EngineContent EngineContent)
 
-if(NOT DEFINED OUTPUT_DIRECTORY)
-# Use $^<CONFIG^> instead of $<CONFIG> since the later one simply doesnt work when the only this target is build
-set(OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../bin")
-endif()
+SetBuildDirectory()
 
-set(OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}/$<CONFIG>)
-message(STATUS ${OUTPUT_DIRECTORY})
+set(OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+message(STATUS "EngineContent Copy to: ${OUTPUT_DIRECTORY}")
 
 add_custom_command(TARGET SlipperEngine_EngineContent POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR} ${OUTPUT_DIRECTORY}/EngineContent/

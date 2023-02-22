@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.9.0)
+SetBuildDirectory()
+
+cmake_minimum_required(VERSION 3.16.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -36,17 +38,13 @@ set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
 include_directories(${SLIPPER_EDITOR_INCLUDE_DIRECTORIES} ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
 
 message("Building Engine Executable")    
-SetBuildDirectory()
 add_executable(SlipperEditor ${SLIPPER_EDITOR_SOURCE_FILES})
 
 set_property(TARGET SlipperEditor PROPERTY CXX_STANDARD 20)
 
-if (OUTPUT_LIB)
 #Make engine dependent on engine content
 add_dependencies(SlipperEditor SlipperEngine)
-target_link_directories(SlipperEditor PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../Slipper_Engine/bin/$<CONFIG>)
 target_link_libraries(SlipperEditor SlipperEngine)
-endif()
 
 #Libs
 if(LINUX)

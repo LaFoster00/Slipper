@@ -1,3 +1,36 @@
+set(BUILD_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../SlipperBin/bin")
+
+
+macro(SetBuildDirectory)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
+    set(CMAKE_BINARY_DIR ${BUILD_DIRECTORY})
+    set(CMAKE_CURRENT_BINARY_DIR ${BUILD_DIRECTORY})
+endmacro()
+
+SetBuildDirectory()
+
+message(STATUS "Cmake Source dir: ${CMAKE_SOURCE_DIR}")
+message(STATUS "Cmake Binary dir: ${CMAKE_BINARY_DIR}")
+
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  if(NOT DEFINED WITH_IN_SOURCE_BUILD)
+    message(FATAL_ERROR
+      "CMake generation for Slipper is not allowed within the source directory!"
+      "\n Remove \"${CMAKE_SOURCE_DIR}/CMakeCache.txt\" and try again from another folder, e.g.:"
+      "\n "
+      "\n rm -rf CMakeCache.txt CMakeFiles"
+      "\n cd .."
+      "\n mkdir cmake-make"
+      "\n cd cmake-make"
+      "\n cmake ../blender"
+      "\n "
+      "\n Alternately define WITH_IN_SOURCE_BUILD to force this option (not recommended!)"
+    )
+  endif()
+endif()
+
 cmake_minimum_required(VERSION 3.16.0)
 project(Slipper VERSION 0.1.0)
 
@@ -17,13 +50,13 @@ set(EXTERNAL_LIBS_DIR "${CMAKE_CURRENT_LIST_DIR}/extern")
 string(CONCAT BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 find_package(Git QUIET)
-if (GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+if (GIT_FOUND AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/.git")
 #Udate submodule as needed
     option(SLIPPER_GIT_SUBMODULE_UPDATE "Check submodules during build" ON)
     if(SLIPPER_GIT_SUBMODULE_UPDATE)
         message(STATUS "Submodule update")
         execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-                        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
                         RESULT_VARIABLE GIT_SUBMOD_RESULT)
         if(NOT GIT_SUBMOD_RESULT EQUAL "0")
             message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
@@ -31,21 +64,8 @@ if (GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     endif()
 endif()
 
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/glfw/CMakeLists.txt")
+if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/extern/glfw/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
-endif()
-
-option(SLIPPER_IN_SOURCE_BUILD Off)
-if (SLIPPER_IN_SOURCE_BUILD)
-    macro(SetBuildDirectory)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin)
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin)
-    endmacro()
-else()
-    macro(SetBuildDirectory)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-    endmacro()
 endif()
 
 # Special thanks to Luca Gherardi who wrote this special little peace of code :)
