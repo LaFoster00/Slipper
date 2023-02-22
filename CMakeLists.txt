@@ -1,4 +1,5 @@
 set(BUILD_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../SlipperBin/bin")
+set(CMAKE_BINARY_DIR ${BUILD_DIRECTORY})
 
 
 macro(SetBuildDirectory)
