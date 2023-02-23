@@ -1,7 +1,6 @@
 #include "PipelineLayout.h"
 
 #include "Presentation/SwapChain.h"
-
 #include "Mesh/Mesh.h"
 
 namespace Slipper

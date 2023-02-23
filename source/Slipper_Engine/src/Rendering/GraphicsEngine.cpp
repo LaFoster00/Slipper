@@ -192,7 +192,7 @@ void GraphicsEngine::RecreateViewportSwapChain(uint32_t Width, uint32_t Height) 
 Camera &GraphicsEngine::GetDefaultCamera()
 {
     if (!m_defaultCamera)
-        m_defaultCamera = std::make_unique<Camera>();
+        m_defaultCamera = new Camera();
 
     return *m_defaultCamera;
 }
@@ -306,6 +306,7 @@ void GraphicsEngine::EndUpdate()
     for (auto &single_draw_command : singleDrawCommands[viewportRenderPass]) {
         single_draw_command(draw_command_buffer);
     }
+
     singleDrawCommands.at(viewportRenderPass).clear();
 
     for (auto &repeated_draw_command : repeatedDrawCommands) {

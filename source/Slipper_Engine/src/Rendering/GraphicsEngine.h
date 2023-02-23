@@ -4,8 +4,8 @@
 
 namespace Slipper
 {
-    class Camera;
-    class OffscreenSwapChain;
+class Camera;
+class OffscreenSwapChain;
 class Model;
 class Texture2D;
 class Texture;
@@ -41,7 +41,7 @@ class GraphicsEngine : DeviceDependentObject
     void DestroyRenderPass(RenderPass *RenderPass);
     void CreateViewportSwapChain() const;
     void RecreateViewportSwapChain(uint32_t Width, uint32_t Height) const;
-    Camera& GetDefaultCamera();
+    Camera &GetDefaultCamera();
 
     void AddWindow(Window &Window);
 
@@ -80,23 +80,23 @@ class GraphicsEngine : DeviceDependentObject
  public:
     uint32_t currentFrame = 0;
 
-    std::unordered_set<Window *> windows;
+    std::unordered_set<NonOwningPtr<Window>> windows;
     std::vector<std::unique_ptr<Shader>> shaders;
     std::vector<std::unique_ptr<Texture>> textures;
     std::unique_ptr<Texture2D> depthBuffer;
 
-    RenderPass *viewportRenderPass = nullptr;
+    NonOwningPtr<RenderPass> viewportRenderPass = nullptr;
     std::unique_ptr<OffscreenSwapChain> viewportSwapChain;
     std::vector<std::unique_ptr<Texture2D>> viewportPresentationTextures;
 
-    RenderPass *windowRenderPass = nullptr;
+    NonOwningPtr<RenderPass> windowRenderPass = nullptr;
     std::unordered_map<std::string, std::unique_ptr<RenderPass>> renderPasses;
-    std::unordered_map<RenderPass *, std::string> renderPassNames;
+    std::unordered_map<NonOwningPtr<RenderPass>, std::string> renderPassNames;
     std::vector<std::unique_ptr<Model>> models;
 
     // Draw Commands
     std::unique_ptr<CommandPool> drawCommandPool;
-    std::unordered_map<const RenderPass *,
+    std::unordered_map<NonOwningPtr<const RenderPass>,
                        std::vector<std::function<void(const VkCommandBuffer &)>>>
         singleDrawCommands;
     std::vector<std::function<void(const VkCommandBuffer &, const RenderPass &)>>
@@ -104,7 +104,7 @@ class GraphicsEngine : DeviceDependentObject
 
     // Gui Commands
     std::unique_ptr<CommandPool> guiCommandPool;
-    std::unordered_map<const RenderPass *,
+    std::unordered_map<NonOwningPtr<const RenderPass>,
                        std::vector<std::function<void(const VkCommandBuffer &)>>>
         singleGuiCommands;
     std::vector<std::function<void(const VkCommandBuffer &, const RenderPass &)>>
@@ -114,7 +114,7 @@ class GraphicsEngine : DeviceDependentObject
     std::unique_ptr<CommandPool> memoryCommandPool;
 
  private:
-    Surface *surface = nullptr;
+    NonOwningPtr<Surface> surface = nullptr;
 
     static GraphicsEngine *m_graphicsInstance;
 
@@ -123,9 +123,9 @@ class GraphicsEngine : DeviceDependentObject
     std::vector<VkFence> m_inFlightFences;
 
     uint32_t m_currentImageIndex = 0;
-    Surface *m_currentSurface = nullptr;
-    RenderPass *m_currentRenderPass = nullptr;
+    NonOwningPtr<Surface> m_currentSurface = nullptr;
+    NonOwningPtr<RenderPass> m_currentRenderPass = nullptr;
 
-    std::unique_ptr<Camera> m_defaultCamera;
+    OwningPtr<Camera> m_defaultCamera;
 };
 }  // namespace Slipper
