@@ -2,6 +2,7 @@
 
 #include "AppComponent.h"
 #include "AppComponents/Gui.h"
+#include "AppComponents/Ecs.h"
 #include "AppEvents.h"
 #include "Event.h"
 #include "GraphicsEngine.h"
@@ -26,13 +27,14 @@ Application::~Application()
 {
     vkDeviceWaitIdle(Device::Get());
 
-    guiComponent->Shutdown();
-
     for (auto &app_component : appComponents) {
         app_component->Shutdown();
     }
     appComponents.clear();
+
+    guiComponent->Shutdown();
     GraphicsEngine::Shutdown();
+    ecsComponent->Shutdown();
     window.reset();
     Device::Destroy();
     glfwTerminate();
@@ -53,10 +55,14 @@ void Application::Init()
     Device::PickPhysicalDevice(&window->GetSurface(), true);
     GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableSampleCount();
 
+
+    ecsComponent = new Ecs();
+    ecsComponent->Init();
+
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
 
-    guiComponent = std::make_unique<Gui>("Gui");
+    guiComponent = new Gui();
     guiComponent->Init();
 }
 

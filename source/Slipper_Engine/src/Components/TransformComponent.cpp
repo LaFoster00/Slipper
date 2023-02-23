@@ -1,11 +1,10 @@
-#include "Transform.h"
+#include "TransformComponent.h"
 
 namespace Slipper
 {
 void Transform::SetLocation(const glm::vec3 Location)
 {
     m_location = glm::translate(glm::mat4(1.0f), Location);
-    TransformChanged();
 }
 
 glm::vec3 Transform::GetLocation()
@@ -16,19 +15,16 @@ glm::vec3 Transform::GetLocation()
 void Transform::Translate(const glm::vec3 Translation)
 {
     m_location = glm::translate(m_location, Translation);
-    TransformChanged();
 }
 
 void Transform::Rotate(const glm::vec3 Rotation)
 {
     m_rotation = glm::quat(glm::radians(Rotation)) * m_rotation;
-    TransformChanged();
 }
 
 void Transform::SetRotation(const glm::vec3 Rotation)
 {
     m_rotation = glm::quat(glm::radians(Rotation));
-    TransformChanged();
 }
 
 glm::vec3 Transform::GetRotation() const
@@ -47,7 +43,6 @@ void Transform::LookAt(glm::vec3 Center, glm::vec3 Up)
 {
     const auto dir = glm::normalize(Center - GetLocation());
     m_rotation = glm::quatLookAt(dir, Up);
-    TransformChanged();
 }
 
 void Transform::Create(const glm::vec3 Location, const glm::vec3 Scale, const glm::vec3 Rotation)
@@ -55,6 +50,5 @@ void Transform::Create(const glm::vec3 Location, const glm::vec3 Scale, const gl
     SetLocation(Location);
     SetScale(Scale);
     SetRotation(Rotation);
-    TransformChanged();
 }
 }  // namespace Slipper

@@ -8,8 +8,6 @@
 #include "Presentation/Surface.h"
 
 #include "Core/Application.h"
-#include "Core/SlipperObject/Camera.h"
-#include "Core/Transform.h"
 #include "Drawing/Sampler.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
@@ -17,6 +15,8 @@
 #include "Texture/Texture2D.h"
 #include "Time/Time.h"
 #include "Window.h"
+#include "Camera.h"
+#include "TransformComponent.h"
 
 namespace Slipper
 {
@@ -189,12 +189,15 @@ void GraphicsEngine::RecreateViewportSwapChain(uint32_t Width, uint32_t Height) 
     }
 }
 
-Camera &GraphicsEngine::GetDefaultCamera()
+Entity &GraphicsEngine::GetDefaultCamera()
 {
-    if (!m_defaultCamera)
-        m_defaultCamera = new Camera();
+    static bool init = false;
+    if (!init) {
+        m_defaultCamera = Camera::Create();
+        init = true;
+    }
 
-    return *m_defaultCamera;
+    return m_defaultCamera;
 }
 
 void GraphicsEngine::AddWindow(Window &Window)
@@ -218,13 +221,16 @@ void GraphicsEngine::SetupSimpleDraw()
             const auto debug_shader = *RenderPass.registeredShaders.begin();
             debug_shader->Bind(CommandBuffer, &RenderPass);
 
-            Camera &camera = GetDefaultCamera();
+            auto &camera = GetDefaultCamera();
+            auto &cam_parameters = camera.GetComponent<Camera::Parameters>();
+            auto &cam_transform = camera.GetComponent<Transform>();
+            cam_parameters.UpdateViewTransform(cam_transform);
             Transform transform({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
 
             UniformMVP mvp;
             mvp.model = transform.GetModelMatrix();
-            mvp.view = camera.GetView();
-            mvp.projection = camera.GetProjection(
+            mvp.view = cam_parameters.view;
+            mvp.projection = cam_parameters.GetProjection(
                 RenderPass.GetActiveSwapChain()->GetResolution().width /
                 static_cast<float>(RenderPass.GetActiveSwapChain()->GetResolution().height));
 

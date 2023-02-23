@@ -20,20 +20,22 @@ class Gui : public AppComponent
     };
 
  public:
-    Gui(std::string_view Name);
+    Gui() : AppComponent("Gui")
+    {
+    }
     void StartNewFrame();
     void EndNewFrame(VkCommandBuffer CommandBuffer);
 
  private:
     static void SetupDocksapce();
 
-public:
+ public:
     void Init() override;
     void Shutdown() override;
     void OnUpdate() override;
     void OnGuiRender() override;
 
-private:
+ private:
     static bool m_initialized;
     static Device *m_device;
     static ImGuiResources *m_resources;

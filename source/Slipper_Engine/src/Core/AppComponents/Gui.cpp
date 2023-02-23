@@ -29,10 +29,6 @@ void Gui::ImGuiResources::CreateDescriptorPool(const VkDescriptorPoolSize *Sizes
               "Failed to create ImGui DescriptorPool")
 }
 
-Gui::Gui(std::string_view Name) : AppComponent(Name)
-{
-}
-
 void Gui::Init()
 {
     if (m_initialized)

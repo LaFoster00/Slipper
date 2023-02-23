@@ -39,9 +39,11 @@
 
 #include "stb_image.h"
 
+#include "Core/Entity.h"
+
+#include "Core/Pointer.h"
 #include "common_defines.h"
 #include "Engine.h"
-#include "Core/Pointer.h"
 #include "Util/StringUtil.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"

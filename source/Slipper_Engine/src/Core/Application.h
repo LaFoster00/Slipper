@@ -6,6 +6,7 @@ namespace Slipper
 {
 class Event;
 class Gui;
+class Ecs;
 class VulkanInstance;
 class Window;
 class GraphicsEngine;
@@ -69,7 +70,8 @@ class Application
 
     std::unique_ptr<VulkanInstance> vulkanInstance;
 
-    std::unique_ptr<Gui> guiComponent;
+    OwningPtr<Ecs> ecsComponent;
+    OwningPtr<Gui> guiComponent;
     std::vector<std::unique_ptr<AppComponent>> appComponents;
 };
 }  // namespace Slipper

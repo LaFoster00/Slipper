@@ -104,27 +104,34 @@ template<typename T> struct OwningPtr
     {
     }
 
-    template<ConvertiblePtr<T> U> explicit OwningPtr(const NonOwningPtr<U> Ptr) : m_ptr(Ptr)
+    template<ConvertiblePtr<T> U> explicit OwningPtr(const NonOwningPtr<U> &Ptr) : m_ptr(Ptr)
     {
     }
 
-    template<ConvertiblePtr<T> U> explicit OwningPtr(const SharedPtr<T> Ptr) = delete;
+    template<ConvertiblePtr<T> U> explicit OwningPtr(const SharedPtr<T> &Ptr) = delete;
+    template<ConvertiblePtr<T> U> explicit OwningPtr(const OwningPtr<T> &Ptr) = delete;
 
     template<ConvertiblePtr<T> U>
     OwningPtr(OwningPtr<U> &&Other) noexcept : m_ptr(std::move(Other.m_ptr))
     {
+        Other.m_stableThisPtr = this;
     }
 
     OwningPtr(OwningPtr<T> &Other) = delete;
+
+    void reset(T *Ptr = nullptr)
+    {
+        m_ptr.reset(Ptr);
+    }
 
     T &operator*() const
     {
         return *m_ptr;
     }
 
-    T operator->() const
+    T *operator->() const
     {
-        return m_ptr;
+        return m_ptr.get();
     }
 
     OwningPtr<T> &operator=(std::nullptr_t)

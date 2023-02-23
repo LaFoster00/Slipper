@@ -5,7 +5,7 @@ namespace Slipper
 class AppComponent
 {
  public:
-    AppComponent(std::string_view Name = "AppComponent");
+    AppComponent(std::string_view Name);
     virtual ~AppComponent() = default;
     virtual void Init(){};
     virtual void Shutdown(){};

@@ -4,7 +4,6 @@
 
 namespace Slipper
 {
-class Camera;
 class OffscreenSwapChain;
 class Model;
 class Texture2D;
@@ -41,7 +40,7 @@ class GraphicsEngine : DeviceDependentObject
     void DestroyRenderPass(RenderPass *RenderPass);
     void CreateViewportSwapChain() const;
     void RecreateViewportSwapChain(uint32_t Width, uint32_t Height) const;
-    Camera &GetDefaultCamera();
+    Entity &GetDefaultCamera();
 
     void AddWindow(Window &Window);
 
@@ -126,6 +125,6 @@ class GraphicsEngine : DeviceDependentObject
     NonOwningPtr<Surface> m_currentSurface = nullptr;
     NonOwningPtr<RenderPass> m_currentRenderPass = nullptr;
 
-    OwningPtr<Camera> m_defaultCamera;
+    Entity m_defaultCamera;
 };
 }  // namespace Slipper
