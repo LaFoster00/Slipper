@@ -141,6 +141,9 @@ target_include_directories(IMGUI PUBLIC
 GroupSources(extern/imgui Source/Iimgui)
 GroupSources(extern/ImGuizmo Source/ImGuizmo)
 
+#entt
+add_subdirectory(${EXTERNAL_LIBS_DIR}/entt)
+
 
 if( MSVC )
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )

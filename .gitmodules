@@ -22,3 +22,6 @@
 	path = extern/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
 	branch = master
+[submodule "extern/entt"]
+	path = extern/entt
+	url = https://github.com/skypjack/entt.git

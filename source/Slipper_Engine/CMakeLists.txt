@@ -65,9 +65,13 @@ set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     src/Tutorial
     src/Window
     src/Platform
+    src/Components
+    src/SceneObjects
 )
 GroupSources(src Source)
-target_include_directories(SlipperEngine PUBLIC ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
+target_include_directories(SlipperEngine PUBLIC
+    ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES} 
+    ${ENTT_INCLUDE_DIR})
 
 #Make engine dependent on engine content
 add_dependencies(SlipperEngine SlipperEngine_EngineContent)
@@ -76,6 +80,7 @@ set(COMMON_ENGINE_LINK_LIBRARIES
     glfw
     IMGUI
     ${Vulkan_LIBRARIES}
+    EnTT::EnTT
 )
 
 #Libs
