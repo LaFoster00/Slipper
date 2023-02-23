@@ -50,6 +50,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/helloworld")
 message("Building Engine Library")
 add_library(SlipperEngine STATIC ${SLIPPER_ENGINE_SOURCE_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
 
+
+target_compile_definitions(SlipperEngine PRIVATE LIBRARY_EXPORT)
+
 set_property(TARGET SlipperEngine PROPERTY CXX_STANDARD 20)
 
 set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
