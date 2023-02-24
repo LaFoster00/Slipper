@@ -27,7 +27,7 @@ Application::~Application()
 {
     vkDeviceWaitIdle(Device::Get());
 
-    for (auto &app_component : appComponents) {
+    for (const auto &app_component : appComponents) {
         app_component->Shutdown();
     }
     appComponents.clear();
@@ -77,7 +77,7 @@ void Application::Close()
     running = false;
 }
 
-void Application::CloseWindow(Window *Window)
+void Application::CloseWindow(const Window *Window)
 {
     if (Window == window.get()) {
         window.reset();

@@ -37,7 +37,7 @@ class Application
     void AddComponent(AppComponent *ProgramComponent);
 
     void Close();
-    void CloseWindow(Window *Window);
+    void CloseWindow(const Window *Window);
 
     static Application &Get()
     {

@@ -1,5 +1,3 @@
-SetBuildDirectory()
-
 cmake_minimum_required(VERSION 3.16.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,8 +10,6 @@ enable_testing()
 string(CONCAT BUILD_TYPE ${CMAKE_BUILD_TYPE})
 message("Building with ${BUILD_TYPE} config!")
 
-set(BUILD_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/$<CONFIG>)
-
 if ("${BUILD_TYPE}" STREQUAL "Debug")
     if(LINUX)
         set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
@@ -24,37 +20,41 @@ if ("${BUILD_TYPE}" STREQUAL "Debug")
     endif()
 endif()
 
-# Fetch all source files
-file(GLOB_RECURSE SLIPPER_EDITOR_SOURCE_FILES "*.h" "*.cpp") 
-
-set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
-    src
-)
-GroupSources(src Source)
-
-set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
-    ../Slipper_Engine/src
-)
-include_directories(${SLIPPER_EDITOR_INCLUDE_DIRECTORIES} ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
+# Set the output folder where your program will be created
+SetBuildDirectory()
 
 message("Building Engine Executable")    
+# Fetch all source files
+file(GLOB_RECURSE SLIPPER_EDITOR_SOURCE_FILES "*.h" "*.cpp") 
 add_executable(SlipperEditor ${SLIPPER_EDITOR_SOURCE_FILES})
 
 set_property(TARGET SlipperEditor PROPERTY CXX_STANDARD 20)
 
 #Make engine dependent on engine content
 add_dependencies(SlipperEditor SlipperEngine)
-target_link_libraries(SlipperEditor SlipperEngine)
+
+set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
+    src
+    src/AppComponents
+)
+GroupSources(src Source)
+
+target_include_directories(SlipperEditor PRIVATE ${SLIPPER_EDITOR_INCLUDE_DIRECTORIES})
+target_precompile_headers(SlipperEditor REUSE_FROM SlipperEngine)
+
+set(COMMON_EDITOR_LIBS
+    SlipperEngine    
+)
 
 #Libs
 if(LINUX)
-    target_link_libraries(SlipperEditor dl pthread X11)
+    target_link_libraries(SlipperEditor ${COMMON_EDITOR_LIBS} dl pthread)
 else()
     message("Linking for windows")    
     if (CMAKE_GENERATOR MATCHES "Visual Studio")
-        target_link_libraries(SlipperEditor User32.lib)
+        target_link_libraries(SlipperEditor ${COMMON_EDITOR_LIBS} User32.lib)
     else()
-        target_link_libraries(SlipperEditor User32.lib msvcrt.lib)
+        target_link_libraries(SlipperEditor ${COMMON_EDITOR_LIBS} User32.lib msvcrt.lib)
     endif()
 endif()
 

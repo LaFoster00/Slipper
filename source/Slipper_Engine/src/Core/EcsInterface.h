@@ -6,7 +6,7 @@ namespace Slipper
 {
 class EcsInterface
 {
-    friend class Entity;
+    friend struct Entity;
  public:
     static void Create();
     static void Destroy();

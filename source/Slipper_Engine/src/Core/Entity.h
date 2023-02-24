@@ -6,7 +6,7 @@ namespace Slipper
 {
 struct Entity
 {
-    Entity() : m_ecs(EcsInterface::Get())
+    Entity() : m_entity(), m_ecs(EcsInterface::Get())
     {
     }
 
@@ -24,7 +24,7 @@ struct Entity
     {
     }
 
-    Entity& operator=(const Entity& Other)
+    Entity &operator=(const Entity &Other)
     {
         m_entity = Other.m_entity;
         return *this;
@@ -46,9 +46,8 @@ struct Entity
 
     template<typename T> std::optional<T &> TryGetComponent()
     {
-        auto *component = m_ecs.m_registry.try_get<T>(m_entity);
-        if (component)
-            return std::optional<T>(*component);
+        if (m_ecs.m_registry.all_of<T>(m_entity))
+            return std::optional<T>(GetComponent<T>());
         return std::optional<T>();
     }
 
