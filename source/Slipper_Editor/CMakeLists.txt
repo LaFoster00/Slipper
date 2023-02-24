@@ -36,6 +36,7 @@ add_dependencies(SlipperEditor SlipperEngine)
 set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
     src
     src/AppComponents
+    src/Editors
 )
 GroupSources(src Source)
 

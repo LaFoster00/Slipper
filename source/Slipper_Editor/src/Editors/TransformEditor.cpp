@@ -2,7 +2,7 @@
 
 namespace Slipper::Editor
 {
-void TransformEditor::DrawEditor(type_info Type, Transform &Component)
+void TransformEditor::DrawEditor(entt::type_info Type, Transform &Component)
 {
     bool open = true;
     ImGui::Begin("Editor Bitch", &open);

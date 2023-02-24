@@ -16,6 +16,12 @@ class EcsInterface
         return *m_instance;
     }
 
+public:
+    entt::registry &GetRegistry()
+    {
+        return m_registry;
+    }
+
  private:
     entt::entity CreateEntity();
 

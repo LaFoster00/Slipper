@@ -21,8 +21,10 @@ class Editor : public AppComponent
 
     void OnViewportResize(uint32_t Width, uint32_t Height);
 
+    void RegisterEditors() const;
+
  private:
-    Slipper::GraphicsEngine *m_graphicsEngine = nullptr;
+    GraphicsEngine *m_graphicsEngine = nullptr;
     std::vector<VkImageView> m_viewportImages;
     std::vector<VkDescriptorSet> m_imguiViewportImages;
 };

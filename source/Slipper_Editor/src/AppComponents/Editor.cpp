@@ -1,10 +1,15 @@
 #include "Editor.h"
 
+#include "ComponentEditorRegistry.h"
 #include "GraphicsEngine.h"
+#include "TransformEditor.h"
 #include "Core/Application.h"
 #include "Drawing/Sampler.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Texture/Texture2D.h"
+#include "Camera.h"
+#include "CameraEditor.h"
+#include "EntityOutliner.h"
 
 namespace Slipper::Editor
 {
@@ -15,6 +20,8 @@ void Editor::Init()
     Application::Get().AddViewportResizeCallback(
         std::bind(&Editor::OnViewportResize, this, std::placeholders::_1, std::placeholders::_2));
     m_graphicsEngine = &GraphicsEngine::Get();
+
+    RegisterEditors();
 }
 
 void Editor::Shutdown()
@@ -65,6 +72,8 @@ void Editor::OnGuiRender()
     ImGui::End();
 
     ImGui::ShowDemoWindow(&open);
+
+    EntityOutliner::DrawEntity(m_graphicsEngine->GetDefaultCamera());
 }
 
 void Editor::OnViewportResize(uint32_t Width, uint32_t Height)
@@ -87,5 +96,11 @@ void Editor::OnViewportResize(uint32_t Width, uint32_t Height)
                                         viewport_image,
                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
     }
+}
+
+void Editor::RegisterEditors() const
+{
+    EditorRegistry::AddEditor<Transform>(TransformEditor::Draw);
+    EditorRegistry::AddEditor<Camera::Parameters>(CameraEditor::Draw);
 }
 }  // namespace Slipper::Editor
