@@ -29,9 +29,7 @@ void Transform::SetRotation(const glm::vec3 Rotation)
 
 glm::vec3 Transform::GetRotation() const
 {
-    glm::vec3 rotation;
-    glm::extractEulerAngleXYZ(glm::mat4_cast(m_rotation), rotation.x, rotation.y, rotation.z);
-    return glm::degrees(rotation);
+    return glm::degrees(glm::eulerAngles(m_rotation));
 }
 
 glm::vec3 Transform::GetScale()

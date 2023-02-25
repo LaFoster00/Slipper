@@ -17,5 +17,25 @@ void Parameters::UpdateViewTransform(Transform &Transform)
 {
     view = glm::inverse(Transform.GetModelMatrix());
 }
+
+void Parameters::SetFov(const float Fov)
+{
+    fov = Fov;
+}
+
+void Parameters::SetFocalLength(const float FocalLength)
+{
+    fov = 2 * atan(sensorSize / (2 * FocalLength)) * 180 / glm::pi<float>();
+}
+
+float Parameters::GetFov() const
+{
+    return fov;
+}
+
+float Parameters::GetFocalLength() const
+{
+    return sensorSize / (2 * tan((fov * glm::pi<float>() / 180) / 2));
+}
 }  // namespace Camera
 }  // namespace Slipper
