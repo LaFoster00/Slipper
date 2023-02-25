@@ -1,15 +1,14 @@
 #include "Editor.h"
 
+#include "CameraEditor.h"
 #include "ComponentEditorRegistry.h"
-#include "GraphicsEngine.h"
-#include "TransformEditor.h"
 #include "Core/Application.h"
 #include "Drawing/Sampler.h"
+#include "EntityOutliner.h"
+#include "GraphicsEngine.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Texture/Texture2D.h"
-#include "Camera.h"
-#include "CameraEditor.h"
-#include "EntityOutliner.h"
+#include "TransformEditor.h"
 
 namespace Slipper::Editor
 {
@@ -65,7 +64,7 @@ void Editor::OnGuiRender()
     window_size.y = std::max(1.0f, window_size.y);
     if (last_window_size.x != window_size.x || last_window_size.y != window_size.y) {
         Application::Get().OnViewportResize(static_cast<uint32_t>(window_size.x),
-                                                     static_cast<uint32_t>(window_size.y));
+                                            static_cast<uint32_t>(window_size.y));
     }
     ImGui::Image(m_imguiViewportImages[current_frame], window_size);
     last_window_size = window_size;
@@ -100,7 +99,7 @@ void Editor::OnViewportResize(uint32_t Width, uint32_t Height)
 
 void Editor::RegisterEditors() const
 {
-    EditorRegistry::AddEditor<Transform>(TransformEditor::Draw);
-    EditorRegistry::AddEditor<Camera::Parameters>(CameraEditor::Draw);
+    EditorRegistry::AddEditor<TransformEditor>();
+    EditorRegistry::AddEditor<CameraEditor>();
 }
 }  // namespace Slipper::Editor

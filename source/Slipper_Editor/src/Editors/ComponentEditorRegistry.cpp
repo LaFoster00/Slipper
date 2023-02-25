@@ -3,6 +3,8 @@
 namespace Slipper::Editor
 {
 EditorRegistry::EditorMap EditorRegistry::m_editors;
+EditorRegistry::EditorHeightMap EditorRegistry::m_editorHeights;
+EditorRegistry::EditorNameMap EditorRegistry::m_editorNames;
 EditorRegistry::IdTypeToTypeInfoLookup EditorRegistry::m_idTypeTypeInfoLookup;
 EditorRegistry::EditorDrawFallback EditorRegistry::m_fallback = [](const entt::type_info &Type) {
     bool open = true;
@@ -28,6 +30,32 @@ std::optional<EditorRegistry::EditorDrawFunc> EditorRegistry::TryGetEditor(
 {
     if (m_editors.contains(&Type)) {
         return m_editors.at(&Type);
+    }
+    return {};
+}
+
+uint32_t EditorRegistry::GetEditorHeight(entt::id_type Id){
+    return m_editorHeights.at(Id);
+}
+
+std::optional<uint32_t> EditorRegistry::TryGetEditorHeight(entt::id_type Id)
+{
+    if (m_editorHeights.contains(Id))
+    {
+        return m_editorHeights.at(Id);
+    }
+    return {};
+}
+
+std::string_view EditorRegistry::GetEditorName(entt::id_type Id)
+{
+    return m_editorNames.at(Id);
+}
+
+std::optional<std::string_view> EditorRegistry::TryGetEditorName(entt::id_type Id)
+{
+    if (m_editorNames.contains(Id)) {
+        return m_editorNames.at(Id);
     }
     return {};
 }
