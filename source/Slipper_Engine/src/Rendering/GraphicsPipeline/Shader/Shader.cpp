@@ -213,7 +213,7 @@ void Shader::CreateDescriptorPool()
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
-    pool_info.maxSets = Engine::MAX_FRAMES_IN_FLIGHT;
+    pool_info.maxSets = Engine::MAX_FRAMES_IN_FLIGHT * 2;
 
     VK_ASSERT(vkCreateDescriptorPool(device, &pool_info, nullptr, &m_vkDescriptorPool),
               "Failed to create descriptor pool!")

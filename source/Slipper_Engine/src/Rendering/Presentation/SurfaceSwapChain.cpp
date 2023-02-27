@@ -51,10 +51,7 @@ VkSurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
 void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
 {
     const VkPresentModeKHR present_mode = ChoosePresentMode();
-    uint32_t image_count = std::clamp(
-        static_cast<uint32_t>(swapChainSupport.capabilities.minImageCount + 1),
-        static_cast<uint32_t>(0),
-        static_cast<uint32_t>(swapChainSupport.capabilities.maxImageCount));
+    uint32_t image_count = Device::CapabilitiesSwapChainImageCount(swapChainSupport);
 
     VkSwapchainCreateInfoKHR create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;

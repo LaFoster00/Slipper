@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(SlipperEngine VERSION 0.1.0)
+project(SlipperEditor VERSION 0.1.0)
 
 include(CTest)
 enable_testing()
@@ -26,12 +26,13 @@ SetBuildDirectory()
 message("Building Engine Executable")    
 # Fetch all source files
 file(GLOB_RECURSE SLIPPER_EDITOR_SOURCE_FILES "*.h" "*.cpp") 
-add_executable(SlipperEditor ${SLIPPER_EDITOR_SOURCE_FILES})
+set(SLIPPER_EDITOR_NAME SlipperEditor CACHE STRING "Engine Name")
+add_executable(${SLIPPER_EDITOR_NAME} ${SLIPPER_EDITOR_SOURCE_FILES})
 
-set_property(TARGET SlipperEditor PROPERTY CXX_STANDARD 20)
+set_property(TARGET ${SLIPPER_EDITOR_NAME} PROPERTY CXX_STANDARD 20)
 
 #Make engine dependent on engine content
-add_dependencies(SlipperEditor SlipperEngine)
+add_dependencies(${SLIPPER_EDITOR_NAME} ${SLIPPER_ENGINE_NAME})
 
 set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
     src
@@ -40,22 +41,22 @@ set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
 )
 GroupSources(src Source)
 
-target_include_directories(SlipperEditor PRIVATE ${SLIPPER_EDITOR_INCLUDE_DIRECTORIES})
-#target_precompile_headers(SlipperEditor REUSE_FROM SlipperEngine)
+target_include_directories(${SLIPPER_EDITOR_NAME} PRIVATE ${SLIPPER_EDITOR_INCLUDE_DIRECTORIES})
+target_precompile_headers(${SLIPPER_EDITOR_NAME} REUSE_FROM ${SLIPPER_ENGINE_NAME})
 
 set(COMMON_EDITOR_LIBS
-    SlipperEngine    
+    ${SLIPPER_ENGINE_NAME}    
 )
 
 #Libs
 if(LINUX)
-    target_link_libraries(SlipperEditor ${COMMON_EDITOR_LIBS} dl pthread)
+    target_link_libraries(${SLIPPER_EDITOR_NAME} ${COMMON_EDITOR_LIBS} ${LIBSTDCXX_LIBRARIES} dl pthread)
 else()
     message("Linking for windows")    
     if (CMAKE_GENERATOR MATCHES "Visual Studio")
-        target_link_libraries(SlipperEditor ${COMMON_EDITOR_LIBS} User32.lib)
+        target_link_libraries(${SLIPPER_EDITOR_NAME} ${COMMON_EDITOR_LIBS} User32.lib)
     else()
-        target_link_libraries(SlipperEditor ${COMMON_EDITOR_LIBS} User32.lib msvcrt.lib)
+        target_link_libraries(${SLIPPER_EDITOR_NAME} ${COMMON_EDITOR_LIBS} User32.lib msvcrt.lib)
     endif()
 endif()
 

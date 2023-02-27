@@ -135,14 +135,18 @@ VkSurfaceCapabilitiesKHR Device::GetPhysicalDeviceSurfaceCapabilities(const Surf
     return capabilities;
 }
 
-uint32_t Device::SurfaceSwapChainImagesCount(const Surface* Surface) const
+uint32_t Device::SurfaceSwapChainImagesCount(const Surface *Surface) const
 {
     const auto swap_chain_support = QuerySwapChainSupport(Surface);
-    const uint32_t image_count = std::clamp(
-        static_cast<uint32_t>(swap_chain_support.capabilities.minImageCount + 1),
-        static_cast<uint32_t>(0),
-        static_cast<uint32_t>(swap_chain_support.capabilities.maxImageCount));
-    return image_count;
+    return CapabilitiesSwapChainImageCount(swap_chain_support);
+}
+
+uint32_t Device::CapabilitiesSwapChainImageCount(const SwapChainSupportDetails &Support)
+{
+    return std::clamp(static_cast<uint32_t>(Support.capabilities.minImageCount),
+                      static_cast<uint32_t>(0),
+                      static_cast<uint32_t>(std::max(Support.capabilities.maxImageCount,
+                                                     Support.capabilities.minImageCount)));
 }
 
 SwapChainSupportDetails Device::QuerySwapChainSupport(const Surface *Surface) const
@@ -229,7 +233,9 @@ bool Device::IsDeviceSuitable(const Surface *Surface)
     const auto [capabilities, formats, presentModes] = QuerySwapChainSupport(Surface);
     /* Populate the queue family indices. */
     if (const bool device_type_suitable = deviceProperties.deviceType ==
-                                          VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+                                              VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ||
+                                          deviceProperties.deviceType ==
+                                              VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
         !device_type_suitable)
         return false;
 

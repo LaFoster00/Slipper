@@ -35,7 +35,7 @@ GroupSources(..\\EngineContent EngineContent)
 
 SetBuildDirectory()
 
-set(OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+set(OUTPUT_DIRECTORY ${BUILD_DIRECTORY}/$<CONFIG>)
 message(STATUS "EngineContent Copy to: ${OUTPUT_DIRECTORY}")
 
 add_custom_command(TARGET SlipperEngine_EngineContent POST_BUILD

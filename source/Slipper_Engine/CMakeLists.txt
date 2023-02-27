@@ -48,12 +48,13 @@ file(GLOB_RECURSE SLIPPER_ENGINE_SOURCE_FILES src/*.h src/*.cpp)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/helloworld")
 
 message("Building Engine Library")
-add_library(SlipperEngine STATIC ${SLIPPER_ENGINE_SOURCE_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
+set(SLIPPER_ENGINE_NAME SlipperEngine CACHE STRING "Engine Name")
+add_library(${SLIPPER_ENGINE_NAME} STATIC ${SLIPPER_ENGINE_SOURCE_FILES} ${TINY_OBJ_LOADER_FILES} ${SPIRV_REFLECT_FILES})
 
 
-target_compile_definitions(SlipperEngine PRIVATE LIBRARY_EXPORT)
+target_compile_definitions(${SLIPPER_ENGINE_NAME} PRIVATE LIBRARY_EXPORT)
 
-set_property(TARGET SlipperEngine PROPERTY CXX_STANDARD 20)
+set_property(TARGET ${SLIPPER_ENGINE_NAME} PROPERTY CXX_STANDARD 20)
 
 set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     src
@@ -69,12 +70,12 @@ set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     src/SceneObjects
 )
 GroupSources(src Source)
-target_include_directories(SlipperEngine PUBLIC
+target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC
     ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES} 
     ${ENTT_INCLUDE_DIR})
 
 #Make engine dependent on engine content
-add_dependencies(SlipperEngine SlipperEngine_EngineContent)
+add_dependencies(${SLIPPER_ENGINE_NAME} SlipperEngine_EngineContent)
 
 set(COMMON_ENGINE_LINK_LIBRARIES
     glfw
@@ -85,27 +86,27 @@ set(COMMON_ENGINE_LINK_LIBRARIES
 
 #Libs
 if(LINUX)
-    target_link_libraries(SlipperEngine ${COMMON_ENGINE_LINK_LIBRARIES} dl pthread X11)
+    target_link_libraries(${SLIPPER_ENGINE_NAME} ${COMMON_ENGINE_LINK_LIBRARIES} ${LIBSTDCXX_LIBRARIES} dl pthread X11)
 else()
     message("Linking for windows")    
     if (CMAKE_GENERATOR MATCHES "Visual Studio")
-        target_link_libraries(SlipperEngine ${COMMON_ENGINE_LINK_LIBRARIES} User32.lib)
+        target_link_libraries(${SLIPPER_ENGINE_NAME} ${COMMON_ENGINE_LINK_LIBRARIES} User32.lib)
     else()
-        target_link_libraries(SlipperEngine ${COMMON_ENGINE_LINK_LIBRARIES} User32.lib msvcrt.lib)
+        target_link_libraries(${SLIPPER_ENGINE_NAME} ${COMMON_ENGINE_LINK_LIBRARIES} User32.lib msvcrt.lib)
     endif()
 endif()
 
-target_precompile_headers(SlipperEngine PUBLIC
+target_precompile_headers(${SLIPPER_ENGINE_NAME} PUBLIC
     src/pch.h
 )
 
 #Append external source files to project
 #Vulkan
-target_include_directories(SlipperEngine PUBLIC ${Vulkan_INCLUDE_DIRS})
+target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS})
 #glm
-target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
+target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
 #stb
-target_include_directories(SlipperEngine PUBLIC "${EXTERNAL_LIBS_DIR}/stb")
+target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC "${EXTERNAL_LIBS_DIR}/stb")
 
 
 ##### Test Application #####
@@ -114,7 +115,7 @@ message("Building Engine Executable")
 file(GLOB_RECURSE SLIPPER_ENGINE_TEST_SOURCE_FILES test/*.h test/*.cpp)
 
 add_executable(SlipperEngine_Test ${SLIPPER_ENGINE_TEST_SOURCE_FILES})
-add_dependencies(SlipperEngine_Test SlipperEngine)
+add_dependencies(SlipperEngine_Test ${SLIPPER_ENGINE_NAME})
 
 #target_precompile_headers(SlipperEngine_Test REUSE_FROM SlipperEngine)
 
@@ -122,17 +123,21 @@ set_property(TARGET SlipperEngine_Test PROPERTY CXX_STANDARD 20)
 
 GroupSources(test Source)
 target_include_directories(SlipperEngine_Test PUBLIC test)
-#target_include_directories(SlipperEngine_Test PRIVATE ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
+target_include_directories(SlipperEngine_Test PRIVATE ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
+
+set(COMMON_EDITOR_LIBS
+    ${SLIPPER_ENGINE_NAME}    
+)
 
 #Libs
 if(LINUX)
-    target_link_libraries(SlipperEngine_Test Slipper_Engine dl pthread)
+    target_link_libraries(SlipperEngine_Test ${COMMON_EDITOR_LIBS} ${LIBSTDCXX_LIBRARIES} dl pthread)
 else()
     message("Linking for windows")    
     if (CMAKE_GENERATOR MATCHES "Visual Studio")
-        target_link_libraries(SlipperEngine_Test SlipperEngine User32.lib)
+        target_link_libraries(SlipperEngine_Test ${COMMON_EDITOR_LIBS} User32.lib)
     else()
-        target_link_libraries(SlipperEngine_Test SlipperEngine User32.lib msvcrt.lib)
+        target_link_libraries(SlipperEngine_Test ${COMMON_EDITOR_LIBS} User32.lib msvcrt.lib)
     endif()
 endif()
 
