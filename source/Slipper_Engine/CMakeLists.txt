@@ -116,12 +116,13 @@ file(GLOB_RECURSE SLIPPER_ENGINE_TEST_SOURCE_FILES test/*.h test/*.cpp)
 add_executable(SlipperEngine_Test ${SLIPPER_ENGINE_TEST_SOURCE_FILES})
 add_dependencies(SlipperEngine_Test SlipperEngine)
 
-target_precompile_headers(SlipperEngine_Test REUSE_FROM SlipperEngine)
+#target_precompile_headers(SlipperEngine_Test REUSE_FROM SlipperEngine)
 
 set_property(TARGET SlipperEngine_Test PROPERTY CXX_STANDARD 20)
 
 GroupSources(test Source)
 target_include_directories(SlipperEngine_Test PUBLIC test)
+#target_include_directories(SlipperEngine_Test PRIVATE ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
 
 #Libs
 if(LINUX)

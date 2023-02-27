@@ -21,4 +21,4 @@ class TestGui : public Slipper::AppComponent
     Slipper::GraphicsEngine *m_graphicsEngine = nullptr;
     std::vector<VkImageView> m_viewportImages;
     std::vector<VkDescriptorSet> m_imguiViewportImages;
-}; 
+};

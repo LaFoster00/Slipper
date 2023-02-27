@@ -33,14 +33,14 @@ inline std::string format(const char *Base, ...)
     final_string.resize(final_string_size);
 
     va_start(args, Base);
-    vsprintf_s(final_string.data(), final_string.size(), Base, args);
+    // TODO vsprintf(final_string.data(), final_string.size(), Base, args);
     va_end(args);
 
     return final_string;
 }
 
 template<typename... StringView>
-    requires std::is_convertible_v<StringView..., std::string_view>
+requires std::is_convertible_v<StringView..., std::string_view>
 int get_total_length_of_strings(const std::string_view &String, const StringView &...Strings)
 {
     return String.length() + GetTotalLength(Strings...);

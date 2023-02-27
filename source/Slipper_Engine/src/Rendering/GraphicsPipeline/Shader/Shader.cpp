@@ -322,20 +322,4 @@ void Shader::AllocateDescriptorSets()
     VK_ASSERT(vkAllocateDescriptorSets(Device::Get(), &allocate_info, m_vkDescriptorSets.data()),
               "Failed to allocate descriptor sets!");
 }
-
-template<> void Shader::SetShaderUniform(const std::string Name, const UniformBuffer &Data)
-{
-    if (SetUniformBuffer(Name, Data)) {
-        return;
-    }
-    ASSERT(1, "No uniform buffer with name '", Name, "' found.");
-}
-
-template<> void Shader::SetShaderUniform(const std::string Name, const Texture &Data)
-{
-    if (SetTexture(Name, Data)) {
-        return;
-    }
-    ASSERT(1, "No uniform texture with name '", Name, "' found.");
-}
 }  // namespace Slipper

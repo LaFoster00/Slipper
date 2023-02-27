@@ -25,10 +25,10 @@ enum class ShaderType
 
 struct ShaderUniform
 {
-protected:
+ protected:
     ShaderUniform() = default;
 
-public:
+ public:
     // This is reuqired since the virtual function table takes up additional memory and only the
     // actual data is interesting to vulkan
     virtual size_t GetDataSize() const = 0;
@@ -139,6 +139,7 @@ class Shader
             }
         }
         ASSERT(true, "Object '", Name, "' does not exist.");
+        return nullptr;
     }
 
     [[nodiscard]] std::vector<VkDescriptorSet> GetDescriptorSets(
@@ -195,6 +196,23 @@ class Shader
     std::unordered_map<const RenderPass *, std::unique_ptr<GraphicsPipeline>> m_graphicsPipelines;
 };
 
-extern template void Shader::SetShaderUniform(const std::string Name, const UniformBuffer &Data);
-extern template void Shader::SetShaderUniform(const std::string Name, const Texture &Data);
+// extern template void Shader::SetShaderUniform(const std::string Name, const UniformBuffer
+// &Data); extern template void Shader::SetShaderUniform(const std::string Name, const Texture
+// &Data);
+
+template<> inline void Shader::SetShaderUniform(const std::string Name, const UniformBuffer &Data)
+{
+    if (SetUniformBuffer(Name, Data)) {
+        return;
+    }
+    ASSERT(1, "No uniform buffer with name '", Name, "' found.");
+}
+
+template<> inline void Shader::SetShaderUniform(const std::string Name, const Texture &Data)
+{
+    if (SetTexture(Name, Data)) {
+        return;
+    }
+    ASSERT(1, "No uniform texture with name '", Name, "' found.");
+}
 }  // namespace Slipper

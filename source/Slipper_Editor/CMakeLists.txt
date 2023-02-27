@@ -41,7 +41,7 @@ set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
 GroupSources(src Source)
 
 target_include_directories(SlipperEditor PRIVATE ${SLIPPER_EDITOR_INCLUDE_DIRECTORIES})
-target_precompile_headers(SlipperEditor REUSE_FROM SlipperEngine)
+#target_precompile_headers(SlipperEditor REUSE_FROM SlipperEngine)
 
 set(COMMON_EDITOR_LIBS
     SlipperEngine    
