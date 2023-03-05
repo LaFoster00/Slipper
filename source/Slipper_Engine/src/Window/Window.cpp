@@ -17,7 +17,8 @@ Window::Window(WindowInfo CreateInfo)
     glfwWindowHint(GLFW_RESIZABLE, CreateInfo.resizable);
     glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
 
-    glfwWindow = glfwCreateWindow(m_info.width, m_info.height, m_info.name.c_str(), nullptr, nullptr);
+    glfwWindow = glfwCreateWindow(
+        m_info.width, m_info.height, m_info.name.c_str(), nullptr, nullptr);
 
     glfwSetWindowUserPointer(glfwWindow, this);
     glfwSetKeyCallback(glfwWindow, Key_Callback);
@@ -48,7 +49,6 @@ void Window::SetTitle(std::string_view Name)
     m_info.name = Name;
     glfwSetWindowTitle(glfwWindow, m_info.name.c_str());
 }
-
 
 void Window::OnUpdate()
 {
@@ -113,20 +113,18 @@ IMPLEMENT_GLFW_CALLBACK(CursorPos, double XPos, double YPos)
 IMPLEMENT_GLFW_CALLBACK(MouseButton, int Button, int Action, int Mods)
 {
     Slipper::Window &window = *static_cast<Slipper::Window *>(glfwGetWindowUserPointer(Window));
-    switch (Action)
-    {
-    case GLFW_PRESS:
-        {
+    switch (Action) {
+        case GLFW_PRESS: {
             MouseButtonPressedEvent event(Button);
             window.m_eventCallback(event);
             break;
         }
-    case GLFW_RELEASE: {
+        case GLFW_RELEASE: {
             MouseButtonReleasedEvent event(Button);
             window.m_eventCallback(event);
             break;
-    }
-    default: ;
+        }
+        default:;
     }
 }
 
@@ -144,7 +142,7 @@ IMPLEMENT_GLFW_CALLBACK(WindowFocus, int Focused)
     window.m_eventCallback(event);
 }
 
-IMPLEMENT_GLFW_CALLBACK(WindowClose)
+IMPLEMENT_GLFW_DIRECT_CALLBACK(WindowClose)
 {
     Slipper::Window &window = *static_cast<Slipper::Window *>(glfwGetWindowUserPointer(Window));
     WindowCloseEvent event(window);

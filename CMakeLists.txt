@@ -1,13 +1,27 @@
 set(BUILD_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../SlipperBin/bin")
 set(CMAKE_BINARY_DIR ${BUILD_DIRECTORY})
 
+if(UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+    add_compile_definitions(LINUX)
+elseif(NOT APPLE)
+    set(LINUX FALSE)
+    add_compile_definitions(WINDOWS)
+endif()
+
+if (Linux)
+    message("Setting Compiler")
+    set(CMAKE_C_COMPILER /usr/bin/gcc)
+    set(CMAKE_CXX_COMPILER /usr/bin/gcc)
+    find_library(LIBSTDCXX_LIBRARIES NAMES stdc++ PATHS /usr/local/lib64)
+endif()
 
 macro(SetBuildDirectory)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BUILD_DIRECTORY})
-    set(CMAKE_BINARY_DIR ${BUILD_DIRECTORY})
-    set(CMAKE_CURRENT_BINARY_DIR ${BUILD_DIRECTORY})
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIRECTORY}/$<CONFIG>)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_DIRECTORY}/$<CONFIG>)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BUILD_DIRECTORY}/$<CONFIG>)
+    set(CMAKE_BINARY_DIR ${BUILD_DIRECTORY}/$<CONFIG>)
+    set(CMAKE_CURRENT_BINARY_DIR ${BUILD_DIRECTORY}/$<CONFIG>)
 endmacro()
 
 SetBuildDirectory()
@@ -37,14 +51,6 @@ project(Slipper VERSION 0.1.0)
 
 include(CTest)
 enable_testing()
-
-if(UNIX AND NOT APPLE)
-    set(LINUX TRUE)
-    add_compile_definitions(LINUX)
-elseif(NOT APPLE)
-    set(LINUX FALSE)
-    add_compile_definitions(WINDOWS)
-endif()
 
 set(EXTERNAL_LIBS_DIR "${CMAKE_CURRENT_LIST_DIR}/extern")
 

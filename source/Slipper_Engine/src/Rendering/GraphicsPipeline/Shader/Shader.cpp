@@ -213,7 +213,7 @@ void Shader::CreateDescriptorPool()
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
-    pool_info.maxSets = Engine::MAX_FRAMES_IN_FLIGHT;
+    pool_info.maxSets = Engine::MAX_FRAMES_IN_FLIGHT * 2;
 
     VK_ASSERT(vkCreateDescriptorPool(device, &pool_info, nullptr, &m_vkDescriptorPool),
               "Failed to create descriptor pool!")
@@ -321,21 +321,5 @@ void Shader::AllocateDescriptorSets()
     m_vkDescriptorSets.resize(layouts.size());
     VK_ASSERT(vkAllocateDescriptorSets(Device::Get(), &allocate_info, m_vkDescriptorSets.data()),
               "Failed to allocate descriptor sets!");
-}
-
-template<> void Shader::SetShaderUniform(const std::string Name, const UniformBuffer &Data)
-{
-    if (SetUniformBuffer(Name, Data)) {
-        return;
-    }
-    ASSERT(1, "No uniform buffer with name '", Name, "' found.");
-}
-
-template<> void Shader::SetShaderUniform(const std::string Name, const Texture &Data)
-{
-    if (SetTexture(Name, Data)) {
-        return;
-    }
-    ASSERT(1, "No uniform texture with name '", Name, "' found.");
 }
 }  // namespace Slipper

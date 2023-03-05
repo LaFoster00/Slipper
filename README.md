@@ -1,2 +1,2 @@
 # Slipper
-Cross Platform C++ / .Net Engine
+Windows/Linux C++ Vulkan Engine

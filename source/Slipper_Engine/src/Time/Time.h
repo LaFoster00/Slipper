@@ -25,7 +25,7 @@ class Time
 
     static float m_timeSinceStartup;
 
-    static std::chrono::time_point<std::chrono::steady_clock> m_lastFrameTime;
-    static std::chrono::time_point<std::chrono::steady_clock> m_startupTime;
+    static std::chrono::time_point<std::chrono::system_clock> m_lastFrameTime;
+    static std::chrono::time_point<std::chrono::system_clock> m_startupTime;
 };
 }  // namespace Slipper

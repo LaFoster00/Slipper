@@ -4,10 +4,10 @@
 
 namespace Slipper
 {
-std::chrono::time_point<std::chrono::steady_clock> Time::m_lastFrameTime =
+std::chrono::time_point<std::chrono::system_clock> Time::m_lastFrameTime =
     std::chrono::high_resolution_clock::now();
 
-std::chrono::time_point<std::chrono::steady_clock> Time::m_startupTime =
+std::chrono::time_point<std::chrono::system_clock> Time::m_startupTime =
     std::chrono::high_resolution_clock::now();
 
 float Time::m_deltaTime = 0;

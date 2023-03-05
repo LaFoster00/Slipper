@@ -1,7 +1,12 @@
 #pragma once
 
+#define DECLARE_GLFW_DIRECT_CALLBACK(FnName) static void FnName##_Callback(GLFWwindow *Window)
+
 #define DECLARE_GLFW_CALLBACK(FnName, ...) \
     static void FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
+
+#define IMPLEMENT_GLFW_DIRECT_CALLBACK(FnName) void Window::FnName##_Callback(GLFWwindow *Window)
+
 #define IMPLEMENT_GLFW_CALLBACK(FnName, ...) \
     void Window::FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
 
@@ -68,7 +73,7 @@ class Window
     DECLARE_GLFW_CALLBACK(MouseButton, int Button, int Action, int Mods);
     DECLARE_GLFW_CALLBACK(WindowMaximize, int Maximized);
     DECLARE_GLFW_CALLBACK(WindowFocus, int Focused);
-    DECLARE_GLFW_CALLBACK(WindowClose);
+    DECLARE_GLFW_DIRECT_CALLBACK(WindowClose);
 
  public:
     GLFWwindow *glfwWindow;

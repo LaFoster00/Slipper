@@ -7,6 +7,7 @@
 #include "Mesh/UniformBuffer.h"
 #include "Presentation/Surface.h"
 
+#include "Camera.h"
 #include "Core/Application.h"
 #include "Drawing/Sampler.h"
 #include "Model/Model.h"
@@ -14,9 +15,8 @@
 #include "Shader/Shader.h"
 #include "Texture/Texture2D.h"
 #include "Time/Time.h"
-#include "Window.h"
-#include "Camera.h"
 #include "TransformComponent.h"
+#include "Window.h"
 
 namespace Slipper
 {
@@ -163,7 +163,9 @@ void GraphicsEngine::CreateViewportSwapChain() const
     m_graphicsInstance->viewportSwapChain = std::make_unique<OffscreenSwapChain>(
         Application::Get().window->GetSize(),
         Engine::TARGET_VIEWPORT_COLOR_FORMAT,
-        device.SurfaceSwapChainImagesCount(&Application::Get().window->GetSurface()));
+        device.SurfaceSwapChainImagesCount(&Application::Get().window->GetSurface()) + 2);
+    // TODO this needs to be modified to adjust to the image count of the actual surface swapchain
+    // !DIRTY HACK!
 
     m_graphicsInstance->viewportRenderPass->CreateSwapChainFramebuffers(
         m_graphicsInstance->viewportSwapChain.get());
