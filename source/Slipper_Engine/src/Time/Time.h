@@ -6,6 +6,13 @@ namespace Slipper
 {
 
 #define DELTA_SMOOTH_FRAMES 2048
+
+#ifdef WINDOWS
+using ClockType = std::chrono::steady_clock;
+#else
+using ClockType = std::chrono::system_clock;
+#endif
+
 class Time
 {
  public:
@@ -25,7 +32,7 @@ class Time
 
     static float m_timeSinceStartup;
 
-    static std::chrono::time_point<std::chrono::system_clock> m_lastFrameTime;
-    static std::chrono::time_point<std::chrono::system_clock> m_startupTime;
+    static std::chrono::time_point<ClockType> m_lastFrameTime;
+    static std::chrono::time_point<ClockType> m_startupTime;
 };
 }  // namespace Slipper
