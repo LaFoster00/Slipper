@@ -19,8 +19,6 @@ void Editor::Init()
     Application::Get().AddViewportResizeCallback(
         std::bind(&Editor::OnViewportResize, this, std::placeholders::_1, std::placeholders::_2));
     m_graphicsEngine = &GraphicsEngine::Get();
-
-    RegisterEditors();
 }
 
 void Editor::Shutdown()
@@ -95,11 +93,5 @@ void Editor::OnViewportResize(uint32_t Width, uint32_t Height)
                                         viewport_image,
                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
     }
-}
-
-void Editor::RegisterEditors() const
-{
-    EditorRegistry::AddEditor<TransformEditor>();
-    EditorRegistry::AddEditor<CameraEditor>();
 }
 }  // namespace Slipper::Editor

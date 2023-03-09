@@ -1,6 +1,7 @@
 #include "EntityOutliner.h"
 
 #include "ComponentEditorRegistry.h"
+#include "TransformEditor.h"
 
 namespace Slipper::Editor
 {
@@ -14,9 +15,9 @@ void EntityOutliner::DrawEntity(Entity &Entity)
             if (auto editor = EditorRegistry::TryGetEditor(id)) {
                 const auto &type_info = Entity::GetComponentType(id);
                 ImGui::BeginChild(type_info.name().data(),
-                                  { ImGui::GetWindowContentRegionWidth(), 30.0f * EditorRegistry::GetEditorHeight(id)});
-                ImGui::Text(EditorRegistry::GetEditorName(id).data());
-                editor.value()(ecs.GetRegistry(), Entity);
+                                  { ImGui::GetWindowContentRegionWidth(), 30.0f * editor.value()->height});
+                ImGui::Text(editor.value()->name.data());
+                editor.value()->drawFunc(ecs.GetRegistry(), Entity);
                 ImGui::EndChild();
             }
             else {
