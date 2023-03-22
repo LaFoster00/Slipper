@@ -70,7 +70,7 @@ void Buffer::CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer)
     command_buffer.Submit();
 }
 
-void Buffer::SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer)
+void Buffer::SetBufferData(const ShaderUniformObject *DataObject, const Buffer &Buffer)
 {
     void *data;
     vkMapMemory(Device::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);

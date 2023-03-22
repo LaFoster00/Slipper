@@ -1,88 +1,77 @@
 #include "ShaderReflection.h"
 
 #include "Shader.h"
-#include "ShaderReflectionUtil.h"
 #include "spirv_reflect.h"
 
 namespace Slipper
 {
-std::unique_ptr<ModuleDescriptorSetLayoutInfo> ShaderReflection::CreateShaderBindingInfo(
+std::vector<DescriptorSetLayoutData> ShaderReflection::GetDescriptorSetsLayoutData(
     const void *SpirvCode, size_t SpirvCodeByteCount)
 {
+    // Generate reflection data for a shader
     SpvReflectShaderModule module;
     SpvReflectResult result = spvReflectCreateShaderModule(SpirvCodeByteCount, SpirvCode, &module);
-    ASSERT(result, "Failed to create reflection data for shader code.")
-
-    // Descriptor Sets
-    uint32_t descriptor_set_count = 0;
-    result = spvReflectEnumerateDescriptorSets(&module, &descriptor_set_count, NULL);
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
-    std::vector<SpvReflectDescriptorSet *> refl_descriptor_sets(descriptor_set_count);
-    result = spvReflectEnumerateDescriptorSets(
-        &module, &descriptor_set_count, refl_descriptor_sets.data());
+    uint32_t count = 0;
+    result = spvReflectEnumerateDescriptorSets(&module, &count, nullptr);
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
-    auto descriptor_sets_layout = std::make_unique<ModuleDescriptorSetLayoutInfo>();
+    std::vector<SpvReflectDescriptorSet *> descriptorSets(count);
+    result = spvReflectEnumerateDescriptorSets(&module, &count, descriptorSets.data());
+    assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
-    PopulateDescriptorSetLayoutInfo(ShaderReflectionUtil::to_shader_type(module.shader_stage),
-                                    refl_descriptor_sets,
-                                    descriptor_sets_layout);
+    // Generate all necessary data structures to create a
+    // VkDescriptorSetLayout for each descriptor set in this shader.
+    std::vector set_layouts(descriptorSets.size(), DescriptorSetLayoutData{});
+    for (size_t i_set = 0; i_set < descriptorSets.size(); ++i_set) {
+        const auto &[set_number, binding_count, bindings] = *(descriptorSets[i_set]);
+        DescriptorSetLayoutData &layout = set_layouts[i_set];
+        layout.bindings.resize(binding_count);
 
-    spvReflectDestroyShaderModule(&module);
+        for (uint32_t i_binding = 0; i_binding < binding_count; ++i_binding) {
+            const SpvReflectDescriptorBinding &refl_binding = *(bindings[i_binding]);
 
-    return descriptor_sets_layout;
-}
-
-void ShaderReflection::PopulateDescriptorSetLayoutInfo(
-    const ShaderType ShaderType,
-    const std::vector<SpvReflectDescriptorSet *> &ReflSets,
-    std::unique_ptr<ModuleDescriptorSetLayoutInfo> &LayoutInfo)
-{
-    for (const auto refl_descriptor_set : ReflSets) {
-
-        for (uint32_t binding = 0; binding < refl_descriptor_set->binding_count; ++binding) {
-            LayoutInfo->bindings.push_back(PopulateDescriptorSetLayoutBinding(
-                ShaderType, refl_descriptor_set->bindings[binding]));
+            auto &layout_binding = layout.bindings[i_binding];
+            // Vulkan Binding Info
+            {
+                VkDescriptorSetLayoutBinding &vk_layout_binding =
+                    layout_binding.GetVkBinding();
+                vk_layout_binding.binding = refl_binding.binding;
+                vk_layout_binding.descriptorType = static_cast<VkDescriptorType>(
+                    refl_binding.descriptor_type);
+                vk_layout_binding.descriptorCount = 1;
+                for (uint32_t i_dim = 0; i_dim < refl_binding.array.dims_count; ++i_dim) {
+                    vk_layout_binding.descriptorCount *= refl_binding.array.dims[i_dim];
+                }
+                vk_layout_binding.stageFlags = static_cast<VkShaderStageFlagBits>(
+                    module.shader_stage);
+            }
+            layout_binding.name = std::string(refl_binding.name);
+            layout_binding.inputAttachmentIndex = refl_binding.input_attachment_index;
+            layout_binding.set = refl_binding.set;
+            layout_binding.resourceType = static_cast<ShaderResourceType>(
+                refl_binding.resource_type);
+            layout_binding.offset = refl_binding.block.offset;
+            layout_binding.absoluteOffset = refl_binding.block.absolute_offset;
+            layout_binding.size = refl_binding.block.size;
+            layout_binding.paddedSize = refl_binding.block.padded_size;
+        }
+        layout.setNumber = set_number;
+        layout.createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layout.createInfo.bindingCount = binding_count;
+        // Extract Vulkan bindings for create info
+        {
+            for (auto binding : layout.bindings) {
+                layout.vkBindings.push_back(binding.GetVkBinding());
+            }
+            layout.createInfo.pBindings = layout.vkBindings.data();
         }
     }
-}
-
-DescriptorSetLayoutBinding ShaderReflection::PopulateDescriptorSetLayoutBinding(
-    const ShaderType ShaderType, const SpvReflectDescriptorBinding *ReflSetBinding)
-{
-    DescriptorSetLayoutBinding set_binding{};
-    set_binding.name = ReflSetBinding->name;
-    set_binding.setNumber = ReflSetBinding->set;
-    set_binding.size = ReflSetBinding->block.size;
-    set_binding.paddedSize = ReflSetBinding->block.padded_size;
-    set_binding.members.resize(ReflSetBinding->block.member_count);
-
-    set_binding.binding.binding = ReflSetBinding->binding;
-    set_binding.binding.descriptorType = static_cast<VkDescriptorType>(
-        ReflSetBinding->descriptor_type);
-    set_binding.binding.descriptorCount = ReflSetBinding->count;
-    set_binding.binding.pImmutableSamplers = nullptr;
-    set_binding.binding.stageFlags |= ShaderReflectionUtil::to_shader_stage_flag(ShaderType);
-
-    for (uint32_t i = 0; i < ReflSetBinding->block.member_count; ++i) {
-        PopulateShaderMember(set_binding.members[i], &ReflSetBinding->block.members[i]);
-    }
-
-    return set_binding;
-}
-
-void ShaderReflection::PopulateShaderMember(ShaderMember &Member,
-                                            const SpvReflectBlockVariable *ReflMember)
-{
-    Member.name = ReflMember->name;
-    Member.size = ReflMember->size;
-    Member.paddedSize = ReflMember->padded_size;
-    Member.type = ShaderReflectionUtil::to_shader_member_type(*ReflMember->type_description);
-    Member.members.resize(ReflMember->member_count);
-    for (uint32_t i = 0; i < ReflMember->member_count; ++i) {
-        PopulateShaderMember(Member.members[i], &ReflMember->members[i]);
-    }
+    // Nothing further is done with set_layouts in this sample; in a real
+    // application they would be merged with similar structures from other shader
+    // stages and/or pipelines to create a VkPipelineLayout.
+    return set_layouts;
 }
 
 void ShaderReflection::create_descriptor_sets(const size_t Count,

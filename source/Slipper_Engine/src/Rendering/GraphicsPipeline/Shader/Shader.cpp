@@ -69,16 +69,14 @@ bool Shader::UnregisterFromRenderPass(RenderPass *RenderPass)
 
 // TODO change this to swap chain dependency instead of resolution, shader should be able to be
 // bound to multiple render passes and swapchains
-void Shader::ChangeResolutionForRenderPass(RenderPass *RenderPass, VkExtent2D Resolution)
+void Shader::ChangeResolutionForRenderPass(RenderPass *RenderPass, VkExtent2D Resolution) const
 {
     if (m_graphicsPipelines.contains(RenderPass)) {
         m_graphicsPipelines.at(RenderPass)->ChangeResolution(Resolution);
     }
 }
 
-void Shader::Bind(const VkCommandBuffer &CommandBuffer,
-                  const RenderPass *RenderPass,
-                  std::optional<uint32_t> CurrentFrame) const
+void Shader::Use(const VkCommandBuffer &CommandBuffer, const RenderPass *RenderPass) const
 {
     if (m_graphicsPipelines.contains(RenderPass)) {
         m_graphicsPipelines.at(RenderPass)->Bind(CommandBuffer);
@@ -94,37 +92,34 @@ void Shader::Bind(const VkCommandBuffer &CommandBuffer,
                                 nullptr);
     }
     else {
-        ASSERT(1, "renderPass is not registered for this shader.")
+        ASSERT(true, "RenderPass {} is not registered for this shader.", RenderPass->name)
     }
 }
 
-bool Shader::SetUniformBuffer(const std::string Name, const UniformBuffer &Buffer) const
+template<>
+bool Shader::BindShaderParameter(const std::string Name, const UniformBuffer &Object) const
 {
     for (auto &module_layout : shaderModuleLayouts | std::views::values) {
         if (module_layout->namedLayoutBindings.contains(String::to_lower(Name))) {
             const auto binding = module_layout->namedLayoutBindings.at(String::to_lower(Name));
 
-            ASSERT(binding->binding.descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                   "Descriptor '",
-                   Name,
-                   "' is not of type buffer");
+            ASSERT(binding->descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                   "Descriptor '{}' is not of type buffer",
+                   Name);
 
-            ASSERT(binding->size != Buffer.vkBufferSize,
-                   "Buffer '",
+            ASSERT(binding->size != Object.vkBufferSize,
+                   "Buffer '{}' size missmatch! Shader expects {} bytes but buffer has {} bytes.",
                    Name,
-                   "' size missmatch! Shader expects ",
                    std::to_string(binding->size),
-                   "bytes but buffer has ",
-                   std::to_string(Buffer.vkBufferSize),
-                   "bytes.");
+                   std::to_string(Object.vkBufferSize));
 
             VkWriteDescriptorSet descriptor_write{};
             descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptor_write.dstBinding = binding->binding.binding;
+            descriptor_write.dstBinding = binding->binding;
             descriptor_write.dstArrayElement = 0;
             descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptor_write.descriptorCount = binding->binding.descriptorCount;
-            descriptor_write.pBufferInfo = Buffer.GetDescriptorInfo();
+            descriptor_write.descriptorCount = binding->descriptorCount;
+            descriptor_write.pBufferInfo = Object.GetDescriptorInfo();
 
             std::vector<VkWriteDescriptorSet> descriptor_writes;
             descriptor_writes.reserve(m_vkDescriptorSets.size() * Engine::MAX_FRAMES_IN_FLIGHT);
@@ -144,24 +139,23 @@ bool Shader::SetUniformBuffer(const std::string Name, const UniformBuffer &Buffe
     return false;
 }
 
-bool Shader::SetTexture(const std::string Name, const Texture &Texture) const
+template<> bool Shader::BindShaderParameter(const std::string Name, const Texture &Object) const
 {
     for (auto &module_layout : shaderModuleLayouts | std::views::values) {
         if (module_layout->namedLayoutBindings.contains(String::to_lower(Name))) {
             const auto binding = module_layout->namedLayoutBindings.at(String::to_lower(Name));
 
-            ASSERT(binding->binding.descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                   "Descriptor '",
-                   Name,
-                   "' is not of type combined image sampler");
+            ASSERT(binding->descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                   "Descriptor '{}' is not of type combined image sampler",
+                   Name);
 
             VkWriteDescriptorSet descriptor_write{};
             descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptor_write.dstBinding = binding->binding.binding;
+            descriptor_write.dstBinding = binding->binding;
             descriptor_write.dstArrayElement = 0;
             descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptor_write.descriptorCount = binding->binding.descriptorCount;
-            const auto image_info = Texture.GetDescriptorImageInfo();
+            descriptor_write.descriptorCount = binding->descriptorCount;
+            const auto image_info = Object.GetDescriptorImageInfo();
             descriptor_write.pImageInfo = &image_info;
 
             std::vector<VkWriteDescriptorSet> descriptor_writes;
@@ -180,6 +174,40 @@ bool Shader::SetTexture(const std::string Name, const Texture &Texture) const
         }
     }
     return false;
+}
+
+UniformBuffer *Shader::GetUniformBuffer(const std::string Name,
+                                        const std::optional<uint32_t> Index) const
+{
+    const auto lowered_name = String::to_lower(Name);
+    for (auto &shader_module_layout : shaderModuleLayouts | std::views::values) {
+        if (!shader_module_layout->namedLayoutBindings.contains(lowered_name)) {
+            continue;
+        }
+        if (const auto binding = shader_module_layout->namedLayoutBindings.at(lowered_name);
+            uniformBindingBuffers.contains(binding)) {
+
+            return uniformBindingBuffers
+                .at(binding)[Index.has_value() ? Index.value() :
+                                                 GraphicsEngine::Get().currentFrame]
+                .get();
+        }
+        ASSERT(true, "Uniform '{}' is not a buffer.", Name);
+    }
+    ASSERT(true, "Object '{}' does not exist.", Name);
+    return nullptr;
+}
+
+std::vector<VkDescriptorSet> Shader::GetDescriptorSets(const std::optional<uint32_t> Index) const
+{
+    std::vector<VkDescriptorSet> ds;
+    if (Index.has_value()) {
+        ds.push_back(m_vkDescriptorSets[Index.value()]);
+    }
+    else {
+        ds.push_back(m_vkDescriptorSets[GraphicsEngine::Get().currentFrame]);
+    }
+    return ds;
 }
 
 void Shader::LoadShader(std::string_view Filepath, ShaderType ShaderType)
@@ -203,9 +231,11 @@ void Shader::CreateDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> pool_sizes;
     for (const auto &module_layout : shaderModuleLayouts | std::views::values) {
-        for (const auto binding : module_layout->layoutInfo->bindings) {
-            pool_sizes.push_back(VkDescriptorPoolSize{binding.binding.descriptorType,
-                                                      binding.binding.descriptorCount});
+        for (const auto set_layout : module_layout->setLayouts) {
+            for (DescriptorSetLayoutBinding binding : set_layout.bindings) {
+                pool_sizes.push_back(
+                    VkDescriptorPoolSize{binding.descriptorType, binding.descriptorCount});
+            }
         }
     }
 
@@ -280,11 +310,11 @@ void Shader::CreateUniformBuffers(size_t Count)
     for (const auto &shader_module_layout : shaderModuleLayouts | std::views::values) {
         for (const auto layout_binding :
              shader_module_layout->namedLayoutBindings | std::views::values) {
-            if (layout_binding->binding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+            if (layout_binding->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
                 auto &buffers = uniformBindingBuffers[layout_binding];
                 for (int i = 0; i < Count; ++i) {
                     buffers.emplace_back(std::make_unique<UniformBuffer>(layout_binding->size));
-                    SetUniformBuffer(layout_binding->name, *buffers.back());
+                    BindShaderParameter(layout_binding->name, *buffers.back());
                 }
             }
         }
@@ -295,8 +325,10 @@ VkDescriptorSetLayout Shader::CreateDescriptorSetLayout()
 {
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     for (const auto &shader_module_layout : shaderModuleLayouts | std::views::values) {
-        auto new_bindings = shader_module_layout->layoutInfo->GetVkBindings();
-        bindings.insert(bindings.end(), new_bindings.begin(), new_bindings.end());
+        for (auto set_layout : shader_module_layout->setLayouts) {
+            bindings.insert(
+                bindings.end(), set_layout.vkBindings.begin(), set_layout.vkBindings.end());
+        }
     }
 
     VkDescriptorSetLayoutCreateInfo createInfo = {};

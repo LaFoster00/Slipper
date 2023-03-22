@@ -23,10 +23,10 @@ enum class ShaderType
     COMPUTE = 3
 };
 
-struct ShaderUniform
+struct ShaderUniformObject
 {
  protected:
-    ShaderUniform() = default;
+    ShaderUniformObject() = default;
 
  public:
     // This is reuqired since the virtual function table takes up additional memory and only the
@@ -38,7 +38,7 @@ struct ShaderUniform
     virtual void const *GetData() const = 0;
 };
 
-struct UniformMVP final : ShaderUniform
+struct UniformMVP final : ShaderUniformObject
 {
     glm::mat4 model = {};
     glm::mat4 view = {};
@@ -104,61 +104,27 @@ class Shader
 
     GraphicsPipeline &RegisterForRenderPass(RenderPass *RenderPass, VkExtent2D Extent);
     bool UnregisterFromRenderPass(RenderPass *RenderPass);
-    void ChangeResolutionForRenderPass(RenderPass *RenderPass, VkExtent2D Resolution);
+    void ChangeResolutionForRenderPass(RenderPass *RenderPass, VkExtent2D Resolution) const;
 
     /* Binds the shaders pipeline and its descriptor sets
      * Current frame is optional and will be fetched from the currentFrame of the GraphicsEngine if
      * empty.
      */
-    void Bind(const VkCommandBuffer &CommandBuffer,
-              const RenderPass *RenderPass,
-              std::optional<uint32_t> CurrentFrame = {}) const;
+    void Use(const VkCommandBuffer &CommandBuffer, const RenderPass *RenderPass) const;
 
-    bool SetUniformBuffer(const std::string Name, const UniformBuffer &Buffer) const;
-    bool SetTexture(const std::string Name, const Texture &Texture) const;
+    bool BindShaderParameter(const std::string Name, const auto &Object) const
+    {
+        ASSERT(true, "You cant bind an object of type {}", typeid(decltype(Object)).name())
+    }
+
+    template<> bool BindShaderParameter(const std::string Name, const UniformBuffer &Object) const;
+    template<> bool BindShaderParameter(const std::string Name, const Texture &Object) const;
 
     [[nodiscard]] UniformBuffer *GetUniformBuffer(const std::string Name,
-                                                  const std::optional<uint32_t> Index = {}) const
-    {
-        const auto lowered_name = String::to_lower(Name);
-        for (auto &shader_module_layout : shaderModuleLayouts | std::views::values) {
-            if (shader_module_layout->namedLayoutBindings.contains(lowered_name)) {
-                if (const auto binding = shader_module_layout->namedLayoutBindings.at(
-                        lowered_name);
-                    uniformBindingBuffers.contains(binding)) {
-                    if (Index.has_value()) {
-                        return uniformBindingBuffers.at(binding)[Index.value()].get();
-                    }
-                    else {
-                        return uniformBindingBuffers
-                            .at(binding)[GraphicsEngine::Get().currentFrame]
-                            .get();
-                    }
-                }
-                ASSERT(true, "Uniform '", Name, "' is not a buffer.");
-            }
-        }
-        ASSERT(true, "Object '", Name, "' does not exist.");
-        return nullptr;
-    }
+                                                  const std::optional<uint32_t> Index = {}) const;
 
     [[nodiscard]] std::vector<VkDescriptorSet> GetDescriptorSets(
-        const std::optional<uint32_t> Index = {}) const
-    {
-        std::vector<VkDescriptorSet> ds;
-        if (Index.has_value()) {
-            ds.push_back(m_vkDescriptorSets[Index.value()]);
-        }
-        else {
-            ds.push_back(m_vkDescriptorSets[GraphicsEngine::Get().currentFrame]);
-        }
-        return ds;
-    }
-
-    template<typename DataType> void SetShaderUniform(const std::string Name, const DataType &Data)
-    {
-        ASSERT(true, "DataType", typeid(DataType).name(), "is not suppored.")
-    }
+        const std::optional<uint32_t> Index = {}) const;
 
  private:
     void LoadShader(std::string_view Filepath, ShaderType ShaderType);
@@ -177,9 +143,6 @@ class Shader
 
     void CreateUniformBuffers(size_t Count);
 
- private:
-    static VkDescriptorPool GetDescriptorPool();
-
  public:
     Device &device;
 
@@ -196,23 +159,7 @@ class Shader
     std::unordered_map<const RenderPass *, std::unique_ptr<GraphicsPipeline>> m_graphicsPipelines;
 };
 
-// extern template void Shader::SetShaderUniform(const std::string Name, const UniformBuffer
-// &Data); extern template void Shader::SetShaderUniform(const std::string Name, const Texture
+// extern template void Shader::BindShaderUniform(const std::string Name, const UniformBuffer
+// &Data); extern template void Shader::BindShaderUniform(const std::string Name, const Texture
 // &Data);
-
-template<> inline void Shader::SetShaderUniform(const std::string Name, const UniformBuffer &Data)
-{
-    if (SetUniformBuffer(Name, Data)) {
-        return;
-    }
-    ASSERT(1, "No uniform buffer with name '", Name, "' found.");
-}
-
-template<> inline void Shader::SetShaderUniform(const std::string Name, const Texture &Data)
-{
-    if (SetTexture(Name, Data)) {
-        return;
-    }
-    ASSERT(1, "No uniform texture with name '", Name, "' found.");
-}
 }  // namespace Slipper

@@ -14,7 +14,7 @@ class UniformBuffer : public Buffer
     {
     }
 
-    void SubmitData(const ShaderUniform *UniformData)
+    void SubmitData(const ShaderUniformObject *UniformData)
     {
         Buffer::SetBufferData(UniformData, *this);
     }

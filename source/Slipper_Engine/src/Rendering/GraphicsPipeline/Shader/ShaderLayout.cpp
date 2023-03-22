@@ -4,30 +4,20 @@
 
 namespace Slipper
 {
-std::vector<VkDescriptorSetLayoutBinding> ModuleDescriptorSetLayoutInfo::GetVkBindings() const
-{
-    std::vector<VkDescriptorSetLayoutBinding> vkBindings(bindings.size());
-    for (int i = 0; i < vkBindings.size(); ++i) {
-        vkBindings[i] = bindings[i].binding;
-    }
-    return vkBindings;
-}
-
 ShaderModuleLayout::ShaderModuleLayout(const std::vector<char> &BinaryCode)
 {
-    layoutInfo = ShaderReflection::CreateShaderBindingInfo(BinaryCode.data(), BinaryCode.size());
+    setLayouts = ShaderReflection::GetDescriptorSetsLayoutData(BinaryCode.data(), BinaryCode.size());
 
     PopulateNamesLayoutBindings();
 }
 
-ShaderModuleLayout::~ShaderModuleLayout()
-{
-}
-
 void ShaderModuleLayout::PopulateNamesLayoutBindings()
 {
-    for (auto &binding : layoutInfo->bindings) {
-        namedLayoutBindings.insert(std::make_pair(String::to_lower(binding.name), &binding));
+    for (auto &layout_data : setLayouts) {
+	    for (auto &binding : layout_data.bindings)
+	    {
+            namedLayoutBindings[String::to_lower(binding.name)] = &binding;
+	    }
     }
 }
 }  // namespace Slipper

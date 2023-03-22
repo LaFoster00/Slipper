@@ -110,7 +110,7 @@ void GraphicsEngine::SetupDebugResources()
         {"./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::FRAGMENT}};
 
     shaders.emplace_back(std::make_unique<Shader>("BasicVertex", shader_stages));
-    shaders[0]->SetShaderUniform("texSampler", *textures[0]);
+    shaders[0]->BindShaderParameter("texSampler", *textures[0]);
 }
 
 void GraphicsEngine::CreateSyncObjects()
@@ -221,7 +221,7 @@ void GraphicsEngine::SetupSimpleDraw()
     SubmitRepeatedDrawCommand(
         [=, this](const VkCommandBuffer &CommandBuffer, const RenderPass &RenderPass) {
             const auto debug_shader = *RenderPass.registeredShaders.begin();
-            debug_shader->Bind(CommandBuffer, &RenderPass);
+            debug_shader->Use(CommandBuffer, &RenderPass);
 
             auto &camera = GetDefaultCamera();
             auto &cam_parameters = camera.GetComponent<Camera::Parameters>();
@@ -248,7 +248,7 @@ void GraphicsEngine::SubmitDraw(const RenderPass *RenderPass,
                                 const glm::mat4 &Transform)
 {
     SubmitSingleDrawCommand(RenderPass, [=, this](const VkCommandBuffer &CommandBuffer) {
-        Shader->Bind(CommandBuffer, RenderPass);
+        Shader->Use(CommandBuffer, RenderPass);
         UniformMVP mvp;
         mvp.model = Transform;
         mvp.view = glm::lookAt(

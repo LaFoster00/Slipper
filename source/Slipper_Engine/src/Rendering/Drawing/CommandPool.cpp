@@ -1,7 +1,5 @@
 #include "CommandPool.h"
 
-#include "GraphicsPipeline/RenderPass.h"
-
 namespace Slipper
 {
 CommandPool::CommandPool(const VkQueue Queue,

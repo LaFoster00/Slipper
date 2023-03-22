@@ -2,7 +2,7 @@
 
 namespace Slipper
 {
-struct ShaderUniform;
+struct ShaderUniformObject;
 class CommandPool;
 
 class Buffer : DeviceDependentObject
@@ -26,7 +26,7 @@ class Buffer : DeviceDependentObject
         vkUnmapMemory(Device::Get(), Buffer);
     }
 
-    void SetBufferData(const ShaderUniform *DataObject, const Buffer &Buffer);
+    void SetBufferData(const ShaderUniformObject *DataObject, const Buffer &Buffer);
 
     static void CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer);
 
