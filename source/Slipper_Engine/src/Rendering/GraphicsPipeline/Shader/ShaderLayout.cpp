@@ -4,14 +4,14 @@
 
 namespace Slipper
 {
-ShaderModuleLayout::ShaderModuleLayout(const std::vector<char> &BinaryCode)
+ShaderLayout::ShaderLayout(const std::vector<std::vector<char>> &BinaryCode)
 {
-    setLayouts = ShaderReflection::GetDescriptorSetsLayoutData(BinaryCode.data(), BinaryCode.size());
+    setLayouts = ShaderReflection::GetMergedDescriptorSetsLayoutData(BinaryCode);
 
     PopulateNamesLayoutBindings();
 }
 
-void ShaderModuleLayout::PopulateNamesLayoutBindings()
+void ShaderLayout::PopulateNamesLayoutBindings()
 {
     for (auto &layout_data : setLayouts) {
 	    for (auto &binding : layout_data.bindings)

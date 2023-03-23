@@ -124,18 +124,19 @@ class Shader
                                                   const std::optional<uint32_t> Index = {}) const;
 
     [[nodiscard]] std::vector<VkDescriptorSet> GetDescriptorSets(
-        const std::optional<uint32_t> Index = {}) const;
+        std::optional<uint32_t> Index = {}) const;
 
  private:
-    void LoadShader(std::string_view Filepath, ShaderType ShaderType);
+    void LoadShader(const std::vector<std::tuple<std::string_view, ShaderType>> &Shaders);
 
     void CreateDescriptorPool();
-    VkDescriptorSetLayout CreateDescriptorSetLayout();
+    void CreateDescriptorSetLayouts();
     void AllocateDescriptorSets();
 
-    GraphicsPipeline &CreateGraphicsPipeline(RenderPass *RenderPass,
-                                             VkExtent2D &Extent,
-                                             const VkDescriptorSetLayout DescriptorSetLayout);
+    GraphicsPipeline &CreateGraphicsPipeline(
+        RenderPass *RenderPass,
+        VkExtent2D &Extent,
+        const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts);
 
     static VkShaderModule CreateShaderModule(const std::vector<char> &Code);
     static VkPipelineShaderStageCreateInfo CreateShaderStage(const ShaderType &ShaderType,
@@ -147,15 +148,16 @@ class Shader
     Device &device;
 
     std::string name;
-    std::unordered_map<VkShaderModule, std::unique_ptr<ShaderModuleLayout>> shaderModuleLayouts;
-    std::unordered_map<DescriptorSetLayoutBinding *, std::vector<std::unique_ptr<UniformBuffer>>>
+    std::unique_ptr<ShaderLayout> shaderLayout;
+    std::map<DescriptorSetLayoutBinding::HashT, std::vector<std::unique_ptr<UniformBuffer>>>
         uniformBindingBuffers;
 
  private:
     VkDescriptorPool m_vkDescriptorPool = VK_NULL_HANDLE;
-    std::vector<VkDescriptorSet> m_vkDescriptorSets;
+    std::map<uint32_t, std::vector<VkDescriptorSet>>
+        m_vkDescriptorSets;  // One set for every frame
     std::unordered_map<ShaderType, ShaderStage> m_shaderStages;
-    VkDescriptorSetLayout m_vkDescriptorSetLayout = VK_NULL_HANDLE;
+    std::map<uint32_t, VkDescriptorSetLayout> m_vkDescriptorSetLayouts;  // One layout for set
     std::unordered_map<const RenderPass *, std::unique_ptr<GraphicsPipeline>> m_graphicsPipelines;
 };
 

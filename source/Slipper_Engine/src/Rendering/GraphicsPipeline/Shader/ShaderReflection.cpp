@@ -5,12 +5,78 @@
 
 namespace Slipper
 {
-std::vector<DescriptorSetLayoutData> ShaderReflection::GetDescriptorSetsLayoutData(
-    const void *SpirvCode, size_t SpirvCodeByteCount)
+struct IntermediateDSLD  // Working DescriptorSetLayoutdata
+{
+    uint32_t setNumber;
+    std::vector<DescriptorSetLayoutBinding> bindings;
+};
+
+std::vector<DescriptorSetLayoutData> ShaderReflection::GetMergedDescriptorSetsLayoutData(
+    std::vector<std::vector<char>> SpirvCodes)
+{
+    std::vector<IntermediateDSLD> intermediate_dslds;
+    for (auto spirv_code : SpirvCodes) {
+        auto new_dslds = GetDescriptorSetsLayoutData(spirv_code);
+        append(intermediate_dslds, new_dslds);
+    }
+
+    std::map<uint32_t, DescriptorSetLayoutData> unique_dslds;
+
+    for (IntermediateDSLD &intermediate_dsld : intermediate_dslds) {
+        if (!unique_dslds.contains(intermediate_dsld.setNumber)) {
+            auto &new_dsld = unique_dslds[intermediate_dsld.setNumber];
+            new_dsld.createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            new_dsld.setNumber = intermediate_dsld.setNumber;
+            new_dsld.createInfo.flags = 0;
+            new_dsld.createInfo.pNext = nullptr;
+        }
+        auto &unique_dsld = unique_dslds.at(intermediate_dsld.setNumber);
+        
+        // Go through each binding and check if it is already defined and if so add its shader
+        // stage to the valid use cases
+        for (auto &intermediate_binding : intermediate_dsld.bindings) {
+            bool contains_binding = false;
+            for (auto &unique_binding : unique_dsld.bindings) {
+                if (unique_binding.name == intermediate_binding.name) {
+                    if (unique_binding.descriptorType == intermediate_binding.descriptorType &&
+                        unique_binding.size == intermediate_binding.size &&
+                        unique_binding.binding == intermediate_binding.binding &&
+                        unique_binding.descriptorCount == intermediate_binding.descriptorCount) {
+                        contains_binding = true;
+                        unique_binding.stageFlags &= intermediate_binding.stageFlags;
+                    }
+                    else {
+                        ASSERT(true,
+                               "Binding {} is defined multiple times with different properties in "
+                               "the shader stages. This is not allowed.",
+                               unique_binding.name)
+                    }
+                }
+            }
+
+            if (!contains_binding)
+            {
+                unique_dsld.bindings.push_back(intermediate_binding);
+            }
+        }
+    }
+
+    std::vector<DescriptorSetLayoutData> dslds;
+    for (auto &unique_dsld : unique_dslds | std::ranges::views::values)
+    {
+        unique_dsld.UpdateCreateInfo();
+        dslds.push_back(unique_dsld);
+    }
+    
+    return dslds;
+}
+std::vector<IntermediateDSLD> ShaderReflection::GetDescriptorSetsLayoutData(
+    const std::vector<char> &SpirvCode)
 {
     // Generate reflection data for a shader
     SpvReflectShaderModule module;
-    SpvReflectResult result = spvReflectCreateShaderModule(SpirvCodeByteCount, SpirvCode, &module);
+    SpvReflectResult result = spvReflectCreateShaderModule(
+        SpirvCode.size(), SpirvCode.data(), &module);
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
     uint32_t count = 0;
@@ -23,10 +89,10 @@ std::vector<DescriptorSetLayoutData> ShaderReflection::GetDescriptorSetsLayoutDa
 
     // Generate all necessary data structures to create a
     // VkDescriptorSetLayout for each descriptor set in this shader.
-    std::vector set_layouts(descriptorSets.size(), DescriptorSetLayoutData{});
+    std::vector set_layouts(descriptorSets.size(), IntermediateDSLD{});
     for (size_t i_set = 0; i_set < descriptorSets.size(); ++i_set) {
         const auto &[set_number, binding_count, bindings] = *(descriptorSets[i_set]);
-        DescriptorSetLayoutData &layout = set_layouts[i_set];
+        IntermediateDSLD &layout = set_layouts[i_set];
         layout.bindings.resize(binding_count);
 
         for (uint32_t i_binding = 0; i_binding < binding_count; ++i_binding) {
@@ -35,8 +101,7 @@ std::vector<DescriptorSetLayoutData> ShaderReflection::GetDescriptorSetsLayoutDa
             auto &layout_binding = layout.bindings[i_binding];
             // Vulkan Binding Info
             {
-                VkDescriptorSetLayoutBinding &vk_layout_binding =
-                    layout_binding.GetVkBinding();
+                VkDescriptorSetLayoutBinding &vk_layout_binding = layout_binding.GetVkBinding();
                 vk_layout_binding.binding = refl_binding.binding;
                 vk_layout_binding.descriptorType = static_cast<VkDescriptorType>(
                     refl_binding.descriptor_type);
@@ -58,24 +123,10 @@ std::vector<DescriptorSetLayoutData> ShaderReflection::GetDescriptorSetsLayoutDa
             layout_binding.paddedSize = refl_binding.block.padded_size;
         }
         layout.setNumber = set_number;
-        layout.createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layout.createInfo.bindingCount = binding_count;
-        // Extract Vulkan bindings for create info
-        {
-            for (auto binding : layout.bindings) {
-                layout.vkBindings.push_back(binding.GetVkBinding());
-            }
-            layout.createInfo.pBindings = layout.vkBindings.data();
-        }
     }
     // Nothing further is done with set_layouts in this sample; in a real
     // application they would be merged with similar structures from other shader
     // stages and/or pipelines to create a VkPipelineLayout.
     return set_layouts;
-}
-
-void ShaderReflection::create_descriptor_sets(const size_t Count,
-                                              const VkDescriptorSetLayout DescriptorSetLayout)
-{
 }
 }  // namespace Slipper

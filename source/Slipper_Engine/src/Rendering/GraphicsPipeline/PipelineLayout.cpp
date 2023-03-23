@@ -1,18 +1,16 @@
 #include "PipelineLayout.h"
 
-#include "Presentation/SwapChain.h"
 #include "Mesh/Mesh.h"
 
 namespace Slipper
 {
 VkPipelineLayout PipelineLayout::CreatePipelineLayout(
-    const Device &Device, const VkDescriptorSetLayout DescriptorSetLayout)
+    const Device &Device, const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts)
 {
-    const std::vector descriptor_set_layouts(Engine::MAX_FRAMES_IN_FLIGHT, DescriptorSetLayout);
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size());
-    pipeline_layout_info.pSetLayouts = descriptor_set_layouts.data();
+    pipeline_layout_info.setLayoutCount = static_cast<uint32_t>(DescriptorSetLayouts.size());
+    pipeline_layout_info.pSetLayouts = DescriptorSetLayouts.data();
     pipeline_layout_info.pushConstantRangeCount = 0;     // Optional
     pipeline_layout_info.pPushConstantRanges = nullptr;  // Optional
 

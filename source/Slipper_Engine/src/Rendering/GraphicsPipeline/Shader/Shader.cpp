@@ -16,12 +16,10 @@ Shader::Shader(std::string_view Name,
                std::optional<VkExtent2D> RenderPassesExtent)
     : device(Device::Get()), name(Name)
 {
-    for (auto &[filepath, shaderType] : ShaderStagesCode) {
-        LoadShader(filepath, shaderType);
-    }
+    LoadShader(ShaderStagesCode);
 
     CreateDescriptorPool();
-    CreateDescriptorSetLayout();
+    CreateDescriptorSetLayouts();
     AllocateDescriptorSets();
 
     CreateUniformBuffers(Engine::MAX_FRAMES_IN_FLIGHT);
@@ -36,15 +34,17 @@ Shader::Shader(std::string_view Name,
 Shader::~Shader()
 {
     m_graphicsPipelines.clear();
-    shaderModuleLayouts.clear();
+    shaderLayout.reset();
     if (m_vkDescriptorPool)
         vkDestroyDescriptorPool(device, m_vkDescriptorPool, nullptr);
 
-    vkDestroyDescriptorSetLayout(device, m_vkDescriptorSetLayout, nullptr);
+    for (const auto vk_descriptor_set_layout : m_vkDescriptorSetLayouts | std::views::values) {
+        vkDestroyDescriptorSetLayout(device, vk_descriptor_set_layout, nullptr);
+    }
     uniformBindingBuffers.clear();
 
-    for (const auto &[shaderType, shaderStage] : m_shaderStages) {
-        vkDestroyShaderModule(device.logicalDevice, shaderStage.shaderModule, nullptr);
+    for (const auto &shader_stage : m_shaderStages | std::views::values) {
+        vkDestroyShaderModule(device.logicalDevice, shader_stage.shaderModule, nullptr);
     }
 }
 
@@ -54,7 +54,13 @@ GraphicsPipeline &Shader::RegisterForRenderPass(RenderPass *RenderPass, VkExtent
     RenderPass->RegisterShader(this);
     std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
 
-    return CreateGraphicsPipeline(RenderPass, Extent, m_vkDescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts;
+    layouts.reserve((m_vkDescriptorSetLayouts | std::ranges::views::values).size());
+    for (auto descriptor_set_layout : m_vkDescriptorSetLayouts | std::ranges::views::values) {
+        layouts.push_back(descriptor_set_layout);
+    }
+
+    return CreateGraphicsPipeline(RenderPass, Extent, layouts);
 }
 
 bool Shader::UnregisterFromRenderPass(RenderPass *RenderPass)
@@ -99,79 +105,75 @@ void Shader::Use(const VkCommandBuffer &CommandBuffer, const RenderPass *RenderP
 template<>
 bool Shader::BindShaderParameter(const std::string Name, const UniformBuffer &Object) const
 {
-    for (auto &module_layout : shaderModuleLayouts | std::views::values) {
-        if (module_layout->namedLayoutBindings.contains(String::to_lower(Name))) {
-            const auto binding = module_layout->namedLayoutBindings.at(String::to_lower(Name));
+    if (shaderLayout->namedLayoutBindings.contains(String::to_lower(Name))) {
+        const auto binding = shaderLayout->namedLayoutBindings.at(String::to_lower(Name));
 
-            ASSERT(binding->descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                   "Descriptor '{}' is not of type buffer",
-                   Name);
+        ASSERT(binding->descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+               "Descriptor '{}' is not of type buffer",
+               Name);
 
-            ASSERT(binding->size != Object.vkBufferSize,
-                   "Buffer '{}' size missmatch! Shader expects {} bytes but buffer has {} bytes.",
-                   Name,
-                   std::to_string(binding->size),
-                   std::to_string(Object.vkBufferSize));
+        ASSERT(binding->size != Object.vkBufferSize,
+               "Buffer '{}' size missmatch! Shader expects {} bytes but buffer has {} bytes.",
+               Name,
+               std::to_string(binding->size),
+               std::to_string(Object.vkBufferSize));
 
-            VkWriteDescriptorSet descriptor_write{};
-            descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptor_write.dstBinding = binding->binding;
-            descriptor_write.dstArrayElement = 0;
-            descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptor_write.descriptorCount = binding->descriptorCount;
-            descriptor_write.pBufferInfo = Object.GetDescriptorInfo();
+        VkWriteDescriptorSet descriptor_write{};
+        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_write.dstBinding = binding->binding;
+        descriptor_write.dstArrayElement = 0;
+        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_write.descriptorCount = binding->descriptorCount;
+        descriptor_write.pBufferInfo = Object.GetDescriptorInfo();
 
-            std::vector<VkWriteDescriptorSet> descriptor_writes;
-            descriptor_writes.reserve(m_vkDescriptorSets.size() * Engine::MAX_FRAMES_IN_FLIGHT);
-            for (const auto descriptor_set : m_vkDescriptorSets) {
-                VkWriteDescriptorSet set_write = descriptor_write;
-                set_write.dstSet = descriptor_set;
-                descriptor_writes.push_back(set_write);
-            }
-            vkUpdateDescriptorSets(device,
-                                   static_cast<uint32_t>(descriptor_writes.size()),
-                                   descriptor_writes.data(),
-                                   0,
-                                   nullptr);
-            return true;
+        // Update all descriptor sets at once
+        std::vector<VkWriteDescriptorSet> descriptor_writes;
+        descriptor_writes.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
+        for (uint32_t frame = 0; frame < Engine::MAX_FRAMES_IN_FLIGHT; ++frame) {
+            descriptor_write.dstSet = m_vkDescriptorSets.at(binding->set)[frame];
+            descriptor_writes.push_back(descriptor_write);
         }
+        vkUpdateDescriptorSets(device,
+                               static_cast<uint32_t>(descriptor_writes.size()),
+                               descriptor_writes.data(),
+                               0,
+                               nullptr);
+        return true;
     }
     return false;
 }
 
 template<> bool Shader::BindShaderParameter(const std::string Name, const Texture &Object) const
 {
-    for (auto &module_layout : shaderModuleLayouts | std::views::values) {
-        if (module_layout->namedLayoutBindings.contains(String::to_lower(Name))) {
-            const auto binding = module_layout->namedLayoutBindings.at(String::to_lower(Name));
+    if (shaderLayout->namedLayoutBindings.contains(String::to_lower(Name))) {
+        const auto binding = shaderLayout->namedLayoutBindings.at(String::to_lower(Name));
 
-            ASSERT(binding->descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                   "Descriptor '{}' is not of type combined image sampler",
-                   Name);
+        ASSERT(binding->descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+               "Descriptor '{}' is not of type combined image sampler",
+               Name);
 
-            VkWriteDescriptorSet descriptor_write{};
-            descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptor_write.dstBinding = binding->binding;
-            descriptor_write.dstArrayElement = 0;
-            descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptor_write.descriptorCount = binding->descriptorCount;
-            const auto image_info = Object.GetDescriptorImageInfo();
-            descriptor_write.pImageInfo = &image_info;
+        VkWriteDescriptorSet descriptor_write{};
+        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_write.dstBinding = binding->binding;
+        descriptor_write.dstArrayElement = 0;
+        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptor_write.descriptorCount = binding->descriptorCount;
+        const auto image_info = Object.GetDescriptorImageInfo();
+        descriptor_write.pImageInfo = &image_info;
 
-            std::vector<VkWriteDescriptorSet> descriptor_writes;
-            descriptor_writes.reserve(m_vkDescriptorSets.size() * Engine::MAX_FRAMES_IN_FLIGHT);
-            for (const auto descriptor_set : m_vkDescriptorSets) {
-                VkWriteDescriptorSet set_write = descriptor_write;
-                set_write.dstSet = descriptor_set;
-                descriptor_writes.push_back(set_write);
-            }
-            vkUpdateDescriptorSets(device,
-                                   static_cast<uint32_t>(descriptor_writes.size()),
-                                   descriptor_writes.data(),
-                                   0,
-                                   nullptr);
-            return true;
+        // Update all descriptor sets at once
+        std::vector<VkWriteDescriptorSet> descriptor_writes;
+        descriptor_writes.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
+        for (uint32_t frame = 0; frame < Engine::MAX_FRAMES_IN_FLIGHT; ++frame) {
+            descriptor_write.dstSet = m_vkDescriptorSets.at(binding->set)[frame];
+            descriptor_writes.push_back(descriptor_write);
         }
+        vkUpdateDescriptorSets(device,
+                               static_cast<uint32_t>(descriptor_writes.size()),
+                               descriptor_writes.data(),
+                               0,
+                               nullptr);
+        return true;
     }
     return false;
 }
@@ -180,78 +182,79 @@ UniformBuffer *Shader::GetUniformBuffer(const std::string Name,
                                         const std::optional<uint32_t> Index) const
 {
     const auto lowered_name = String::to_lower(Name);
-    for (auto &shader_module_layout : shaderModuleLayouts | std::views::values) {
-        if (!shader_module_layout->namedLayoutBindings.contains(lowered_name)) {
-            continue;
-        }
-        if (const auto binding = shader_module_layout->namedLayoutBindings.at(lowered_name);
-            uniformBindingBuffers.contains(binding)) {
+    if (shaderLayout->namedLayoutBindings.contains(lowered_name)) {
+        if (const auto binding = shaderLayout->namedLayoutBindings.at(lowered_name);
+            uniformBindingBuffers.contains(GetHash(binding))) {
 
             return uniformBindingBuffers
-                .at(binding)[Index.has_value() ? Index.value() :
-                                                 GraphicsEngine::Get().currentFrame]
+                .at(GetHash(binding))[Index.has_value() ? Index.value() :
+                                                          GraphicsEngine::Get().currentFrame]
                 .get();
         }
         ASSERT(true, "Uniform '{}' is not a buffer.", Name);
     }
     ASSERT(true, "Object '{}' does not exist.", Name);
-    return nullptr;
 }
 
+// TODO this isn't setup for use with multiple descriptor sets
 std::vector<VkDescriptorSet> Shader::GetDescriptorSets(const std::optional<uint32_t> Index) const
 {
     std::vector<VkDescriptorSet> ds;
-    if (Index.has_value()) {
-        ds.push_back(m_vkDescriptorSets[Index.value()]);
-    }
-    else {
-        ds.push_back(m_vkDescriptorSets[GraphicsEngine::Get().currentFrame]);
+    for (auto vk_descriptor_sets : m_vkDescriptorSets | std::ranges::views::values) {
+        ds.push_back(vk_descriptor_sets[Index.has_value() ? Index.value() :
+                                                            GraphicsEngine::Get().currentFrame]);
     }
     return ds;
 }
 
-void Shader::LoadShader(std::string_view Filepath, ShaderType ShaderType)
+void Shader::LoadShader(const std::vector<std::tuple<std::string_view, ShaderType>> &Shaders)
 {
-    ShaderStage new_shader_stage{};
-    name = File::get_file_name_from_path(Filepath);
-    const auto binary_code = File::read_binary_file(Filepath);
-    new_shader_stage.shaderModule = CreateShaderModule(binary_code);
-    new_shader_stage.pipelineStageCrateInfo = CreateShaderStage(ShaderType,
-                                                                new_shader_stage.shaderModule);
+    std::vector<std::vector<char>> shader_codes;
+    shader_codes.reserve(Shaders.size());
+    for (const auto &[filepath, shader_type] : Shaders) {
+        ShaderStage new_shader_stage{};
+        name = File::get_file_name_from_path(filepath);
+        const auto &binary_code = shader_codes.emplace_back(File::read_binary_file(filepath));
+        new_shader_stage.shaderModule = CreateShaderModule(binary_code);
+        new_shader_stage.pipelineStageCrateInfo = CreateShaderStage(shader_type,
+                                                                    new_shader_stage.shaderModule);
+        m_shaderStages.insert(std::make_pair(shader_type, new_shader_stage));
+        LOG_FORMAT("Create {} shader '{}' from {}",
+            ShaderTypeNames[static_cast<uint32_t>(shader_type)],
+            name,
+            filepath)
+    }
 
-    m_shaderStages.insert(std::make_pair(ShaderType, new_shader_stage));
-    shaderModuleLayouts.emplace(std::make_pair(new_shader_stage.shaderModule,
-                                               std::make_unique<ShaderModuleLayout>(binary_code)));
-
-    std::cout << "Created " << ShaderTypeNames[static_cast<uint32_t>(ShaderType)] << " shader '"
-              << name << "' from " << Filepath << '\n';
+    shaderLayout = std::make_unique<ShaderLayout>(shader_codes);
 }
 
 void Shader::CreateDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> pool_sizes;
-    for (const auto &module_layout : shaderModuleLayouts | std::views::values) {
-        for (const auto set_layout : module_layout->setLayouts) {
-            for (DescriptorSetLayoutBinding binding : set_layout.bindings) {
-                pool_sizes.push_back(
-                    VkDescriptorPoolSize{binding.descriptorType, binding.descriptorCount});
-            }
+    std::unordered_map<VkDescriptorType, uint32_t> descriptor_counts;
+    for (const auto set_layout : shaderLayout->setLayouts) {
+        for (DescriptorSetLayoutBinding binding : set_layout.bindings) {
+            descriptor_counts[binding.descriptorType] += 1;
         }
+    }
+    for (auto [DescriptorType, DescriptorCount] : descriptor_counts) {
+        pool_sizes.push_back(VkDescriptorPoolSize{DescriptorType, DescriptorCount});
     }
 
     VkDescriptorPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
-    pool_info.maxSets = Engine::MAX_FRAMES_IN_FLIGHT * 2;
+    pool_info.maxSets = Engine::MAX_FRAMES_IN_FLIGHT;
 
     VK_ASSERT(vkCreateDescriptorPool(device, &pool_info, nullptr, &m_vkDescriptorPool),
               "Failed to create descriptor pool!")
 }
 
-GraphicsPipeline &Shader::CreateGraphicsPipeline(RenderPass *RenderPass,
-                                                 VkExtent2D &Extent,
-                                                 const VkDescriptorSetLayout DescriptorSetLayout)
+GraphicsPipeline &Shader::CreateGraphicsPipeline(
+    RenderPass *RenderPass,
+    VkExtent2D &Extent,
+    const std::vector<VkDescriptorSetLayout> &DescriptorSetLayout)
 {
     std::vector<VkPipelineShaderStageCreateInfo> createInfos;
     createInfos.reserve(m_shaderStages.size());
@@ -307,51 +310,59 @@ VkPipelineShaderStageCreateInfo Shader::CreateShaderStage(const ShaderType &Shad
 
 void Shader::CreateUniformBuffers(size_t Count)
 {
-    for (const auto &shader_module_layout : shaderModuleLayouts | std::views::values) {
-        for (const auto layout_binding :
-             shader_module_layout->namedLayoutBindings | std::views::values) {
-            if (layout_binding->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
-                auto &buffers = uniformBindingBuffers[layout_binding];
-                for (int i = 0; i < Count; ++i) {
-                    buffers.emplace_back(std::make_unique<UniformBuffer>(layout_binding->size));
-                    BindShaderParameter(layout_binding->name, *buffers.back());
-                }
+    for (const auto layout_binding : shaderLayout->namedLayoutBindings | std::views::values) {
+        if (layout_binding->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+            auto &buffers = uniformBindingBuffers[GetHash(layout_binding)];
+            for (int i = 0; i < Count; ++i) {
+                buffers.emplace_back(std::make_unique<UniformBuffer>(layout_binding->size));
+                BindShaderParameter(layout_binding->name, *buffers.back());
             }
         }
     }
 }
 
-VkDescriptorSetLayout Shader::CreateDescriptorSetLayout()
+void Shader::CreateDescriptorSetLayouts()
 {
-    std::vector<VkDescriptorSetLayoutBinding> bindings;
-    for (const auto &shader_module_layout : shaderModuleLayouts | std::views::values) {
-        for (auto set_layout : shader_module_layout->setLayouts) {
-            bindings.insert(
-                bindings.end(), set_layout.vkBindings.begin(), set_layout.vkBindings.end());
-        }
+    for (auto set_layout : shaderLayout->setLayouts) {
+        VkDescriptorSetLayout &new_layout = m_vkDescriptorSetLayouts[set_layout.setNumber];
+        vkCreateDescriptorSetLayout(Device::Get(), &set_layout.createInfo, nullptr, &new_layout);
     }
-
-    VkDescriptorSetLayoutCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    createInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-    createInfo.pBindings = bindings.data();
-    vkCreateDescriptorSetLayout(Device::Get(), &createInfo, nullptr, &m_vkDescriptorSetLayout);
-
-    return m_vkDescriptorSetLayout;
 }
 
 void Shader::AllocateDescriptorSets()
 {
-    const std::vector layouts(Engine::MAX_FRAMES_IN_FLIGHT, m_vkDescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts;
+    layouts.reserve(m_vkDescriptorSetLayouts.size() * Engine::MAX_FRAMES_IN_FLIGHT);
+
+    // Make a duplicate of each descriptor set layout for each frame so that they can be set on a
+    // per frame basis
+    for (auto vk_descriptor_set_layout : m_vkDescriptorSetLayouts | std::ranges::views::values) {
+        std::fill_n(
+            std::back_inserter(layouts), Engine::MAX_FRAMES_IN_FLIGHT, vk_descriptor_set_layout);
+    }
+    
+    std::vector<VkDescriptorSet> descriptor_sets;
+    descriptor_sets.resize(layouts.size());
 
     VkDescriptorSetAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocate_info.descriptorPool = m_vkDescriptorPool;
     allocate_info.pSetLayouts = layouts.data();
-    allocate_info.descriptorSetCount = Engine::MAX_FRAMES_IN_FLIGHT;
+    allocate_info.descriptorSetCount = layouts.size();
 
-    m_vkDescriptorSets.resize(layouts.size());
-    VK_ASSERT(vkAllocateDescriptorSets(Device::Get(), &allocate_info, m_vkDescriptorSets.data()),
+    VK_ASSERT(vkAllocateDescriptorSets(Device::Get(), &allocate_info, descriptor_sets.data()),
               "Failed to allocate descriptor sets!");
+    uint32_t i = 0;
+    for (const auto &set_number : m_vkDescriptorSetLayouts | std::views::keys) {
+        auto &set_layout = m_vkDescriptorSets[set_number];
+        auto begin_offset_it = descriptor_sets.begin();
+        std::advance(begin_offset_it, i * Engine::MAX_FRAMES_IN_FLIGHT);
+        auto end_offset_it = descriptor_sets.begin();
+        std::advance(end_offset_it,
+                     i * Engine::MAX_FRAMES_IN_FLIGHT + Engine::MAX_FRAMES_IN_FLIGHT);
+        set_layout.insert(set_layout.end(), begin_offset_it, end_offset_it);
+
+        i++;
+    }
 }
 }  // namespace Slipper

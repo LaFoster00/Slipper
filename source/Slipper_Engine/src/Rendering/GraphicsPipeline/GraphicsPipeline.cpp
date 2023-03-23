@@ -1,14 +1,13 @@
 #include "GraphicsPipeline.h"
 
 #include "PipelineLayout.h"
-#include "Window/Window.h"
 namespace Slipper
 {
 GraphicsPipeline::GraphicsPipeline(
     const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
     const VkExtent2D Extent,
     const RenderPass *RenderPass,
-    const VkDescriptorSetLayout DescriptorSetLayout)
+    const std::vector<VkDescriptorSetLayout> &DescriptorSetLayout)
     : device(Device::Get()), m_renderPass(RenderPass), m_shaderStages(ShaderStages)
 {
     vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, DescriptorSetLayout);

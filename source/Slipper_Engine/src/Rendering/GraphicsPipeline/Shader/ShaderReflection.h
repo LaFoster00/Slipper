@@ -5,15 +5,17 @@ struct SpvReflectBlockVariable;
 
 namespace Slipper
 {
-struct DescriptorSetLayoutData;
+	struct IntermediateDSLD;
+	struct DescriptorSetLayoutData;
 
 class ShaderReflection
 {
  public:
-    static std::vector<DescriptorSetLayoutData> GetDescriptorSetsLayoutData(
-        const void *SpirvCode, size_t SpirvCodeByteCount);
+    static std::vector<DescriptorSetLayoutData> GetMergedDescriptorSetsLayoutData(
+        std::vector<std::vector<char>> SpirvCodes);
 
-    static void create_descriptor_sets(const size_t Count,
-                                       const VkDescriptorSetLayout DescriptorSetLayout);
+ private:
+    static std::vector<IntermediateDSLD> GetDescriptorSetsLayoutData(
+        const std::vector<char> &SpirvCode);
 };
 }  // namespace Slipper

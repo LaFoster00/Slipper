@@ -15,7 +15,7 @@ class GraphicsPipeline
     GraphicsPipeline(const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
                      VkExtent2D Extent,
                      const RenderPass *RenderPass,
-                     const VkDescriptorSetLayout DescriptorSetLayout);
+                     const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts);
     ~GraphicsPipeline();
 
     void Bind(const VkCommandBuffer &CommandBuffer) const;

@@ -53,7 +53,10 @@ struct DescriptorSetLayoutBinding
     {
         return *reinterpret_cast<const VkDescriptorSetLayoutBinding *>(&binding);
     }
+
+    using HashT = size_t;
 };
+
 }  // namespace Slipper
 
 namespace std
@@ -72,10 +75,20 @@ template<> struct hash<Slipper::DescriptorSetLayoutBinding>
                      binding.set,
                      binding.resourceType);
         return hash;  // or use boost::hash_combine (see Discussion)
-                                // https://en.cppreference.com/w/Talk:cpp/utility/hash
+                      // https://en.cppreference.com/w/Talk:cpp/utility/hash
     }
 };
 }  // namespace std
+
+inline size_t GetHash(const Slipper::DescriptorSetLayoutBinding &Object)
+{
+    return std::hash<Slipper::DescriptorSetLayoutBinding>{}(Object);
+}
+
+inline size_t GetHash(const Slipper::DescriptorSetLayoutBinding *Object)
+{
+    return std::hash<Slipper::DescriptorSetLayoutBinding>{}(*Object);
+}
 
 namespace Slipper
 {
@@ -86,19 +99,50 @@ struct DescriptorSetLayoutData
     std::vector<DescriptorSetLayoutBinding> bindings;
     // Required for the create info. Otherwise it will reference an invalid array
     std::vector<VkDescriptorSetLayoutBinding> vkBindings;
+
+    DescriptorSetLayoutData() = default;
+
+    // Only move otherwise create info wont be valid
+    DescriptorSetLayoutData(const DescriptorSetLayoutData &&Other) noexcept
+	    : setNumber(Other.setNumber),
+	      createInfo(Other.createInfo),
+	      bindings(Other.bindings),
+	      vkBindings(Other.vkBindings)
+    {
+        createInfo.pBindings = vkBindings.data();
+    }
+    DescriptorSetLayoutData(const DescriptorSetLayoutData &Other)
+        : setNumber(Other.setNumber),
+          createInfo(Other.createInfo),
+          bindings(Other.bindings),
+          vkBindings(Other.vkBindings)
+    {
+        createInfo.pBindings = vkBindings.data();
+    };
+
+    void UpdateCreateInfo()
+    {
+        vkBindings.clear();
+        vkBindings.reserve(bindings.size());
+	    for (auto &binding : bindings)
+	    {
+            vkBindings.push_back(binding.GetVkBinding());
+	    }
+        createInfo.pBindings = vkBindings.data();
+        createInfo.bindingCount = vkBindings.size();
+    }
 };
 
-class ShaderModuleLayout : DeviceDependentObject
+class ShaderLayout : DeviceDependentObject
 {
  public:
-    explicit ShaderModuleLayout(const std::vector<char> &BinaryCode);
-    ShaderModuleLayout(const ShaderModuleLayout &Other) : setLayouts(Other.setLayouts)
+    explicit ShaderLayout(const std::vector<std::vector<char>> &BinaryCodes);
+    ShaderLayout(const ShaderLayout &Other) : setLayouts(Other.setLayouts)
     {
         PopulateNamesLayoutBindings();
     }
 
-    ShaderModuleLayout(const ShaderModuleLayout &&Other) noexcept
-        : setLayouts(std::move(Other.setLayouts))
+    ShaderLayout(const ShaderLayout &&Other) noexcept : setLayouts(std::move(Other.setLayouts))
     {
         PopulateNamesLayoutBindings();
     }

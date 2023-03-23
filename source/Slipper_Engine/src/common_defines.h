@@ -18,7 +18,8 @@
         throw std::runtime_error(formatedMessage);                                          \
     }
 
-#define LOG(message) std::cout << message;
+#define LOG(message) std::cout << message << '\n';
+#define LOG_FORMAT(message, ...) std::cout << std::format(message, __VA_ARGS__) << '\n';
 
 #define ASSERT(statement, message, ...)                                                       \
     if (statement) {                                                                          \
@@ -44,9 +45,14 @@ inline void hash_combine(std::size_t &seed)
 }
 
 template<typename T, typename... Rest>
-inline void hash_combine(std::size_t &seed, const T &v, const Rest &... rest)
+void hash_combine(std::size_t &Seed, const T &V, const Rest &...rest)
 {
     std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    hash_combine(seed, rest...);
+    Seed ^= hasher(V) + 0x9e3779b9 + (Seed << 6) + (Seed >> 2);
+    hash_combine(Seed, rest...);
+}
+
+template<typename T> void append(std::vector<T> &A, std::vector<T> &B)
+{
+    A.insert(A.end(), B.begin(), B.end());
 }

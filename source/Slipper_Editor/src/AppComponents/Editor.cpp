@@ -1,14 +1,11 @@
 #include "Editor.h"
 
-#include "CameraEditor.h"
-#include "ComponentEditorRegistry.h"
 #include "Core/Application.h"
 #include "Drawing/Sampler.h"
 #include "EntityOutliner.h"
 #include "GraphicsEngine.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Texture/Texture2D.h"
-#include "TransformEditor.h"
 
 namespace Slipper::Editor
 {
