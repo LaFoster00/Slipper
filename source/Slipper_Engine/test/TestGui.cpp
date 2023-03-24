@@ -1,15 +1,11 @@
 #include "TestGui.h"
 
-#include <backends/imgui_impl_vulkan.h>
-#include <imgui.h>
-
 #include "Core/Application.h"
 #include "Drawing/Sampler.h"
 #include "GraphicsEngine.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Presentation/SwapChain.h"
 #include "Texture/Texture2D.h"
-#include "Window.h"
 
 using namespace std::placeholders;
 

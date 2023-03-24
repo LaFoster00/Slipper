@@ -143,6 +143,8 @@ set(IMGUI_FILES
     ${EXTERNAL_LIBS_DIR}/ImGuizmo/ImGuizmo.cpp)
 
 add_library(IMGUI STATIC ${IMGUI_FILES})
+target_compile_definitions(IMGUI PRIVATE IMGUI_DEFINE_MATH_OPERATORS)
+
 # private link and include dependencies so that users of this library can use their own linking
 target_link_libraries(IMGUI PRIVATE ${Vulkan_LIBRARIES} glfw)
 target_include_directories(IMGUI PRIVATE ${Vulkan_INCLUDE_DIRS})

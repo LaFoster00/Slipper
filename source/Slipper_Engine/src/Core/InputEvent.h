@@ -1,7 +1,4 @@
 #pragma once
-#include <imgui.h>
-#include <sstream>
-
 #include "Event.h"
 #include "Input.h"
 

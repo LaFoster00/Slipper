@@ -34,11 +34,13 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
-#include <imgui.h>
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
 
-#include <ImGuizmo.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+
+#include <ImGuizmo.h>
 
 #include "stb_image.h"
 
