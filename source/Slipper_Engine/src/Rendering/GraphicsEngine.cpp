@@ -9,6 +9,7 @@
 
 #include "Camera.h"
 #include "Core/Application.h"
+#include "Core/ShaderManager.h"
 #include "Drawing/Sampler.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
@@ -17,6 +18,8 @@
 #include "Time/Time.h"
 #include "TransformComponent.h"
 #include "Window.h"
+#include "Core/ModelManager.h"
+#include "Core/TextureManager.h"
 
 namespace Slipper
 {
@@ -52,10 +55,9 @@ GraphicsEngine::~GraphicsEngine()
         vkDestroyFence(device, in_flight_fence, nullptr);
     }
 
-    shaders.clear();
-
-    models.clear();
-    textures.clear();
+    ShaderManager::Shutdown();
+    ModelManager::Shutdown();
+    TextureManager::Shutdown();
 }
 
 void GraphicsEngine::Init()
@@ -101,16 +103,15 @@ void GraphicsEngine::Shutdown()
 void GraphicsEngine::SetupDebugResources()
 {
     // The default shader depends on these so initialize them first
-    textures.emplace_back(Texture2D::LoadTexture(DEMO_TEXTURE_PATH, true));
-    models.emplace_back(std::make_unique<Model>(DEMO_MODEL_PATH));
+    TextureManager::Load2D(DEMO_TEXTURE_PATH, true);
+    ModelManager::Load(DEMO_MODEL_PATH);
 
     /* Create shader for this pipeline. */
-    std::vector<std::tuple<std::string_view, ShaderType>> shader_stages = {
-        {"./EngineContent/Shaders/Spir-V/Basic.vert.spv", ShaderType::VERTEX},
-        {"./EngineContent/Shaders/Spir-V/Basic.frag.spv", ShaderType::FRAGMENT}};
+    auto debug_shader = ShaderManager::LoadShader(
+        {{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
+         {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}});
 
-    shaders.emplace_back(std::make_unique<Shader>("BasicVertex", shader_stages));
-    shaders[0]->BindShaderParameter("texSampler", *textures[0]);
+    debug_shader->BindShaderParameter("texSampler", TextureManager::Get2D("Viking"));
 }
 
 void GraphicsEngine::CreateSyncObjects()
@@ -211,7 +212,8 @@ void GraphicsEngine::AddWindow(Window &Window)
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface)
 {
-    shaders[0]->RegisterForRenderPass(viewportRenderPass, Surface.GetResolution());
+    ShaderManager::GetShader("Basic")->RegisterForRenderPass(viewportRenderPass,
+                                                        Surface.GetResolution());
 
     SetupSimpleDraw();
 }
@@ -241,7 +243,7 @@ void GraphicsEngine::SetupSimpleDraw()
             debug_shader->GetUniformBuffer("vp")->SubmitData(&vp);
             debug_shader->GetUniformBuffer("m")->SubmitData(&model);
 
-            models[0]->Draw(CommandBuffer);
+            ModelManager::GetModel("Viking")->Draw(CommandBuffer);
         });
 }
 

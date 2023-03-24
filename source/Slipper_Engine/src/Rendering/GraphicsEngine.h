@@ -80,9 +80,6 @@ class GraphicsEngine : DeviceDependentObject
     uint32_t currentFrame = 0;
 
     std::unordered_set<NonOwningPtr<Window>> windows;
-    std::vector<std::unique_ptr<Shader>> shaders;
-    std::vector<std::unique_ptr<Texture>> textures;
-    std::unique_ptr<Texture2D> depthBuffer;
 
     NonOwningPtr<RenderPass> viewportRenderPass = nullptr;
     std::unique_ptr<OffscreenSwapChain> viewportSwapChain;
@@ -91,7 +88,6 @@ class GraphicsEngine : DeviceDependentObject
     NonOwningPtr<RenderPass> windowRenderPass = nullptr;
     std::unordered_map<std::string, std::unique_ptr<RenderPass>> renderPasses;
     std::unordered_map<NonOwningPtr<RenderPass>, std::string> renderPassNames;
-    std::vector<std::unique_ptr<Model>> models;
 
     // Draw Commands
     std::unique_ptr<CommandPool> drawCommandPool;

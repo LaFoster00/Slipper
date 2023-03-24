@@ -33,8 +33,15 @@ std::string get_file_name_from_path(const std::string_view Filepath)
     if (*Filepath.begin() == '.') {
         std::ranges::replace(fp, '\\', '/');
     }
-    fp = fp.substr(fp.find_last_of('/') + 1);
-    return fp.substr(0, fp.find_last_of('.'));
+    std::string_view vfp = Filepath;
+    vfp = vfp.substr(vfp.find_last_of('/') + 1);
+    return std::string(vfp.substr(0, vfp.find_last_of('.')));
+}
+
+std::string get_file_ending_from_path(std::string_view Filepath)
+{
+	const auto filename = get_file_name_from_path(Filepath);
+    return filename.substr(filename.find_last_of('.'));
 }
 }  // namespace File
 }  // namespace Slipper

@@ -6,11 +6,14 @@ namespace Slipper
 {
 class ShaderManager
 {
+    using ShaderNameHash = std::hash<std::string_view>;
  public:
-    static Slipper::Shader *GetShader(const std::string &filepath);
-    static void ShutDown();
+    static NonOwningPtr<Shader> GetShader(const std::string_view &Name);
+    static NonOwningPtr<Shader> LoadShader(const std::vector<std::string_view> &Filepaths);
+    static void Shutdown();
 
  private:
-    static std::unordered_map<std::string, Slipper::Shader *> m_shader;
+    static inline std::vector<OwningPtr<Shader>> m_shaders;
+    static inline std::map<size_t, NonOwningPtr<Shader>> m_shader;
 };
 }  // namespace Slipper
