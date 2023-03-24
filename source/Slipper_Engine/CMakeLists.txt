@@ -107,6 +107,8 @@ target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS})
 target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC "${EXTERNAL_LIBS_DIR}/glm")
 #stb
 target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC "${EXTERNAL_LIBS_DIR}/stb")
+#magin_enum
+target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC "${EXTERNAL_LIBS_DIR}/magic_enum/include")
 
 
 ##### Test Application #####

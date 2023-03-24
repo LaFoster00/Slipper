@@ -158,6 +158,8 @@ GroupSources(extern/ImGuizmo Source/ImGuizmo)
 #entt
 add_subdirectory(${EXTERNAL_LIBS_DIR}/entt)
 
+#magic_enum
+add_subdirectory(${EXTERNAL_LIBS_DIR}/magic_enum)
 
 if( MSVC )
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
