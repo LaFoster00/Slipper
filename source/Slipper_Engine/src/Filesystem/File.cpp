@@ -38,10 +38,24 @@ std::string get_file_name_from_path(const std::string_view Filepath)
     return std::string(vfp.substr(0, vfp.find_last_of('.')));
 }
 
+std::string remove_file_type_from_name(std::string_view FileName)
+{
+    return std::string(FileName.substr(0, FileName.find_last_of('.')));
+}
+
 std::string get_file_ending_from_path(std::string_view Filepath)
 {
-	const auto filename = get_file_name_from_path(Filepath);
-    return filename.substr(filename.find_last_of('.'));
+    const auto filename = get_file_name_from_path(Filepath);
+    const std::string_view filename_view = filename;
+    return std::string(filename_view.substr(filename_view.find_last_of('.')).substr(1));
+}
+
+std::string get_shader_type_from_spirv_path(std::string_view Filepath)
+{
+    const auto filename = get_file_name_from_path(Filepath);
+    const std::string_view filename_view = filename;
+    return std::string(
+        filename_view.substr(filename_view.find('.')).substr(1, filename_view.find('.')));
 }
 }  // namespace File
 }  // namespace Slipper

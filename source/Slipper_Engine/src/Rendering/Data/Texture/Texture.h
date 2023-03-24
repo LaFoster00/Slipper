@@ -5,6 +5,7 @@
 
 namespace Slipper
 {
+class Texture;
 class Sampler;
 class Buffer;
 

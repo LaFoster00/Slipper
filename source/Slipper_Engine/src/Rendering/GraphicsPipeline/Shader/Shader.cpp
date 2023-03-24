@@ -10,11 +10,9 @@ namespace Slipper
 {
 const char *ShaderTypeNames[]{"UNDEFINED", "Vertex", "Fragment", "Compute"};
 
-Shader::Shader(std::string_view Name,
-               std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
+Shader::Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
                const std::optional<std::vector<RenderPass *>> RenderPasses,
                std::optional<VkExtent2D> RenderPassesExtent)
-    : device(Device::Get()), name(Name)
 {
     LoadShader(ShaderStagesCode);
 
@@ -125,41 +123,6 @@ bool Shader::BindShaderParameter(const std::string Name, const UniformBuffer &Ob
         descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptor_write.descriptorCount = binding->descriptorCount;
         descriptor_write.pBufferInfo = Object.GetDescriptorInfo();
-
-        // Update all descriptor sets at once
-        std::vector<VkWriteDescriptorSet> descriptor_writes;
-        descriptor_writes.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
-        for (uint32_t frame = 0; frame < Engine::MAX_FRAMES_IN_FLIGHT; ++frame) {
-            descriptor_write.dstSet = m_vkDescriptorSets.at(binding->set)[frame];
-            descriptor_writes.push_back(descriptor_write);
-        }
-        vkUpdateDescriptorSets(device,
-                               static_cast<uint32_t>(descriptor_writes.size()),
-                               descriptor_writes.data(),
-                               0,
-                               nullptr);
-        return true;
-    }
-    return false;
-}
-
-template<> bool Shader::BindShaderParameter(const std::string Name, const Texture &Object) const
-{
-    if (shaderLayout->namedLayoutBindings.contains(String::to_lower(Name))) {
-        const auto binding = shaderLayout->namedLayoutBindings.at(String::to_lower(Name));
-
-        ASSERT(binding->descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-               "Descriptor '{}' is not of type combined image sampler",
-               Name);
-
-        VkWriteDescriptorSet descriptor_write{};
-        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_write.dstBinding = binding->binding;
-        descriptor_write.dstArrayElement = 0;
-        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptor_write.descriptorCount = binding->descriptorCount;
-        const auto image_info = Object.GetDescriptorImageInfo();
-        descriptor_write.pImageInfo = &image_info;
 
         // Update all descriptor sets at once
         std::vector<VkWriteDescriptorSet> descriptor_writes;
@@ -311,7 +274,8 @@ void Shader::CreateUniformBuffers(size_t Count)
             auto &buffers = uniformBindingBuffers[GetHash(layout_binding)];
             for (int i = 0; i < Count; ++i) {
                 buffers.emplace_back(std::make_unique<UniformBuffer>(layout_binding->size));
-                BindShaderParameter(layout_binding->name, *buffers.back());
+                //TODO Reenable
+            	//BindShaderParameter(layout_binding->name, *buffers.back());
             }
         }
     }

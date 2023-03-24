@@ -8,6 +8,9 @@ template<typename T> class SharedPtr;
 template<typename To, typename From>
 concept ConvertiblePtr = std::is_convertible_v<To *, From *>;
 
+template<typename From, typename To>
+concept ConvertibleFromPtr = std::is_convertible_v<To *, From *>;
+
 template<typename T> struct NonOwningPtr
 {
     friend std::hash<NonOwningPtr<T>>;
@@ -76,6 +79,12 @@ template<typename T> struct NonOwningPtr
         return bool(m_ptr);
     }
 
+    template<ConvertibleFromPtr<T> U>
+    NonOwningPtr<U> Cast()
+    {
+        return NonOwningPtr<U>(m_ptr);
+    }
+
  private:
     T *m_ptr;
 };
@@ -100,7 +109,7 @@ template<typename T> struct OwningPtr
     {
     }
 
-    template<ConvertiblePtr<T> U> explicit OwningPtr(U *Ptr) : m_ptr(Ptr)
+    template<ConvertiblePtr<T> U> OwningPtr(U *Ptr) : m_ptr(Ptr)
     {
     }
 
@@ -114,7 +123,6 @@ template<typename T> struct OwningPtr
     template<ConvertiblePtr<T> U>
     OwningPtr(OwningPtr<U> &&Other) noexcept : m_ptr(std::move(Other.m_ptr))
     {
-        Other.m_stableThisPtr = this;
     }
 
     OwningPtr(OwningPtr<T> &Other) = delete;

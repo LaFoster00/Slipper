@@ -9,7 +9,9 @@
 
 #include "Camera.h"
 #include "Core/Application.h"
+#include "Core/ModelManager.h"
 #include "Core/ShaderManager.h"
+#include "Core/TextureManager.h"
 #include "Drawing/Sampler.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
@@ -18,8 +20,6 @@
 #include "Time/Time.h"
 #include "TransformComponent.h"
 #include "Window.h"
-#include "Core/ModelManager.h"
-#include "Core/TextureManager.h"
 
 namespace Slipper
 {
@@ -111,7 +111,7 @@ void GraphicsEngine::SetupDebugResources()
         {{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
          {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}});
 
-    debug_shader->BindShaderParameter("texSampler", TextureManager::Get2D("Viking"));
+    debug_shader->BindShaderParameter("texSampler", TextureManager::Get2D("viking_room"));
 }
 
 void GraphicsEngine::CreateSyncObjects()
@@ -212,8 +212,8 @@ void GraphicsEngine::AddWindow(Window &Window)
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface)
 {
-    ShaderManager::GetShader("Basic")->RegisterForRenderPass(viewportRenderPass,
-                                                        Surface.GetResolution());
+    auto debug_shader = ShaderManager::GetShader("Basic");
+    debug_shader->RegisterForRenderPass(viewportRenderPass, Surface.GetResolution());
 
     SetupSimpleDraw();
 }
@@ -243,7 +243,7 @@ void GraphicsEngine::SetupSimpleDraw()
             debug_shader->GetUniformBuffer("vp")->SubmitData(&vp);
             debug_shader->GetUniformBuffer("m")->SubmitData(&model);
 
-            ModelManager::GetModel("Viking")->Draw(CommandBuffer);
+            ModelManager::GetModel("viking_room")->Draw(CommandBuffer);
         });
 }
 

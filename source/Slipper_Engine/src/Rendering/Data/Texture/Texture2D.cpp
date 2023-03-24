@@ -38,7 +38,7 @@ Texture2D::~Texture2D()
 {
 }
 
-std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath,
+OwningPtr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath,
                                                   const bool GenerateMipMaps)
 {
     VkExtent3D tex_dimensions{0, 0, 1};
@@ -59,7 +59,7 @@ std::unique_ptr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepat
 
     auto image = StbImage(
         pixels, tex_dimensions, Engine::TARGET_VIEWPORT_TEXTURE_FORMAT, std::move(absolute_path));
-    return std::make_unique<Texture2D>(image, GenerateMipMaps);
+    return new Texture2D(image, GenerateMipMaps);
 }
 
 void Texture2D::CreateTexture2D(void *Data, const VkMemoryPropertyFlags MemoryFlags)

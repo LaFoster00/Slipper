@@ -102,6 +102,8 @@ inline static std::map<VkResult, std::string_view> ResultToString = {
 
 #define BIT(x) (1 << x)
 
+using StringViewHash = std::hash<std::string_view>;
+
 inline void hash_combine(std::size_t &seed)
 {
 }

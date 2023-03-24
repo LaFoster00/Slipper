@@ -142,11 +142,6 @@ class ShaderLayout : DeviceDependentObject
         PopulateNamesLayoutBindings();
     }
 
-    ShaderLayout(const ShaderLayout &&Other) noexcept : setLayouts(std::move(Other.setLayouts))
-    {
-        PopulateNamesLayoutBindings();
-    }
-
  private:
     void PopulateNamesLayoutBindings();
 
