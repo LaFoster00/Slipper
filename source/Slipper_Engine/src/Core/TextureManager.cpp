@@ -28,7 +28,7 @@ NonOwningPtr<Texture2D> TextureManager::Load2D(std::string_view Filepath, bool G
     const auto &new_texture = std::get<OwningPtr<Texture2D>>(
         m_textures.emplace_back(Texture2D::LoadTexture(Filepath, GenerateMipMaps)));
     m_namedTextures.emplace(texture_name_hash, NonOwningPtr<Texture2D>(new_texture));
-    LOG_FORMAT("Loaded texture '{}' from path {}", texture_name, Filepath);
+    LOG_FORMAT("Loaded texture '{}' from {}", texture_name, Filepath);
     return new_texture;
 }
 

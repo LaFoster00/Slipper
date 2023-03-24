@@ -32,7 +32,7 @@ NonOwningPtr<Shader> ShaderManager::LoadShader(const std::vector<std::string_vie
             shader_stages.emplace_back(filepath, ShaderType::FRAGMENT);
     }
     const auto &new_shader = m_shaders.emplace_back(OwningPtr<Shader>(new Shader(shader_stages)));
-    LOG_FORMAT("Loading shader '{}'", shader_name);
+    LOG_FORMAT("Loaded shader '{}'", shader_name);
     return m_namedShaders.emplace(hash, NonOwningPtr<Shader>(new_shader)).first->second;
 }
 

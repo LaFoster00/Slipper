@@ -18,7 +18,7 @@ NonOwningPtr<Model> ModelManager::Load(std::string_view Filepath)
         return m_namedModels.at(model_name_hash);
     }
 
-    LOG_FORMAT("Loaded model '{}' in filepath '{}'", model_name, Filepath);
+    LOG_FORMAT("Loaded model '{}' from '{}'", model_name, Filepath);
     auto &new_model = m_models.emplace_back(new Model(Filepath));
     return m_namedModels.emplace(model_name_hash, new_model).first->second;
 }

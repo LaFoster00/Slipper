@@ -107,11 +107,9 @@ void GraphicsEngine::SetupDebugResources()
     ModelManager::Load(DEMO_MODEL_PATH);
 
     /* Create shader for this pipeline. */
-    auto debug_shader = ShaderManager::LoadShader(
-        {{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
-         {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}});
-
-    debug_shader->BindShaderParameter("texSampler", TextureManager::Get2D("viking_room"));
+    ShaderManager::LoadShader({{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
+                               {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}})
+        ->BindShaderParameter("texSampler", TextureManager::Get2D("viking_room"));
 }
 
 void GraphicsEngine::CreateSyncObjects()
