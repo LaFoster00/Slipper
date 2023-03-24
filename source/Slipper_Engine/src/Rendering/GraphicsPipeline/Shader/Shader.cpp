@@ -274,8 +274,7 @@ void Shader::CreateUniformBuffers(size_t Count)
             auto &buffers = uniformBindingBuffers[GetHash(layout_binding)];
             for (int i = 0; i < Count; ++i) {
                 buffers.emplace_back(std::make_unique<UniformBuffer>(layout_binding->size));
-                //TODO Reenable
-            	//BindShaderParameter(layout_binding->name, *buffers.back());
+            	BindShaderParameter(layout_binding->name, *buffers.back());
             }
         }
     }
