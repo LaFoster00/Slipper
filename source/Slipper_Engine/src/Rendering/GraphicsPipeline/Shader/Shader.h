@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Buffer.h"
 #include "GraphicsEngine.h"
 #include "ShaderLayout.h"
 
@@ -38,20 +37,19 @@ struct ShaderUniformObject
     virtual void const *GetData() const = 0;
 };
 
-struct UniformMVP final : ShaderUniformObject
+struct UniformVP final : ShaderUniformObject
 {
-    glm::mat4 model = {};
     glm::mat4 view = {};
     glm::mat4 projection = {};
 
     size_t GetDataSize() const override
     {
-        return sizeof(UniformMVP);
+        return sizeof(UniformVP);
     }
 
     void const *GetData() const override
     {
-        return &model;
+        return &view;
     }
 };
 

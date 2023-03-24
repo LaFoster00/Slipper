@@ -41,6 +41,8 @@
 
 #include "stb_image.h"
 
+#include "magic_enum.hpp"
+
 #include "Core/Entity.h"
 
 #include "Core/Pointer.h"

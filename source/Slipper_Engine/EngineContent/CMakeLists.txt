@@ -4,7 +4,7 @@ file(GLOB_RECURSE ENGINE_CONTENT *.*)
 list(FILTER ENGINE_CONTENT EXCLUDE REGEX ".spv|CMakeLists.txt")
 
 option(SLIPPER_COMPILE_SHADERS ON)
-if(COMPILE_SHADERS)
+if(SLIPPER_COMPILE_SHADERS)
     message("Compiling Shaders")
     set(SHADER_DIR ${CMAKE_CURRENT_LIST_DIR}/Shaders)
     file(GLOB_RECURSE SHADERS ${SHADER_DIR}/*.vert ${SHADER_DIR}/*.frag ${SHADER_DIR}/*.comp ${SHADER_DIR}/*.geom ${SHADER_DIR}/*.tesc ${SHADER_DIR}/*.tese ${SHADER_DIR}/*.mesh ${SHADER_DIR}/*.task ${SHADER_DIR}/*.rgen ${SHADER_DIR}/*.rchit ${SHADER_DIR}/*.rmiss)
@@ -31,7 +31,7 @@ list(APPEND ENGINE_CONTENT ${SPV_SHADERS})
 add_custom_target(SlipperEngine_EngineContent ALL SOURCES ${ENGINE_CONTENT})
 
 # Importet from SlipperEngine
-GroupSources(..\\EngineContent EngineContent)
+GroupSources(../EngineContent EngineContent)
 
 SetBuildDirectory()
 

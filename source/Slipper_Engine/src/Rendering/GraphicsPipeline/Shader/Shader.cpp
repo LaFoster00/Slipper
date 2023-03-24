@@ -3,8 +3,8 @@
 #include "File.h"
 #include "GraphicsPipeline.h"
 #include "Mesh/UniformBuffer.h"
+#include "RenderPass.h"
 #include "Texture/Texture.h"
-#include "spirv_reflect.h"
 
 namespace Slipper
 {
@@ -220,9 +220,9 @@ void Shader::LoadShader(const std::vector<std::tuple<std::string_view, ShaderTyp
                                                                     new_shader_stage.shaderModule);
         m_shaderStages.insert(std::make_pair(shader_type, new_shader_stage));
         LOG_FORMAT("Create {} shader '{}' from {}",
-            ShaderTypeNames[static_cast<uint32_t>(shader_type)],
-            name,
-            filepath)
+                   ShaderTypeNames[static_cast<uint32_t>(shader_type)],
+                   name,
+                   filepath)
     }
 
     shaderLayout = std::make_unique<ShaderLayout>(shader_codes);
@@ -231,21 +231,17 @@ void Shader::LoadShader(const std::vector<std::tuple<std::string_view, ShaderTyp
 void Shader::CreateDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> pool_sizes;
-    std::unordered_map<VkDescriptorType, uint32_t> descriptor_counts;
     for (const auto set_layout : shaderLayout->setLayouts) {
         for (DescriptorSetLayoutBinding binding : set_layout.bindings) {
-            descriptor_counts[binding.descriptorType] += 1;
+            pool_sizes.push_back({binding.descriptorType, binding.descriptorCount});
         }
-    }
-    for (auto [DescriptorType, DescriptorCount] : descriptor_counts) {
-        pool_sizes.push_back(VkDescriptorPoolSize{DescriptorType, DescriptorCount});
     }
 
     VkDescriptorPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
-    pool_info.maxSets = Engine::MAX_FRAMES_IN_FLIGHT;
+    pool_info.maxSets = shaderLayout->setLayouts.size() * Engine::MAX_FRAMES_IN_FLIGHT;
 
     VK_ASSERT(vkCreateDescriptorPool(device, &pool_info, nullptr, &m_vkDescriptorPool),
               "Failed to create descriptor pool!")
@@ -340,7 +336,7 @@ void Shader::AllocateDescriptorSets()
         std::fill_n(
             std::back_inserter(layouts), Engine::MAX_FRAMES_IN_FLIGHT, vk_descriptor_set_layout);
     }
-    
+
     std::vector<VkDescriptorSet> descriptor_sets;
     descriptor_sets.resize(layouts.size());
 

@@ -229,14 +229,17 @@ void GraphicsEngine::SetupSimpleDraw()
             cam_parameters.UpdateViewTransform(cam_transform);
             Transform transform({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
 
-            UniformMVP mvp;
-            mvp.model = transform.GetModelMatrix();
-            mvp.view = cam_parameters.view;
-            mvp.projection = cam_parameters.GetProjection(
+            UniformVP vp;
+            vp.view = cam_parameters.view;
+            vp.projection = cam_parameters.GetProjection(
                 RenderPass.GetActiveSwapChain()->GetResolution().width /
                 static_cast<float>(RenderPass.GetActiveSwapChain()->GetResolution().height));
 
-            debug_shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
+            UniformModel model;
+            model.model = transform.GetModelMatrix();
+
+            debug_shader->GetUniformBuffer("vp")->SubmitData(&vp);
+            debug_shader->GetUniformBuffer("m")->SubmitData(&model);
 
             models[0]->Draw(CommandBuffer);
         });
@@ -249,19 +252,22 @@ void GraphicsEngine::SubmitDraw(const RenderPass *RenderPass,
 {
     SubmitSingleDrawCommand(RenderPass, [=, this](const VkCommandBuffer &CommandBuffer) {
         Shader->Use(CommandBuffer, RenderPass);
-        UniformMVP mvp;
-        mvp.model = Transform;
-        mvp.view = glm::lookAt(
+        UniformVP vp;
+        vp.view = glm::lookAt(
             glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        mvp.projection = glm::perspective(
+        vp.projection = glm::perspective(
             glm::radians(45.0f),
             RenderPass->GetActiveSwapChain()->GetResolution().width /
                 static_cast<float>(RenderPass->GetActiveSwapChain()->GetResolution().height),
             0.1f,
             10.0f);
 
-        mvp.projection[1][1] *= -1;
-        Shader->GetUniformBuffer("mvp")->SubmitData(&mvp);
+        UniformModel model;
+        model.model = Transform;
+
+        vp.projection[1][1] *= -1;
+        Shader->GetUniformBuffer("vp")->SubmitData(&vp);
+        Shader->GetUniformBuffer("m")->SubmitData(&model);
         Mesh->Bind(CommandBuffer);
         vkCmdDrawIndexed(CommandBuffer, static_cast<uint32_t>(Mesh->NumIndex()), 1, 0, 0, 0);
     });

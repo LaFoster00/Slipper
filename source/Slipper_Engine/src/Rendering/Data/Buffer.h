@@ -26,7 +26,7 @@ class Buffer : DeviceDependentObject
         vkUnmapMemory(Device::Get(), Buffer);
     }
 
-    void SetBufferData(const ShaderUniformObject *DataObject, const Buffer &Buffer);
+    static void SetBufferData(const ShaderUniformObject *DataObject, const Buffer &Buffer);
 
     static void CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer);
 
