@@ -25,3 +25,6 @@
 [submodule "extern/entt"]
 	path = extern/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "extern/magic_enum"]
+	path = extern/magic_enum
+	url = https://github.com/Neargye/magic_enum.git
