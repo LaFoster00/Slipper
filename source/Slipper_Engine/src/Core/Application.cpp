@@ -1,8 +1,8 @@
 #include "Application.h"
 
 #include "AppComponent.h"
-#include "AppComponents/Gui.h"
 #include "AppComponents/Ecs.h"
+#include "AppComponents/Gui.h"
 #include "AppEvents.h"
 #include "Event.h"
 #include "GraphicsEngine.h"
@@ -32,9 +32,7 @@ Application::~Application()
     }
     appComponents.clear();
 
-    guiComponent->Shutdown();
     GraphicsEngine::Shutdown();
-    ecsComponent->Shutdown();
     window.reset();
     Device::Destroy();
     glfwTerminate();
@@ -55,21 +53,12 @@ void Application::Init()
     Device::PickPhysicalDevice(&window->GetSurface(), true);
     GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableSampleCount();
 
-
-    ecsComponent = new Ecs();
-    ecsComponent->Init();
+    ecsComponent = AddComponent(new Ecs());
 
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
 
-    guiComponent = new Gui();
-    guiComponent->Init();
-}
-
-void Application::AddComponent(AppComponent *ProgramComponent)
-{
-    ProgramComponent->Init();
-    appComponents.push_back(std::unique_ptr<AppComponent>(ProgramComponent));
+    guiComponent = AddComponent(new Gui());
 }
 
 void Application::Close()
@@ -132,7 +121,7 @@ void Application::Run()
 
 void Application::OnEvent(Event &Event)
 {
-    // std::cout << Event.ToString() << '\n';
+	std::cout << Event.ToString() << '\n';
     switch (Event.GetEventType()) {
         case EventType::WindowClose: {
             WindowCloseEvent &window_close_event = *static_cast<WindowCloseEvent *>(&Event);
@@ -141,7 +130,13 @@ void Application::OnEvent(Event &Event)
                 Close();
             }
         }
-        default:;
+        default:
+            for (auto &app_component : appComponents) {
+                app_component->OnEvent(Event);
+                if (Event.Handled)
+                    break;
+            };
+            break;
     }
 }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "AppComponent.h"
 
 int main(int argc, char *argv[]);
 
@@ -10,7 +11,6 @@ class Ecs;
 class VulkanInstance;
 class Window;
 class GraphicsEngine;
-class AppComponent;
 
 struct ApplicationInfo
 {
@@ -34,7 +34,21 @@ class Application
 
     virtual void Init();
 
-    void AddComponent(AppComponent *ProgramComponent);
+    template<typename T>
+        requires IsAppComponent<T>
+    NonOwningPtr<T> AddComponent(NonOwningPtr<T> ProgramComponent)
+    {
+        ProgramComponent->Init();
+        return static_cast<T *>(appComponents.emplace_back(ProgramComponent).get());
+    }
+
+    template<typename T>
+        requires IsAppComponent<T>
+    NonOwningPtr<T> AddComponent(T *ProgramComponent)
+    {
+        ProgramComponent->Init();
+        return static_cast<T*>(appComponents.emplace_back(ProgramComponent).get());
+    }
 
     void Close();
     void CloseWindow(const Window *Window);
@@ -70,8 +84,8 @@ class Application
 
     std::unique_ptr<VulkanInstance> vulkanInstance;
 
-    OwningPtr<Ecs> ecsComponent;
-    OwningPtr<Gui> guiComponent;
-    std::vector<std::unique_ptr<AppComponent>> appComponents;
+    NonOwningPtr<Ecs> ecsComponent;
+    NonOwningPtr<Gui> guiComponent;
+    std::vector<OwningPtr<AppComponent>> appComponents;
 };
 }  // namespace Slipper

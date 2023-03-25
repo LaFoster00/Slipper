@@ -83,6 +83,7 @@ class GraphicsEngine : DeviceDependentObject
 
     NonOwningPtr<RenderPass> viewportRenderPass = nullptr;
     std::unique_ptr<OffscreenSwapChain> viewportSwapChain;
+    //TODO put these textures into the offscreenSwapChain and enable them conditionally
     std::vector<std::unique_ptr<Texture2D>> viewportPresentationTextures;
 
     NonOwningPtr<RenderPass> windowRenderPass = nullptr;

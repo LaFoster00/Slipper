@@ -1,20 +1,12 @@
 #pragma once
 
-#define DECLARE_GLFW_DIRECT_CALLBACK(FnName) static void FnName##_Callback(GLFWwindow *Window)
-
-#define DECLARE_GLFW_CALLBACK(FnName, ...) \
-    static void FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
-
-#define IMPLEMENT_GLFW_DIRECT_CALLBACK(FnName) void Window::FnName##_Callback(GLFWwindow *Window)
-
-#define IMPLEMENT_GLFW_CALLBACK(FnName, ...) \
-    void Window::FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
-
 namespace Slipper
 {
+class InputManager;
 class WindowEvent;
 class Surface;
 class Event;
+
 using EventCallback = std::function<void(Event &)>;
 
 struct WindowInfo
@@ -28,6 +20,7 @@ struct WindowInfo
 class Window
 {
     friend WindowEvent;
+    friend InputManager;
 
  public:
     Window(WindowInfo CreateInfo);
@@ -47,7 +40,7 @@ class Window
         return glfwWindow;
     }
 
-    void SetEventCallback(EventCallback Callback)
+    void SetEventCallback(const EventCallback Callback)
     {
         m_eventCallback = Callback;
     }
@@ -62,18 +55,7 @@ class Window
         return m_info.name;
     }
 
-    void OnUpdate();
-
- private:
-    DECLARE_GLFW_CALLBACK(FramebufferResize, int Width, int Height);
-    DECLARE_GLFW_CALLBACK(Key, int Key, int Scancode, int Action, int Mods);
-    DECLARE_GLFW_CALLBACK(Scroll, double XOffset, double YOffset);
-    DECLARE_GLFW_CALLBACK(CursorEnter, int Entered);
-    DECLARE_GLFW_CALLBACK(CursorPos, double XPos, double YPos);
-    DECLARE_GLFW_CALLBACK(MouseButton, int Button, int Action, int Mods);
-    DECLARE_GLFW_CALLBACK(WindowMaximize, int Maximized);
-    DECLARE_GLFW_CALLBACK(WindowFocus, int Focused);
-    DECLARE_GLFW_DIRECT_CALLBACK(WindowClose);
+    static void OnUpdate();
 
  public:
     GLFWwindow *glfwWindow;

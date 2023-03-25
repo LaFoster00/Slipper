@@ -2,6 +2,12 @@
 
 namespace Slipper
 {
+class AppComponent;
+class Event;
+
+template<typename T>
+concept IsAppComponent = std::is_base_of_v<AppComponent, T>;
+
 class AppComponent
 {
  public:
@@ -11,6 +17,7 @@ class AppComponent
     virtual void Shutdown(){};
     virtual void OnUpdate(){};
     virtual void OnGuiRender(){};
+    virtual void OnEvent(Event &Event){};
 
     const std::string &GetName() const
     {

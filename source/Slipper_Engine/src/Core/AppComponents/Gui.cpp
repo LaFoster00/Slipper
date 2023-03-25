@@ -126,6 +126,7 @@ void Gui::SetupDocksapce()
                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
     window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     window_flags |= ImGuiWindowFlags_NoBackground;
+    //window_flags |= ImGuiWindowFlags_NoInputs ;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     bool window_open = true;
     ImGui::Begin("Dockspace Window", &window_open, window_flags);

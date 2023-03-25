@@ -15,6 +15,7 @@ void EcsInterface::Create()
 void EcsInterface::Destroy()
 {
     delete m_instance;
+    m_instance = nullptr;
 }
 
 entt::entity EcsInterface::CreateEntity()

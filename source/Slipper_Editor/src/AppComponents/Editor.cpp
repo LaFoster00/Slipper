@@ -52,6 +52,7 @@ void Editor::OnGuiRender()
 
     const auto current_frame = m_graphicsEngine->GetCurrentImageIndex();
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
     ImGui::Begin("Viewport", &open);
     static ImVec2 last_window_size = {0, 0};
     auto window_size = ImGui::GetContentRegionAvail();
@@ -62,10 +63,15 @@ void Editor::OnGuiRender()
                                             static_cast<uint32_t>(window_size.y));
     }
     ImGui::Image(m_imguiViewportImages[current_frame], window_size);
+	if (ImGui::IsItemHovered())
+    {
+        ImGui::CaptureMouseFromApp(false);
+    }
     last_window_size = window_size;
     ImGui::End();
+    ImGui::PopStyleVar();
 
-    ImGui::ShowDemoWindow(&open);
+    //ImGui::ShowDemoWindow(&open);
 
     EntityOutliner::DrawEntity(m_graphicsEngine->GetDefaultCamera());
 }

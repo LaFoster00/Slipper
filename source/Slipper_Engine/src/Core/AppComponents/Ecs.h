@@ -15,6 +15,7 @@ class Ecs : public AppComponent
     void Init() override;
     void Shutdown() override;
     void OnUpdate() override;
+    void OnEvent(Event& Event) override;
 
     public:
     OwningPtr<EcsInterface> interface;
