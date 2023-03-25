@@ -166,6 +166,11 @@ void Application::AddViewportResizeCallback(std::function<void(uint32_t, uint32_
     viewportResizeCallbacks.push_back(Callback);
 }
 
+void Application::AddAdditionalRenderStage(std::function<void()> RenderStage)
+{
+    additionalRenderStages.push_back(RenderStage);
+}
+
 void Application::WindowResize()
 {
     windowResize.resized = false;

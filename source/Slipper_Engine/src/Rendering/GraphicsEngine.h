@@ -72,6 +72,11 @@ class GraphicsEngine : DeviceDependentObject
         return m_currentImageIndex;
     }
 
+    [[nodiscard]] uint32_t GetCurrentFrame() const
+    {
+        return currentFrame;
+    }
+
  private:
     GraphicsEngine();
     ~GraphicsEngine();

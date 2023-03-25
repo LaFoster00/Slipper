@@ -162,12 +162,10 @@ void GraphicsEngine::CreateViewportSwapChain() const
     m_graphicsInstance->viewportSwapChain = std::make_unique<OffscreenSwapChain>(
         Application::Get().window->GetSize(),
         Engine::TARGET_VIEWPORT_COLOR_FORMAT,
-        device.SurfaceSwapChainImagesCount(&Application::Get().window->GetSurface()) + 2);
+        device.SurfaceSwapChainImagesCount(&Application::Get().window->GetSurface()) + 2,
+        true);
     // TODO this needs to be modified to adjust to the image count of the actual surface swapchain
     // !DIRTY HACK!
-
-    m_graphicsInstance->viewportRenderPass->CreateSwapChainFramebuffers(
-        m_graphicsInstance->viewportSwapChain.get());
 
     m_graphicsInstance->viewportPresentationTextures.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
     for (uint32_t i = 0; i < m_graphicsInstance->viewportSwapChain->numImages; ++i) {
@@ -177,6 +175,9 @@ void GraphicsEngine::CreateViewportSwapChain() const
                                         SwapChain::swapChainFormat,
                                         false));
     }
+
+    m_graphicsInstance->viewportRenderPass->CreateSwapChainFramebuffers(
+        m_graphicsInstance->viewportSwapChain.get());
 }
 
 void GraphicsEngine::RecreateViewportSwapChain(uint32_t Width, uint32_t Height) const

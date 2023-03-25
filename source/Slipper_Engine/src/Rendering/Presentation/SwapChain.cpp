@@ -28,7 +28,6 @@ SwapChain::~SwapChain()
 
 void SwapChain::ClearImages()
 {
-
     for (const auto image_view : vkImageViews) {
         vkDestroyImageView(device, image_view, nullptr);
     }

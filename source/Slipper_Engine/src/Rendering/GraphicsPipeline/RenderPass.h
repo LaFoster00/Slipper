@@ -2,6 +2,7 @@
 
 namespace Slipper
 {
+class RenderingStage;
 class Framebuffer;
 class Shader;
 class Device;
@@ -12,12 +13,15 @@ class RenderPass : DeviceDependentObject
 {
  public:
     RenderPass() = delete;
-    RenderPass(std::string_view Name, VkFormat RenderingFormat, VkFormat DepthFormat, bool ForPresentation = true);
+    RenderPass(std::string_view Name,
+               VkFormat RenderingFormat,
+               VkFormat DepthFormat,
+               bool ForPresentation = true);
     ~RenderPass();
 
     void DestroyAllFrameBuffers();
-    bool DestroySwapChainFramebuffers(SwapChain *SwapChain);
-    void CreateSwapChainFramebuffers(SwapChain *SwapChain);
+    bool DestroySwapChainFramebuffers(NonOwningPtr<SwapChain> SwapChain);
+    void CreateSwapChainFramebuffers(NonOwningPtr<SwapChain> SwapChain);
 
     void RecreateSwapChainResources(SwapChain *SwapChain);
 
@@ -41,7 +45,8 @@ class RenderPass : DeviceDependentObject
     std::unordered_map<SwapChain *, std::vector<std::unique_ptr<Framebuffer>>>
         swapChainFramebuffers;
 
-    std::unordered_set<Shader *> registeredShaders;
+    std::unordered_set<NonOwningPtr<Shader>> registeredShaders;
+    std::unordered_set<NonOwningPtr<RenderingStage>> registeredRenderingStages;
 
  private:
     SwapChain *m_activeSwapChain;

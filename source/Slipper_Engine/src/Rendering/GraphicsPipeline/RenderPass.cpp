@@ -131,7 +131,7 @@ void RenderPass::DestroyAllFrameBuffers()
 }
 
 /* Destroys the last occurence of the frame buffer. */
-bool RenderPass::DestroySwapChainFramebuffers(SwapChain *SwapChain)
+bool RenderPass::DestroySwapChainFramebuffers(NonOwningPtr<SwapChain> SwapChain)
 {
     if (swapChainFramebuffers.contains(SwapChain)) {
         swapChainFramebuffers.erase(SwapChain);
@@ -140,7 +140,7 @@ bool RenderPass::DestroySwapChainFramebuffers(SwapChain *SwapChain)
     return false;
 }
 
-void RenderPass::CreateSwapChainFramebuffers(SwapChain *SwapChain)
+void RenderPass::CreateSwapChainFramebuffers(NonOwningPtr<SwapChain> SwapChain)
 {
     if (swapChainFramebuffers.contains(SwapChain)) {
         ASSERT(1,

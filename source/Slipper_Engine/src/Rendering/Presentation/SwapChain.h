@@ -35,7 +35,7 @@ class SwapChain : public DeviceDependentObject
         return depthFormat;
     }
 
-    virtual void ClearImages();
+	virtual void ClearImages();
     virtual void Recreate(uint32_t Width, uint32_t Height);
 
  protected:

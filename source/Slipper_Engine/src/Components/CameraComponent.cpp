@@ -13,6 +13,25 @@ glm::mat4 Parameters::GetProjection(float Aspect)
     return projection;
 }
 
+glm::mat4 Parameters::GetView()
+{
+    return view;
+}
+
+std::tuple<glm::mat4, glm::mat4> Parameters::GetViewProjection(float Aspect, Transform &Transform)
+{
+    UpdateViewTransform(Transform);
+    return {GetView(), GetProjection(Aspect)};
+}
+
+std::tuple<glm::mat4, glm::mat4> Parameters::GetViewProjection(Entity& Camera, float Aspect)
+{
+    auto &camera_transform = Camera.GetComponent<Transform>();
+    auto &camera_parameters = Camera.GetComponent<Parameters>();
+
+    return camera_parameters.GetViewProjection(Aspect, camera_transform);
+}
+
 void Parameters::UpdateViewTransform(Transform &Transform)
 {
     view = glm::inverse(Transform.GetModelMatrix());

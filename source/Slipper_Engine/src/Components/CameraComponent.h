@@ -17,7 +17,11 @@ struct Parameters
 
     // Aspect is Width / Height
     [[nodiscard]] glm::mat4 GetProjection(float Aspect);
-
+    [[nodiscard]] glm::mat4 GetView();
+    [[nodiscard]] std::tuple<glm::mat4, glm::mat4> GetViewProjection(float Aspect,
+                                                                     Transform &Transform);
+    [[nodiscard]] static std::tuple<glm::mat4, glm::mat4> GetViewProjection(Entity &Camera,
+        float Aspect);
     void UpdateViewTransform(Transform &Transform);
 
     void SetFov(float Fov);

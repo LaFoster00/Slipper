@@ -1,11 +1,18 @@
 #include "OffscreenSwapChain.h"
 
+#include "Core/Application.h"
+#include "Texture/Texture2D.h"
+#include "Window.h"
+
 namespace Slipper
 {
 OffscreenSwapChain::OffscreenSwapChain(const VkExtent2D &Extent,
                                        VkFormat RenderingFormat,
-                                       uint32_t NumImages)
-    : SwapChain(Extent, RenderingFormat), numImages(NumImages)
+                                       uint32_t NumImages,
+                                       bool WithPresentationTextures)
+    : SwapChain(Extent, RenderingFormat),
+      withPresentationTextures(WithPresentationTextures),
+      numImages(NumImages)
 {
     OffscreenSwapChain::Create();
 }
@@ -19,6 +26,8 @@ void OffscreenSwapChain::ClearImages()
 {
     SwapChain::ClearImages();
 
+    presentationTextures.clear();
+
     for (const auto vk_image : vkImages) {
         vkDestroyImage(device, vk_image, nullptr);
     }
@@ -27,6 +36,21 @@ void OffscreenSwapChain::ClearImages()
         vkFreeMemory(device, vk_image_memory, nullptr);
     }
     vkImageMemory.clear();
+}
+
+void OffscreenSwapChain::UpdatePresentationTextures(VkCommandBuffer CommandBuffer,
+                                                    uint32_t ImageIndex) const
+{
+    if (!withPresentationTextures)
+        return;
+
+    const auto viewport_resolution = GetResolution();
+    presentationTextures[ImageIndex]->EnqueueCopyImage(
+        CommandBuffer,
+        vkImages[ImageIndex],
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        {viewport_resolution.width, viewport_resolution.height, 1},
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
@@ -78,6 +102,17 @@ void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
 
         vkBindImageMemory(device, vkImages[i], vkImageMemory[i], 0);
     }
+
     SwapChain::Create(OldSwapChain);
+
+    if (withPresentationTextures) {
+        presentationTextures.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
+        for (uint32_t i = 0; i < numImages; ++i) {
+            presentationTextures.push_back(new Texture2D(Application::Get().window->GetSize(),
+                                                         Engine::TARGET_VIEWPORT_COLOR_FORMAT,
+                                                         swapChainFormat,
+                                                         false));
+        }
+    }
 }
 }  // namespace Slipper
