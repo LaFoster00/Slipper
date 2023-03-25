@@ -1,5 +1,6 @@
 #include "SurfaceSwapChain.h"
 
+#include "GraphicsEngine.h"
 #include "Surface.h"
 #include "Window.h"
 
@@ -48,6 +49,11 @@ VkSurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
     return swapChainSupport.formats[0];
 }
 
+uint32_t SurfaceSwapChain::GetCurrentSwapChainImageIndex() const
+{
+    return GraphicsEngine::Get().GetCurrentImageIndex();
+}
+
 void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
 {
     const VkPresentModeKHR present_mode = ChoosePresentMode();
@@ -88,8 +94,8 @@ void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
 
     image_count = 0;
     vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, nullptr);
-    vkImages.resize(image_count);
-    vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, vkImages.data());
+    GetVkImages().resize(image_count);
+    vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, GetVkImages().data());
     imageRenderingFormat = create_info.imageFormat;
     resolution = create_info.imageExtent;
 

@@ -14,7 +14,7 @@ RenderPass::RenderPass(std::string_view Name,
                        VkFormat RenderingFormat,
                        VkFormat DepthFormat,
                        bool ForPresentation)
-    : name(Name), m_activeSwapChain(nullptr), m_currentImage(nullptr)
+    : name(Name), m_activeSwapChain(nullptr)
 {
     // Not used for presenting cause multisampled textures can not be presented
     // Presentation through color attachment resolve
@@ -147,15 +147,15 @@ void RenderPass::CreateSwapChainFramebuffers(NonOwningPtr<SwapChain> SwapChain)
                "Swapchain allready has Framebuffers for this swap chain. Clean them up before "
                "creating new ones!")
     }
-    for (size_t i = 0; i < SwapChain->vkImageViews.size(); i++) {
+    for (size_t i = 0; i < SwapChain->GetVkImageViews().size(); i++) {
         std::vector<VkImageView> attachments;
         if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
             attachments.push_back(SwapChain->renderTarget->imageInfo.view);
             attachments.push_back(SwapChain->depthBuffer->imageInfo.view);
-            attachments.push_back(SwapChain->vkImageViews[i]);
+            attachments.push_back(SwapChain->GetVkImageViews()[i]);
         }
         else {
-            attachments.push_back(SwapChain->vkImageViews[i]);
+            attachments.push_back(SwapChain->GetVkImageViews()[i]);
             attachments.push_back(SwapChain->depthBuffer->imageInfo.view);
         }
         VkExtent2D extent = SwapChain->GetResolution();
@@ -174,11 +174,6 @@ void RenderPass::RecreateSwapChainResources(SwapChain* SwapChain)
     }
 }
 
-VkImage RenderPass::GetCurrentImage() const
-{
-    return m_currentImage;
-}
-
 void RenderPass::BeginRenderPass(SwapChain *SwapChain,
                                  const uint32_t ImageIndex,
                                  const VkCommandBuffer CommandBuffer)
@@ -195,7 +190,6 @@ void RenderPass::BeginRenderPass(SwapChain *SwapChain,
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_info.renderPass = vkRenderPass;
     render_pass_info.framebuffer = swapChainFramebuffers.at(SwapChain)[ImageIndex]->vkFramebuffer;
-    m_currentImage = SwapChain->vkImages[ImageIndex];
 
     render_pass_info.renderArea.offset = {0, 0};
     render_pass_info.renderArea.extent = SwapChain->GetResolution();

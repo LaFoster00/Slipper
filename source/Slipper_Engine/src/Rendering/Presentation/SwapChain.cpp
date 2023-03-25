@@ -3,7 +3,6 @@
 #include "Data/Texture/Texture.h"
 #include "Texture/DepthBuffer.h"
 #include "Texture/RenderTarget.h"
-#include "Window.h"
 
 namespace Slipper
 {
@@ -28,10 +27,10 @@ SwapChain::~SwapChain()
 
 void SwapChain::ClearImages()
 {
-    for (const auto image_view : vkImageViews) {
+    for (const auto image_view : m_vkImageViews) {
         vkDestroyImageView(device, image_view, nullptr);
     }
-    vkImageViews.clear();
+    m_vkImageViews.clear();
 }
 
 void SwapChain::Recreate(uint32_t Width, uint32_t Height)
@@ -45,6 +44,11 @@ void SwapChain::Recreate(uint32_t Width, uint32_t Height)
     Create(old_swap_chain);
 
     vkDestroySwapchainKHR(device, old_swap_chain, nullptr);
+}
+
+VkImage SwapChain::GetCurrentSwapChainImage() const
+{
+	return m_vkImages[GetCurrentSwapChainImageIndex()];
 }
 
 void SwapChain::Create(VkSwapchainKHR OldSwapChain)
@@ -68,10 +72,10 @@ void SwapChain::Create(VkSwapchainKHR OldSwapChain)
 
 void SwapChain::CreateImageViews()
 {
-    vkImageViews.resize(vkImages.size());
-    for (size_t i = 0; i < vkImages.size(); i++) {
-        vkImageViews[i] = Texture::CreateImageView(
-            vkImages[i], VK_IMAGE_TYPE_2D, imageRenderingFormat, 1);
+    m_vkImageViews.resize(m_vkImages.size());
+    for (size_t i = 0; i < m_vkImages.size(); i++) {
+        m_vkImageViews[i] = Texture::CreateImageView(
+            m_vkImages[i], VK_IMAGE_TYPE_2D, imageRenderingFormat, 1);
     }
 }
 }  // namespace Slipper

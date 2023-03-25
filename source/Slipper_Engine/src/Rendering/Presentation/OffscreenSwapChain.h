@@ -15,11 +15,12 @@ class OffscreenSwapChain : public SwapChain
 
     void ClearImages() override;
     void UpdatePresentationTextures(VkCommandBuffer CommandBuffer, uint32_t ImageIndex) const;
-
+    
+    uint32_t GetCurrentSwapChainImageIndex() const override;
  protected:
     void Create(VkSwapchainKHR OldSwapChain = VK_NULL_HANDLE) override;
 
- public:
+public:
     bool withPresentationTextures;
     uint32_t numImages;
     std::vector<OwningPtr<Texture2D>> presentationTextures;

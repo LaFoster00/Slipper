@@ -24,9 +24,7 @@ class RenderPass : DeviceDependentObject
     void CreateSwapChainFramebuffers(NonOwningPtr<SwapChain> SwapChain);
 
     void RecreateSwapChainResources(SwapChain *SwapChain);
-
-    VkImage GetCurrentImage() const;
-
+    
     void BeginRenderPass(SwapChain *SwapChain, uint32_t ImageIndex, VkCommandBuffer CommandBuffer);
     void EndRenderPass(VkCommandBuffer commandBuffer);
 
@@ -50,6 +48,5 @@ class RenderPass : DeviceDependentObject
 
  private:
     SwapChain *m_activeSwapChain;
-    VkImage m_currentImage;
 };
 }  // namespace Slipper

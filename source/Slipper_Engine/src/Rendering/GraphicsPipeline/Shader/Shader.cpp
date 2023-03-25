@@ -151,7 +151,7 @@ UniformBuffer *Shader::GetUniformBuffer(const std::string Name,
 
             return uniformBindingBuffers
                 .at(GetHash(binding))[Index.has_value() ? Index.value() :
-                                                          GraphicsEngine::Get().currentFrame]
+                                                          GraphicsEngine::Get().GetCurrentFrame()]
                 .get();
         }
         ASSERT(true, "Uniform '{}' is not a buffer.", Name);
@@ -164,8 +164,9 @@ std::vector<VkDescriptorSet> Shader::GetDescriptorSets(const std::optional<uint3
 {
     std::vector<VkDescriptorSet> ds;
     for (auto vk_descriptor_sets : m_vkDescriptorSets | std::ranges::views::values) {
-        ds.push_back(vk_descriptor_sets[Index.has_value() ? Index.value() :
-                                                            GraphicsEngine::Get().currentFrame]);
+        ds.push_back(
+            vk_descriptor_sets[Index.has_value() ? Index.value() :
+                                                   GraphicsEngine::Get().GetCurrentFrame()]);
     }
     return ds;
 }
@@ -274,7 +275,7 @@ void Shader::CreateUniformBuffers(size_t Count)
             auto &buffers = uniformBindingBuffers[GetHash(layout_binding)];
             for (int i = 0; i < Count; ++i) {
                 buffers.emplace_back(std::make_unique<UniformBuffer>(layout_binding->size));
-            	BindShaderParameter(layout_binding->name, *buffers.back());
+                BindShaderParameter(layout_binding->name, *buffers.back());
             }
         }
     }

@@ -16,6 +16,8 @@ class SurfaceSwapChain : public SwapChain
     VkSurfaceFormatKHR ChooseSurfaceFormat() const;
 
 public:
+    uint32_t GetCurrentSwapChainImageIndex() const override;
+
     Surface &surface;
     SwapChainSupportDetails swapChainSupport;
 

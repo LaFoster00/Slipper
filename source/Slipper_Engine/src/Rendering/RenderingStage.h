@@ -2,9 +2,9 @@
 
 namespace Slipper
 {
-	class Mesh;
-	class Shader;
-	class Texture2D;
+class Mesh;
+class Shader;
+class Texture2D;
 class OffscreenSwapChain;
 class SurfaceSwapChain;
 class SwapChain;
@@ -26,14 +26,15 @@ class RenderingStage
                    SwapChainVariants SwapChain,
                    VkQueue CommandQueue,
                    uint32_t CommandQueueFamilyIndex,
+                   bool NativeSwapChain,
                    int32_t CommandBufferCount = Engine::MAX_FRAMES_IN_FLIGHT);
     ~RenderingStage();
 
-    VkCommandBuffer BeginRender(uint32_t ImageIndex);
+    VkCommandBuffer BeginRender();
     void EndRender();
 
     void SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
-                    NonOwningPtr<const Shader>Shader,
+                    NonOwningPtr<const Shader> Shader,
                     NonOwningPtr<const Mesh> Mesh,
                     const glm::mat4 &Transform);
     void SubmitSingleDrawCommand(const RenderPass *RP,
@@ -43,10 +44,16 @@ class RenderingStage
         std::function<void(const VkCommandBuffer &, const RenderPass &)> Command);
 
     void RegisterForRenderPass(NonOwningPtr<RenderPass> RenderPass);
+    void UnregisterFromRenderPass(NonOwningPtr<RenderPass> RenderPass);
     void ChangeResolution(uint32_t Width, uint32_t Height);
     bool HasPresentationTextures() const;
-    NonOwningPtr<Texture2D> GetPresentationTexture(uint32_t ImageIndex) const;
+    NonOwningPtr<Texture2D> GetPresentationTexture() const;
     NonOwningPtr<SwapChain> GetSwapChain();
+    template<typename T> NonOwningPtr<T> GetSwapChain()
+    {
+        return std::get<OwningPtr<T>>(swapChain);
+    }
+    uint32_t GetCurrentImageIndex() const;
 
     CommandPool &GetCommandPool() const
     {
@@ -69,6 +76,6 @@ class RenderingStage
         repeatedCommands;
 
  private:
-    uint32_t m_currentImageIndex;
+    bool m_nativeSwapChain;
 };
 }  // namespace Slipper

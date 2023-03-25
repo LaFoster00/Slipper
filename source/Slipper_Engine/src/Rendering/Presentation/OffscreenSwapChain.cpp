@@ -1,5 +1,6 @@
 #include "OffscreenSwapChain.h"
 
+#include "GraphicsEngine.h"
 #include "Core/Application.h"
 #include "Texture/Texture2D.h"
 #include "Window.h"
@@ -28,10 +29,10 @@ void OffscreenSwapChain::ClearImages()
 
     presentationTextures.clear();
 
-    for (const auto vk_image : vkImages) {
+    for (const auto vk_image : GetVkImages()) {
         vkDestroyImage(device, vk_image, nullptr);
     }
-    vkImages.clear();
+    GetVkImages().clear();
     for (const auto vk_image_memory : vkImageMemory) {
         vkFreeMemory(device, vk_image_memory, nullptr);
     }
@@ -45,12 +46,17 @@ void OffscreenSwapChain::UpdatePresentationTextures(VkCommandBuffer CommandBuffe
         return;
 
     const auto viewport_resolution = GetResolution();
-    presentationTextures[ImageIndex]->EnqueueCopyImage(
+    presentationTextures[GetCurrentSwapChainImageIndex()]->EnqueueCopyImage(
         CommandBuffer,
-        vkImages[ImageIndex],
+        GetCurrentSwapChainImage(),
         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
         {viewport_resolution.width, viewport_resolution.height, 1},
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
+uint32_t OffscreenSwapChain::GetCurrentSwapChainImageIndex() const
+{
+    return GraphicsEngine::Get().GetCurrentFrame();
 }
 
 void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
@@ -59,7 +65,7 @@ void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
                                                 device.queueFamilyIndices.transferFamily.value()};
     std::vector queue_families(unique_queue_families.begin(), unique_queue_families.end());
 
-    vkImages.resize(numImages);
+    GetVkImages().resize(numImages);
     vkImageMemory.resize(numImages);
 
     VkImageCreateInfo image_create_info{};
@@ -85,11 +91,11 @@ void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
     image_create_info.flags = 0;  // Optional
 
     for (uint32_t i = 0; i < numImages; i++) {
-        VK_ASSERT(vkCreateImage(device, &image_create_info, nullptr, &vkImages[i]),
+        VK_ASSERT(vkCreateImage(device, &image_create_info, nullptr, &GetVkImages()[i]),
                   "Failed to create image!")
 
         VkMemoryRequirements mem_requirements;
-        vkGetImageMemoryRequirements(device, vkImages[i], &mem_requirements);
+        vkGetImageMemoryRequirements(device, GetVkImages()[i], &mem_requirements);
 
         VkMemoryAllocateInfo alloc_info{};
         alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -100,7 +106,7 @@ void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
         VK_ASSERT(vkAllocateMemory(device, &alloc_info, nullptr, &vkImageMemory[i]),
                   "Failed to allocate image memory!")
 
-        vkBindImageMemory(device, vkImages[i], vkImageMemory[i], 0);
+        vkBindImageMemory(device, GetVkImages()[i], vkImageMemory[i], 0);
     }
 
     SwapChain::Create(OldSwapChain);

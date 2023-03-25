@@ -16,27 +16,28 @@ RenderingStage::RenderingStage(std::string Name,
                                SwapChainVariants SwapChain,
                                VkQueue CommandQueue,
                                uint32_t CommandQueueFamilyIndex,
+                               const bool NativeSwapChain,
                                int32_t CommandBufferCount)
-    : name(Name), swapChain(std ::move(SwapChain))
+    : name(Name), swapChain(std::move(SwapChain)), m_nativeSwapChain(NativeSwapChain)
 {
     commandPool = new CommandPool(CommandQueue, CommandQueueFamilyIndex, CommandBufferCount);
 }
 
 RenderingStage::~RenderingStage()
 {
-    for (auto render_pass : renderPasses) {
+    for (const auto render_pass : renderPasses) {
         render_pass->DestroySwapChainFramebuffers(GetSwapChain());
     }
+    renderPasses.clear();
 }
 
-VkCommandBuffer RenderingStage::BeginRender(uint32_t ImageIndex)
+VkCommandBuffer RenderingStage::BeginRender()
 {
-    m_currentImageIndex = ImageIndex;
-    const auto draw_command_buffer = commandPool->vkCommandBuffers[ImageIndex];
+    const auto draw_command_buffer = commandPool->vkCommandBuffers[GetCurrentImageIndex()];
     commandPool->BeginCommandBuffer(draw_command_buffer);
 
     for (const auto render_pass : renderPasses) {
-        render_pass->BeginRenderPass(GetSwapChain(), m_currentImageIndex, draw_command_buffer);
+        render_pass->BeginRenderPass(GetSwapChain(), GetCurrentImageIndex(), draw_command_buffer);
     }
 
     return draw_command_buffer;
@@ -44,7 +45,7 @@ VkCommandBuffer RenderingStage::BeginRender(uint32_t ImageIndex)
 
 void RenderingStage::EndRender()
 {
-    const auto draw_command_buffer = commandPool->vkCommandBuffers[m_currentImageIndex];
+    const auto draw_command_buffer = commandPool->vkCommandBuffers[GetCurrentImageIndex()];
 
     for (auto render_pass : renderPasses) {
         for (auto &single_draw_command : singleCommands[render_pass]) {
@@ -61,12 +62,11 @@ void RenderingStage::EndRender()
 
         if (HasPresentationTextures()) {
             const auto [width, height] = GetSwapChain()->GetResolution();
-            GetPresentationTexture(m_currentImageIndex)
-                ->EnqueueCopyImage(draw_command_buffer,
-                                   render_pass->GetCurrentImage(),
-                                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                   {width, height, 1},
-                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            GetPresentationTexture()->EnqueueCopyImage(draw_command_buffer,
+                                                       GetSwapChain()->GetCurrentSwapChainImage(),
+                                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                                       {width, height, 1},
+                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
     }
     commandPool->EndCommandBuffer(draw_command_buffer);
@@ -119,6 +119,13 @@ void RenderingStage::RegisterForRenderPass(NonOwningPtr<RenderPass> RenderPass)
     renderPasses.insert(RenderPass);
 }
 
+void RenderingStage::UnregisterFromRenderPass(NonOwningPtr<RenderPass> RenderPass)
+{
+    if (renderPasses.contains(RenderPass))
+        renderPasses.erase(RenderPass);
+    RenderPass->DestroySwapChainFramebuffers(GetSwapChain());
+}
+
 void RenderingStage::ChangeResolution(uint32_t Width, uint32_t Height)
 {
     GetSwapChain()->Recreate(Width, Height);
@@ -136,11 +143,11 @@ bool RenderingStage::HasPresentationTextures() const
     return false;
 }
 
-NonOwningPtr<Texture2D> RenderingStage::GetPresentationTexture(uint32_t ImageIndex) const
+NonOwningPtr<Texture2D> RenderingStage::GetPresentationTexture() const
 {
     if (std::holds_alternative<OwningPtr<OffscreenSwapChain>>(swapChain)) {
         const auto &offscreenSwapChain = std::get<OwningPtr<OffscreenSwapChain>>(swapChain);
-        return offscreenSwapChain->presentationTextures[ImageIndex];
+        return offscreenSwapChain->presentationTextures[GetCurrentImageIndex()];
     }
     return nullptr;
 }
@@ -150,5 +157,13 @@ NonOwningPtr<SwapChain> RenderingStage::GetSwapChain()
     return std::visit(
         [](auto const &Sc) -> SwapChain * { return static_cast<SwapChain *>(Sc.get()); },
         swapChain);
+}
+
+uint32_t RenderingStage::GetCurrentImageIndex() const
+{
+    if (m_nativeSwapChain)
+        return GraphicsEngine::Get().GetCurrentImageIndex();
+    else
+        return GraphicsEngine::Get().GetCurrentFrame();
 }
 }  // namespace Slipper

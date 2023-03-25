@@ -34,12 +34,14 @@ void Editor::OnGuiRender()
 
     bool open = true;
 
-    if (m_viewportImages.empty() && !m_graphicsEngine->viewportSwapChain->vkImageViews.empty()) {
+    const auto swap_chain =
+        m_graphicsEngine->viewportRenderStage->GetSwapChain<OffscreenSwapChain>();
+    const auto &image_views = swap_chain->GetVkImageViews();
+    if (m_viewportImages.empty() && !image_views.empty()) {
 
-        m_viewportImages.resize(m_graphicsEngine->viewportSwapChain->numImages);
-        for (uint32_t i{0}; i < m_graphicsEngine->viewportSwapChain->numImages; i++) {
-            m_viewportImages[i] =
-                m_graphicsEngine->viewportPresentationTextures[i]->imageInfo.view;
+        m_viewportImages.resize(swap_chain->numImages);
+        for (uint32_t i{0}; i < swap_chain->numImages; i++) {
+            m_viewportImages[i] = swap_chain->presentationTextures[i]->imageInfo.view;
         }
 
         for (const auto viewport_image : m_viewportImages) {
@@ -63,15 +65,14 @@ void Editor::OnGuiRender()
                                             static_cast<uint32_t>(window_size.y));
     }
     ImGui::Image(m_imguiViewportImages[current_frame], window_size);
-	if (ImGui::IsItemHovered())
-    {
+    if (ImGui::IsItemHovered()) {
         ImGui::CaptureMouseFromApp(false);
     }
     last_window_size = window_size;
     ImGui::End();
     ImGui::PopStyleVar();
 
-    //ImGui::ShowDemoWindow(&open);
+    // ImGui::ShowDemoWindow(&open);
 
     EntityOutliner::DrawEntity(m_graphicsEngine->GetDefaultCamera());
 }
@@ -84,12 +85,15 @@ void Editor::OnViewportResize(uint32_t Width, uint32_t Height)
     m_imguiViewportImages.clear();
 
     m_viewportImages.clear();
-    m_viewportImages.resize(m_graphicsEngine->viewportSwapChain->numImages);
-    for (uint32_t i{0}; i < m_graphicsEngine->viewportSwapChain->numImages; i++) {
-        m_viewportImages[i] = m_graphicsEngine->viewportPresentationTextures[i]->imageInfo.view;
+
+    const auto swap_chain =
+        m_graphicsEngine->viewportRenderStage->GetSwapChain<OffscreenSwapChain>();
+    m_viewportImages.resize(swap_chain->numImages);
+    for (uint32_t i{0}; i < swap_chain->numImages; i++) {
+        m_viewportImages[i] = swap_chain->presentationTextures[i]->imageInfo.view;
     }
 
-    m_imguiViewportImages.reserve(m_graphicsEngine->viewportSwapChain->numImages);
+    m_imguiViewportImages.reserve(swap_chain->numImages);
     for (const auto viewport_image : m_viewportImages) {
         m_imguiViewportImages.push_back(
             ImGui_ImplVulkan_AddTexture(Sampler::GetLinearSampler(),
