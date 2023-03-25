@@ -34,21 +34,13 @@ GraphicsEngine::GraphicsEngine()
 
 GraphicsEngine::~GraphicsEngine()
 {
-    viewportRenderStage.reset();
+    viewportRenderingStage.reset();
+    windowRenderingStage.reset();
 
     renderPassNames.clear();
     renderPasses.clear();
 
     memoryCommandPool.reset();
-    guiCommandPool.reset();
-
-    for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
-        vkDestroySemaphore(device, image_available_semaphore, nullptr);
-    }
-
-    for (const auto render_finished_semaphore : m_renderFinishedSemaphores) {
-        vkDestroySemaphore(device, render_finished_semaphore, nullptr);
-    }
 
     for (const auto in_flight_fence : m_inFlightFences) {
         vkDestroyFence(device, in_flight_fence, nullptr);
@@ -64,10 +56,16 @@ void GraphicsEngine::Init()
     m_graphicsInstance = new GraphicsEngine();
     auto &device = Device::Get();
 
-    m_graphicsInstance->guiCommandPool = std::make_unique<CommandPool>(
-        device.graphicsQueue,
-        device.queueFamilyIndices.graphicsFamily.value(),
-        Engine::MAX_FRAMES_IN_FLIGHT);
+    VkFenceCreateInfo fence_info{};
+    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    m_graphicsInstance->m_inFlightFences.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
+        VK_ASSERT(
+            vkCreateFence(device, &fence_info, nullptr, &m_graphicsInstance->m_inFlightFences[i]),
+            "Failed to create fence!")
+    }
 
     m_graphicsInstance->memoryCommandPool = std::make_unique<CommandPool>(
         device.transferQueue ? device.transferQueue : device.graphicsQueue,
@@ -85,18 +83,17 @@ void GraphicsEngine::Init()
                                                       Engine::MAX_FRAMES_IN_FLIGHT,
                                                       true);
 
-    m_graphicsInstance->viewportRenderStage = new RenderingStage(
+    m_graphicsInstance->viewportRenderingStage = new RenderingStage(
         "Viewport",
         viewport_swap_chain,
         device.graphicsQueue,
         device.queueFamilyIndices.graphicsFamily.value(),
         false);
 
-    m_graphicsInstance->viewportRenderStage->RegisterForRenderPass(
+    m_graphicsInstance->viewportRenderingStage->RegisterForRenderPass(
         m_graphicsInstance->viewportRenderPass);
 
     SetupDebugResources();
-    m_graphicsInstance->CreateSyncObjects();
 }
 
 void GraphicsEngine::Shutdown()
@@ -120,31 +117,6 @@ void GraphicsEngine::SetupDebugResources()
         ->BindShaderParameter("texSampler", TextureManager::Get2D("viking_room"));
 }
 
-void GraphicsEngine::CreateSyncObjects()
-{
-    VkSemaphoreCreateInfo semaphore_info{};
-    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    VkFenceCreateInfo fence_info{};
-    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-    m_imageAvailableSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
-    m_renderFinishedSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
-    m_inFlightFences.resize(Engine::MAX_FRAMES_IN_FLIGHT);
-
-    for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
-        VK_ASSERT(
-            vkCreateSemaphore(device, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
-            "Failed to create semaphore!")
-        VK_ASSERT(
-            vkCreateSemaphore(device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
-            "Failed to create semaphore!")
-        VK_ASSERT(vkCreateFence(device, &fence_info, nullptr, &m_inFlightFences[i]),
-                  "Failed to create fence!")
-    }
-}
-
 RenderPass *GraphicsEngine::CreateRenderPass(const std::string &Name,
                                              const VkFormat RenderingFormat,
                                              const VkFormat DepthFormat,
@@ -165,11 +137,6 @@ void GraphicsEngine::DestroyRenderPass(RenderPass *RenderPass)
     }
 }
 
-void GraphicsEngine::RecreateViewportSwapChain(uint32_t Width, uint32_t Height) const
-{
-    viewportRenderStage->ChangeResolution(Width, Height);
-}
-
 Entity &GraphicsEngine::GetDefaultCamera()
 {
     static bool init = false;
@@ -185,7 +152,15 @@ void GraphicsEngine::AddWindow(Window &Window)
 {
     windows.insert(&Window);
     Window.GetSurface().CreateSwapChain();
-    Window.GetSurface().RegisterRenderPass(*windowRenderPass);
+
+    m_graphicsInstance->windowRenderingStage = new RenderingStage(
+        "Window",
+        Window.GetSurface().swapChain.get(),
+        device.graphicsQueue,
+        device.queueFamilyIndices.graphicsFamily.value(),
+        true);
+
+    m_graphicsInstance->windowRenderingStage->RegisterForRenderPass(windowRenderPass);
 }
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface)
@@ -198,7 +173,7 @@ void GraphicsEngine::SetupDebugRender(Surface &Surface)
 
 void GraphicsEngine::SetupSimpleDraw()
 {
-    viewportRenderStage->SubmitRepeatedDrawCommand(
+    viewportRenderingStage->SubmitRepeatedDrawCommand(
         viewportRenderPass,
         [=, this](const VkCommandBuffer &CommandBuffer, const RenderPass &RenderPass) {
             const auto debug_shader = *RenderPass.registeredShaders.begin();
@@ -228,78 +203,52 @@ void GraphicsEngine::SetupSimpleDraw()
 
 void GraphicsEngine::BeginUpdate()
 {
-    vkWaitForFences(device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(device,
+                    1,
+                    &m_inFlightFences[GraphicsEngine::Get().GetCurrentFrame()],
+                    VK_TRUE,
+                    UINT64_MAX);
 
     m_currentSurface = &(*windows.begin())->GetSurface();
-    auto result = vkAcquireNextImageKHR(device,
-                                        *m_currentSurface->swapChain,
-                                        UINT64_MAX,
-                                        m_imageAvailableSemaphores[m_currentFrame],
-                                        VK_NULL_HANDLE,
-                                        &m_currentImageIndex);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        // This should be handled by even OnWindowResize
-        // current_surface->RecreateSwapChain();
-        ASSERT(1, "This should not be reached.")
-    }
-    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        throw std::runtime_error("Failed to acquire swap chain image!");
-    }
-
-    viewportRenderStage->BeginRender();
+    viewportRenderingStage->BeginRender();
 }
 
 void GraphicsEngine::EndUpdate() const
 {
-    viewportRenderStage->EndRender();
+    viewportRenderingStage->EndRender();
 }
 
-void GraphicsEngine::BeginGuiUpdate()
+void GraphicsEngine::BeginGuiUpdate() const
 {
-    const auto gui_command_buffer = guiCommandPool->vkCommandBuffers[m_currentFrame];
-    guiCommandPool->BeginCommandBuffer(gui_command_buffer);
-    m_currentRenderPass = windowRenderPass;
-    m_currentRenderPass->BeginRenderPass(
-        m_currentSurface->swapChain.get(), m_currentImageIndex, gui_command_buffer);
+    windowRenderingStage->BeginRender();
 }
 
-void GraphicsEngine::EndGuiUpdate()
+void GraphicsEngine::EndGuiUpdate() const
 {
-    const auto gui_command_buffer = guiCommandPool->vkCommandBuffers[m_currentFrame];
-
-    for (auto &single_gui_command : singleGuiCommands[m_currentRenderPass]) {
-        single_gui_command(gui_command_buffer);
-    }
-    singleGuiCommands.at(m_currentRenderPass).clear();
-
-    for (auto &repeated_gui_command : repeatedGuiCommands) {
-        repeated_gui_command(gui_command_buffer, *m_currentRenderPass);
-    }
-
-    windowRenderPass->EndRenderPass(gui_command_buffer);
-    guiCommandPool->EndCommandBuffer(gui_command_buffer);
+    windowRenderingStage->EndRender();
 }
 
 void GraphicsEngine::Render()
 {
-    vkResetFences(device, 1, &m_inFlightFences[m_currentFrame]);
+    vkResetFences(device, 1, &m_inFlightFences[GetCurrentFrame()]);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
     const std::array command_buffers = {
-        viewportRenderStage->commandPool->vkCommandBuffers[m_currentFrame],
-        guiCommandPool->vkCommandBuffers[m_currentFrame]};
+        viewportRenderingStage->commandPool->vkCommandBuffers[m_currentFrame],
+        windowRenderingStage->commandPool->vkCommandBuffers[m_currentFrame]};
 
-    const VkSemaphore wait_semaphores[] = {m_imageAvailableSemaphores[m_currentFrame]};
+    const VkSemaphore wait_semaphores[] = {
+        windowRenderingStage->GetCurrentImageAvailableSemaphore()};
     constexpr VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submit_info.waitSemaphoreCount = 1;
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
     submit_info.pCommandBuffers = command_buffers.data();
-    const VkSemaphore signal_semaphores[] = {m_renderFinishedSemaphores[m_currentFrame]};
+    const VkSemaphore signal_semaphores[] = {
+        windowRenderingStage->GetCurrentRenderFinishSemaphore()};
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
 
@@ -313,10 +262,14 @@ void GraphicsEngine::Render()
     present_info.waitSemaphoreCount = 1;
     present_info.pWaitSemaphores = signal_semaphores;
 
-    const VkSwapchainKHR present_swap_chains[] = {*m_currentSurface->swapChain};
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains = present_swap_chains;
-    present_info.pImageIndices = &m_currentImageIndex;
+    const std::vector<VkSwapchainKHR> present_swap_chains = {
+        windowRenderingStage->GetSwapChain()->vkSwapChain};
+    const std::vector<uint32_t> swap_chain_image_indices = {
+        windowRenderingStage->GetCurrentImageIndex()};
+    present_info.swapchainCount = static_cast<uint32_t>(present_swap_chains.size());
+    present_info.pSwapchains = present_swap_chains.data();
+    present_info.pImageIndices = swap_chain_image_indices.data();
+    ;
     present_info.pResults = nullptr;  // Optional
 
     const auto result = vkQueuePresentKHR(device.presentQueue, &present_info);
@@ -335,11 +288,11 @@ void GraphicsEngine::Render()
 // Dont call while rendering
 void GraphicsEngine::OnViewportResize(uint32_t Width, uint32_t Height)
 {
-    m_graphicsInstance->RecreateViewportSwapChain(Width, Height);
+    m_graphicsInstance->viewportRenderingStage->ChangeResolution(Width, Height);
 }
 
 void GraphicsEngine::OnWindowResized(Window *Window, int Width, int Height)
 {
-    Window->GetSurface().RecreateSwapChain(Width, Height);
+    m_graphicsInstance->windowRenderingStage->ChangeResolution(Width, Height);
 }
 }  // namespace Slipper

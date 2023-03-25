@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "SurfaceSwapChain.h"
 
 namespace Slipper
@@ -27,10 +25,6 @@ class Surface
     // ONLY CALL AFTER DEVICE IS CREATED
     void CreateSwapChain();
 
-    void RecreateSwapChain(uint32_t Width, uint32_t Height);
-    void RegisterRenderPass(RenderPass &RenderPass);
-    void UnregisterRenderPass(RenderPass &RenderPass);
-
  private:
     void CleanupSwapChain(bool DestroySwapChain);
 
@@ -38,7 +32,6 @@ class Surface
     VkSurfaceKHR vkSurface;
     const Window &window;
 
-    std::unique_ptr<SurfaceSwapChain> swapChain;
-    std::vector<RenderPass *> renderPasses;
+    OwningPtr<SurfaceSwapChain> swapChain;
 };
 }  // namespace Slipper

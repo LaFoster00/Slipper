@@ -22,6 +22,14 @@ SurfaceSwapChain::~SurfaceSwapChain()
 {
     SwapChain::ClearImages();
     vkDestroySwapchainKHR(device.logicalDevice, vkSwapChain, nullptr);
+
+    for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
+        vkDestroySemaphore(device, image_available_semaphore, nullptr);
+    }
+
+    for (const auto render_finished_semaphore : m_renderFinishedSemaphores) {
+        vkDestroySemaphore(device, render_finished_semaphore, nullptr);
+    }
 }
 
 VkPresentModeKHR SurfaceSwapChain::ChoosePresentMode() const
@@ -49,9 +57,20 @@ VkSurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
     return swapChainSupport.formats[0];
 }
 
+VkResult SurfaceSwapChain::AcquireNextImageKhr()
+{
+    return vkAcquireNextImageKHR(
+        device,
+        vkSwapChain,
+        UINT64_MAX,
+        m_imageAvailableSemaphores[GraphicsEngine::Get().GetCurrentFrame()],
+        VK_NULL_HANDLE,
+        &m_currentImageIndex);
+}
+
 uint32_t SurfaceSwapChain::GetCurrentSwapChainImageIndex() const
 {
-    return GraphicsEngine::Get().GetCurrentImageIndex();
+    return m_currentImageIndex;
 }
 
 void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
@@ -98,6 +117,21 @@ void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
     vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, GetVkImages().data());
     imageRenderingFormat = create_info.imageFormat;
     resolution = create_info.imageExtent;
+
+    VkSemaphoreCreateInfo semaphore_info{};
+    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    m_imageAvailableSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+    m_renderFinishedSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+
+    for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
+        VK_ASSERT(
+            vkCreateSemaphore(device, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
+            "Failed to create semaphore!")
+        VK_ASSERT(
+            vkCreateSemaphore(device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
+            "Failed to create semaphore!")
+    }
 
     SwapChain::Create(OldSwapChain);
 }

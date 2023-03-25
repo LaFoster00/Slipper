@@ -33,6 +33,18 @@ RenderingStage::~RenderingStage()
 
 VkCommandBuffer RenderingStage::BeginRender()
 {
+    if (m_nativeSwapChain) {
+        const auto result = GetSwapChain<SurfaceSwapChain>()->AcquireNextImageKhr();
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            // This should be handled by even OnWindowResize
+            // current_surface->RecreateSwapChain();
+            ASSERT(1, "This should not be reached.")
+        }
+        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            throw std::runtime_error("Failed to acquire swap chain image!");
+        }
+    }
     const auto draw_command_buffer = commandPool->vkCommandBuffers[GetCurrentImageIndex()];
     commandPool->BeginCommandBuffer(draw_command_buffer);
 
@@ -162,8 +174,32 @@ NonOwningPtr<SwapChain> RenderingStage::GetSwapChain()
 uint32_t RenderingStage::GetCurrentImageIndex() const
 {
     if (m_nativeSwapChain)
-        return GraphicsEngine::Get().GetCurrentImageIndex();
+        return GetSwapChain<SurfaceSwapChain>()->GetCurrentSwapChainImageIndex();
     else
         return GraphicsEngine::Get().GetCurrentFrame();
+}
+
+template <>
+NonOwningPtr<OffscreenSwapChain> RenderingStage::GetSwapChain<OffscreenSwapChain>() const
+{
+	return std::get<OwningPtr<OffscreenSwapChain>>(swapChain);
+}
+
+template <>
+NonOwningPtr<SurfaceSwapChain> RenderingStage::GetSwapChain<SurfaceSwapChain>() const
+{
+    return std::get<NonOwningPtr<SurfaceSwapChain>>(swapChain);
+}
+
+VkSemaphore RenderingStage::GetCurrentImageAvailableSemaphore() const
+{
+    return GetSwapChain<SurfaceSwapChain>()
+        ->m_imageAvailableSemaphores[GraphicsEngine::Get().GetCurrentFrame()];
+}
+
+VkSemaphore RenderingStage::GetCurrentRenderFinishSemaphore() const
+{
+    return GetSwapChain<SurfaceSwapChain>()
+        ->m_renderFinishedSemaphores[GraphicsEngine::Get().GetCurrentFrame()];
 }
 }  // namespace Slipper

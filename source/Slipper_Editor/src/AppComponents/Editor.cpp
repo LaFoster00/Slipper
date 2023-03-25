@@ -35,7 +35,7 @@ void Editor::OnGuiRender()
     bool open = true;
 
     const auto swap_chain =
-        m_graphicsEngine->viewportRenderStage->GetSwapChain<OffscreenSwapChain>();
+        m_graphicsEngine->viewportRenderingStage->GetSwapChain<OffscreenSwapChain>();
     const auto &image_views = swap_chain->GetVkImageViews();
     if (m_viewportImages.empty() && !image_views.empty()) {
 
@@ -52,7 +52,7 @@ void Editor::OnGuiRender()
         }
     }
 
-    const auto current_frame = m_graphicsEngine->GetCurrentImageIndex();
+    const auto current_frame = m_graphicsEngine->viewportRenderingStage->GetCurrentImageIndex();
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
     ImGui::Begin("Viewport", &open);
@@ -87,7 +87,7 @@ void Editor::OnViewportResize(uint32_t Width, uint32_t Height)
     m_viewportImages.clear();
 
     const auto swap_chain =
-        m_graphicsEngine->viewportRenderStage->GetSwapChain<OffscreenSwapChain>();
+        m_graphicsEngine->viewportRenderingStage->GetSwapChain<OffscreenSwapChain>();
     m_viewportImages.resize(swap_chain->numImages);
     for (uint32_t i{0}; i < swap_chain->numImages; i++) {
         m_viewportImages[i] = swap_chain->presentationTextures[i]->imageInfo.view;

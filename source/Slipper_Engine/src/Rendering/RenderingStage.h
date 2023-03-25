@@ -11,9 +11,10 @@ class SwapChain;
 class RenderPass;
 class CommandPool;
 
-using SwapChainVariants = std::variant<OwningPtr<SurfaceSwapChain>, OwningPtr<OffscreenSwapChain>>;
+using SwapChainVariants =
+    std::variant<NonOwningPtr<SurfaceSwapChain>, OwningPtr<OffscreenSwapChain>>;
 
-class RenderingStage
+class RenderingStage : public DeviceDependentObject
 {
  public:
     // use like "new RenderingStage(
@@ -49,11 +50,17 @@ class RenderingStage
     bool HasPresentationTextures() const;
     NonOwningPtr<Texture2D> GetPresentationTexture() const;
     NonOwningPtr<SwapChain> GetSwapChain();
-    template<typename T> NonOwningPtr<T> GetSwapChain()
+    template<typename T> NonOwningPtr<T> GetSwapChain() const
     {
-        return std::get<OwningPtr<T>>(swapChain);
+        ASSERT(true, "This point should not be reached!");
     }
+    template<> NonOwningPtr<OffscreenSwapChain> GetSwapChain() const;
+    template<> NonOwningPtr<SurfaceSwapChain> GetSwapChain() const;
+
     uint32_t GetCurrentImageIndex() const;
+
+    VkSemaphore GetCurrentImageAvailableSemaphore() const;
+    VkSemaphore GetCurrentRenderFinishSemaphore() const;
 
     CommandPool &GetCommandPool() const
     {
