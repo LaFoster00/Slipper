@@ -58,19 +58,16 @@ void Application::Init()
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
 
-    guiComponent = AddComponent(new Gui("Viewport", GraphicsEngine::Get().viewportRenderPass));
-
+    
     AddAdditionalRenderStageUpdate(GraphicsEngine::Get().viewportRenderingStage,
                                    [&](NonOwningPtr<RenderingStage> RS) {
                                        for (const auto &app_component : appComponents) {
                                            app_component->OnUpdate();
                                        }
-
-                                       guiComponent->StartNewFrame();
+                                       
                                        for (const auto &app_component : appComponents) {
                                            app_component->OnGuiRender();
                                        }
-                                       guiComponent->EndNewFrame(RS);
                                    });
 }
 

@@ -15,12 +15,14 @@ void TestGui::OnGuiRender()
 
     bool open = true;
 
-    if (m_viewportImages.empty() && !m_graphicsEngine->viewportSwapChain->vkImageViews.empty()) {
+    const auto swap_chain =
+        m_graphicsEngine->viewportRenderingStage->GetSwapChain<Slipper::OffscreenSwapChain>();
+    const auto &image_views = swap_chain->GetVkImageViews();
+    if (m_viewportImages.empty() && !image_views.empty()) {
 
-        m_viewportImages.resize(m_graphicsEngine->viewportSwapChain->numImages);
-        for (uint32_t i{0}; i < m_graphicsEngine->viewportSwapChain->numImages; i++) {
-            m_viewportImages[i] =
-                m_graphicsEngine->viewportPresentationTextures[i]->imageInfo.view;
+        m_viewportImages.resize(swap_chain->numImages);
+        for (uint32_t i{0}; i < swap_chain->numImages; i++) {
+            m_viewportImages[i] = swap_chain->presentationTextures[i]->imageInfo.view;
         }
 
         for (const auto viewport_image : m_viewportImages) {
@@ -31,22 +33,28 @@ void TestGui::OnGuiRender()
         }
     }
 
-    const auto current_frame = m_graphicsEngine->GetCurrentImageIndex();
+    const auto current_frame = m_graphicsEngine->viewportRenderingStage->GetCurrentImageIndex();
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
     ImGui::Begin("Viewport", &open);
     static ImVec2 last_window_size = {0, 0};
     auto window_size = ImGui::GetContentRegionAvail();
     window_size.x = std::max(1.0f, window_size.x);
     window_size.y = std::max(1.0f, window_size.y);
     if (last_window_size.x != window_size.x || last_window_size.y != window_size.y) {
-        Slipper::Application::Get().OnViewportResize(static_cast<uint32_t>(window_size.x),
-                                                     static_cast<uint32_t>(window_size.y));
+	    Slipper::Application::Get().OnViewportResize(static_cast<uint32_t>(window_size.x),
+	                                                 static_cast<uint32_t>(window_size.y));
     }
     ImGui::Image(m_imguiViewportImages[current_frame], window_size);
+    // ImGui::SetWindowHitTestHole(ImGui::GetCurrentWindow(), ImGui::GetWindowPos(), window_size);
+    if (ImGui::IsItemHovered()) {
+        ImGui::CaptureMouseFromApp(false);
+    }
     last_window_size = window_size;
     ImGui::End();
+    ImGui::PopStyleVar();
 
-    ImGui::ShowDemoWindow(&open);
+    // ImGui::ShowDemoWindow(&open);
 }
 
 void TestGui::Init()
@@ -60,18 +68,21 @@ void TestGui::Init()
 
 void TestGui::OnViewportResize(uint32_t Width, uint32_t Height)
 {
-    for (auto imgui_viewport_image : m_imguiViewportImages) {
+    for (const auto imgui_viewport_image : m_imguiViewportImages) {
         ImGui_ImplVulkan_RemoveTexture(imgui_viewport_image);
     }
     m_imguiViewportImages.clear();
 
     m_viewportImages.clear();
-    m_viewportImages.resize(m_graphicsEngine->viewportSwapChain->numImages);
-    for (uint32_t i{0}; i < m_graphicsEngine->viewportSwapChain->numImages; i++) {
-        m_viewportImages[i] = m_graphicsEngine->viewportPresentationTextures[i]->imageInfo.view;
+
+    const auto swap_chain =
+        m_graphicsEngine->viewportRenderingStage->GetSwapChain<Slipper::OffscreenSwapChain>();
+    m_viewportImages.resize(swap_chain->numImages);
+    for (uint32_t i{0}; i < swap_chain->numImages; i++) {
+        m_viewportImages[i] = swap_chain->presentationTextures[i]->imageInfo.view;
     }
 
-    m_imguiViewportImages.reserve(m_graphicsEngine->viewportSwapChain->numImages);
+    m_imguiViewportImages.reserve(swap_chain->numImages);
     for (const auto viewport_image : m_viewportImages) {
         m_imguiViewportImages.push_back(
             ImGui_ImplVulkan_AddTexture(Slipper::Sampler::GetLinearSampler(),

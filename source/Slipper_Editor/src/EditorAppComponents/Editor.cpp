@@ -1,5 +1,7 @@
 #include "Editor.h"
 
+#include <imgui_internal.h>
+
 #include "Core/AppComponents/Gui.h"
 #include "Core/Application.h"
 #include "Drawing/Sampler.h"

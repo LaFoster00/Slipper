@@ -96,7 +96,7 @@ void Gui::StartNewFrame() const
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    //ImGuizmo::BeginFrame();
+    // ImGuizmo::BeginFrame();
     SetupDocksapce();
 }
 
@@ -105,9 +105,10 @@ void Gui::EndNewFrame(NonOwningPtr<RenderingStage> RenderingStage) const
     ImGui::Render();
     const auto draw_data = ImGui::GetDrawData();
 
-    RenderingStage->SubmitSingleDrawCommand(m_renderPass, [=](const VkCommandBuffer &CommandBuffer) {
-        ImGui_ImplVulkan_RenderDrawData(draw_data, CommandBuffer);
-    });
+    RenderingStage->SubmitSingleDrawCommand(
+        m_renderPass, [=](const VkCommandBuffer &CommandBuffer) {
+            ImGui_ImplVulkan_RenderDrawData(draw_data, CommandBuffer);
+        });
 }
 
 void Gui::Shutdown()
@@ -121,7 +122,7 @@ void Gui::Shutdown()
     ImGui::DestroyContext();
 }
 
-void Gui::SetupDocksapce()
+void Gui::SetupDocksapce() const
 {
     ImGui::SetNextWindowPos({0.0f, 0.0f}, ImGuiCond_Always);
 
@@ -136,15 +137,17 @@ void Gui::SetupDocksapce()
                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
     window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     window_flags |= ImGuiWindowFlags_NoBackground;
-    // window_flags |= ImGuiWindowFlags_NoInputs ;
+    window_flags |= ImGuiWindowFlags_NoInputs;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     bool window_open = true;
-    ImGui::Begin("Dockspace Window", &window_open, window_flags);
+    ImGui::Begin(
+        std::format("Dockspace Window {}", GetName()).c_str(), &window_open, window_flags);
     ImGui::PopStyleVar(3);
 
     // Dockspace
-    ImGui::DockSpace(
-        ImGui::GetID("Dockspace"), ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+    ImGui::DockSpace(ImGui::GetID(std::format("Dockspace {}", GetName()).c_str()),
+                     ImVec2(0.0f, 0.0f),
+                     ImGuiDockNodeFlags_PassthruCentralNode);
     ImGui::End();
 }
 }  // namespace Slipper

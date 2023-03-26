@@ -30,7 +30,7 @@ class Gui : public AppComponent
     }
 
  private:
-    static void SetupDocksapce();
+	void SetupDocksapce() const;
 
  public:
     void Init() override;

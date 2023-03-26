@@ -87,7 +87,6 @@ class Application
     std::unique_ptr<VulkanInstance> vulkanInstance;
 
     NonOwningPtr<Ecs> ecsComponent;
-    NonOwningPtr<Gui> guiComponent;
     std::vector<OwningPtr<AppComponent>> appComponents;
 
     std::unordered_map<NonOwningPtr<RenderingStage>,
