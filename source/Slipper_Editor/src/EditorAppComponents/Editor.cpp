@@ -28,10 +28,8 @@ void Editor::OnUpdate()
     AppComponent::OnUpdate();
 }
 
-void Editor::OnGuiRender()
+void Editor::OnEditorGuiUpdate()
 {
-    AppComponent::OnGuiRender();
-
     bool open = true;
 
     const auto swap_chain =

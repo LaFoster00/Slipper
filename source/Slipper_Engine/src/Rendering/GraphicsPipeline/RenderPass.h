@@ -36,6 +36,11 @@ class RenderPass : DeviceDependentObject
         return m_activeSwapChain;
     }
 
+    operator VkRenderPass() const
+    {
+        return vkRenderPass;
+    }
+
  public:
     std::string name;
     VkRenderPass vkRenderPass;

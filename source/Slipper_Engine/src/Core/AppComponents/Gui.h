@@ -20,11 +20,9 @@ class Gui : public AppComponent
     };
 
  public:
-    Gui() : AppComponent("Gui")
-    {
-    }
-    void StartNewFrame();
-    void EndNewFrame(VkCommandBuffer CommandBuffer);
+    explicit Gui(std::string_view Name, NonOwningPtr<RenderPass> RenderPass, bool InstallCallbacks = false);
+	void StartNewFrame() const;
+    static void EndNewFrame(VkCommandBuffer CommandBuffer);
 
  private:
     static void SetupDocksapce();
@@ -32,13 +30,13 @@ class Gui : public AppComponent
  public:
     void Init() override;
     void Shutdown() override;
-    void OnUpdate() override;
-    void OnGuiRender() override;
 
  private:
-    static bool m_initialized;
+	bool m_initialized = false;
+    bool m_installCallbacks;
     static Device *m_device;
-    static ImGuiResources *m_resources;
-    static const Window *m_window;
+	static inline ImGuiResources *m_resources = nullptr;
+    ImGuiContext *m_context = nullptr;
+    NonOwningPtr<RenderPass> m_renderPass;
 };
 }  // namespace Slipper

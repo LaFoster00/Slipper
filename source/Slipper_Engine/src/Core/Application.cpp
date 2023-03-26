@@ -58,7 +58,7 @@ void Application::Init()
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
 
-    guiComponent = AddComponent(new Gui());
+    guiComponent = AddComponent(new Gui("Viewport", GraphicsEngine::Get().viewportRenderPass));
 }
 
 void Application::Close()
@@ -77,15 +77,15 @@ void Application::Run()
 {
     while (running) {
         window->OnUpdate();
+        if (!running)
+            return;
+
         if (windowResize.resized) {
             WindowResize();
         }
         if (viewportResize.resized) {
             ViewportResize();
         }
-
-        if (!running)
-            return;
 
         if (!minimized) {
             Time::Tick(Engine::FRAME_COUNT);
@@ -98,30 +98,33 @@ void Application::Run()
                 window->SetTitle(ss.str());
             }
 
-            GraphicsEngine::Get().BeginUpdate();
-            for (auto &app_component : appComponents) {
+            GraphicsEngine::Get().BeginRender();
+
+            for (const auto &app_component : appComponents) {
                 app_component->OnUpdate();
             }
-            guiComponent->OnUpdate();
-            GraphicsEngine::Get().EndUpdate();
 
-            GraphicsEngine::Get().BeginGuiUpdate();
             guiComponent->StartNewFrame();
-            guiComponent->OnGuiRender();
-            for (auto &app_component : appComponents) {
+            for (const auto &app_component : appComponents) {
                 app_component->OnGuiRender();
             }
             guiComponent->EndNewFrame(GraphicsEngine::Get().GetCurrentGuiCommandBuffer());
-            GraphicsEngine::Get().EndGuiUpdate();
 
-            GraphicsEngine::Get().Render();
+            for (auto &rendering_stage :
+                 GraphicsEngine::Get().renderingStages | std::ranges::views::values) {
+                for (auto &stage_update : additionalRenderStagesUpdate[rendering_stage]) {
+                    stage_update(rendering_stage.get());
+                }
+            }
+
+            GraphicsEngine::Get().EndRender();
         }
     }
 }
 
 void Application::OnEvent(Event &Event)
 {
-	std::cout << Event.ToString() << '\n';
+    std::cout << Event.ToString() << '\n';
     switch (Event.GetEventType()) {
         case EventType::WindowClose: {
             WindowCloseEvent &window_close_event = *static_cast<WindowCloseEvent *>(&Event);
@@ -166,9 +169,11 @@ void Application::AddViewportResizeCallback(std::function<void(uint32_t, uint32_
     viewportResizeCallbacks.push_back(Callback);
 }
 
-void Application::AddAdditionalRenderStage(std::function<void()> RenderStage)
+void Application::AddAdditionalRenderStageUpdate(
+    NonOwningPtr<RenderingStage> Stage,
+    std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction)
 {
-    additionalRenderStages.push_back(RenderStage);
+    additionalRenderStagesUpdate[Stage].emplace_back(UpdateFunction);
 }
 
 void Application::WindowResize()

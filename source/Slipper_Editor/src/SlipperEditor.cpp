@@ -1,5 +1,6 @@
 #include "SlipperEditor.h"
 
+#include "Core/AppComponents/Gui.h"
 #include "Editor.h"
 #include "GraphicsEngine.h"
 #include "Window.h"
@@ -10,8 +11,6 @@ int main(int argc, char *argv[])
         Slipper::ApplicationInfo app_info{"Slipper Engine "};
         auto app = new Slipper::Editor::SlipperEditor(app_info);
         app->Init();
-        Slipper::Editor::Editor *TestGui = new Slipper::Editor::Editor();
-        app->AddComponent(TestGui);
         app->Run();
         delete app;
     }
@@ -29,6 +28,25 @@ void SlipperEditor::Init()
 {
     Application::Init();
     GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
+
+    m_editor = AddComponent(new Editor());
+    m_editorGui = AddComponent(new Gui("Editor Gui", GraphicsEngine::Get().windowRenderPass, true));
+    AddAdditionalRenderStageUpdate(GraphicsEngine::Get().windowRenderingStage,
+                                   std::bind(&SlipperEditor::UpdateEditor, this, std::placeholders::_1));
 }
 
+void SlipperEditor::UpdateEditor(NonOwningPtr<RenderingStage> RenderingStage) const
+{
+    m_editorGui->StartNewFrame();
+
+    for (auto &app_component : appComponents) {
+        if (const auto editor_app_component = dynamic_cast<EditorAppComponent *>(
+                app_component.get())) {
+            editor_app_component->OnEditorGuiUpdate();
+        }
+    }
+
+    m_editorGui->EndNewFrame(
+        RenderingStage->commandPool->vkCommandBuffers[GraphicsEngine::Get().GetCurrentFrame()]);
+}
 }  // namespace Slipper::Editor

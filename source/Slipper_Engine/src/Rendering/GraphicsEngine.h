@@ -42,12 +42,32 @@ class GraphicsEngine : DeviceDependentObject
     void DestroyRenderPass(RenderPass *RenderPass);
 
     void AddWindow(Window &Window);
+    NonOwningPtr<RenderingStage> AddRenderingStage(
+        std::string Name,
+        auto SwapChain,
+        VkQueue CommandQueue,
+        uint32_t CommandQueueFamilyIndex,
+        bool NativeSwapChain,
+        int32_t CommandBufferCount = Engine::MAX_FRAMES_IN_FLIGHT)
+    {
+        if (renderingStages.contains(Name)) {
+            LOG_FORMAT("Rendering stage '{}' does already exist. Returned nullptr", Name);
+            return nullptr;
+        }
 
-    void BeginUpdate();
-    void EndUpdate() const;
-    void BeginGuiUpdate() const;
-    void EndGuiUpdate() const;
-    void Render();
+        return renderingStages
+            .emplace(Name,
+                     new RenderingStage(Name,
+                                        SwapChain,
+                                        CommandQueue,
+                                        CommandQueueFamilyIndex,
+                                        NativeSwapChain,
+                                        CommandBufferCount))
+            .first->second.get();
+    }
+
+    void BeginRender() const;
+    void EndRender();
 
     static void OnViewportResize(uint32_t Width, uint32_t Height);
     static void OnWindowResized(Window *Window, int Width, int Height);
@@ -77,13 +97,14 @@ class GraphicsEngine : DeviceDependentObject
     std::unordered_set<NonOwningPtr<Window>> windows;
 
     NonOwningPtr<RenderPass> viewportRenderPass = nullptr;
-    OwningPtr<RenderingStage> viewportRenderingStage;
+    NonOwningPtr<RenderingStage> viewportRenderingStage;
 
     NonOwningPtr<RenderPass> windowRenderPass = nullptr;
-    OwningPtr<RenderingStage> windowRenderingStage;
+    NonOwningPtr<RenderingStage> windowRenderingStage;
 
     std::unordered_map<std::string, std::unique_ptr<RenderPass>> renderPasses;
     std::unordered_map<NonOwningPtr<RenderPass>, std::string> renderPassNames;
+    std::unordered_map<std::string, OwningPtr<RenderingStage>> renderingStages;
 
     // Memory Transfer Commands
     std::unique_ptr<CommandPool> memoryCommandPool;
@@ -96,7 +117,6 @@ class GraphicsEngine : DeviceDependentObject
     std::vector<VkFence> m_inFlightFences;
 
     uint32_t m_currentFrame = 0;
-    NonOwningPtr<Surface> m_currentSurface = nullptr;
     NonOwningPtr<RenderPass> m_currentRenderPass = nullptr;
 
     Entity m_defaultCamera;

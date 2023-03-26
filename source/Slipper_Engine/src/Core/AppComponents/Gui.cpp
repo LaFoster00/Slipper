@@ -9,10 +9,7 @@
 
 namespace Slipper
 {
-bool Gui::m_initialized = false;
-Gui::ImGuiResources *Gui::m_resources = nullptr;
 Device *Gui::m_device = nullptr;
-const Window *Gui::m_window = nullptr;
 
 void Gui::ImGuiResources::CreateDescriptorPool(const VkDescriptorPoolSize *Sizes,
                                                uint32_t SizesCount,
@@ -29,25 +26,43 @@ void Gui::ImGuiResources::CreateDescriptorPool(const VkDescriptorPoolSize *Sizes
               "Failed to create ImGui DescriptorPool")
 }
 
+Gui::Gui(std::string_view Name, NonOwningPtr<RenderPass> RenderPass, bool InstallCallbacks)
+    : AppComponent(Name), m_renderPass(RenderPass), m_installCallbacks(InstallCallbacks)
+{
+}
+
 void Gui::Init()
 {
     if (m_initialized)
         return;
 
     m_device = &Device::Get();
-    m_window = Application::Get().window.get();
 
-    ImGui::CreateContext();
+    // For each context we can initialize a new Imgui vulkan backend and therefore a different
+    // render pass
+    m_context = ImGui::CreateContext();
+    ImGui::SetCurrentContext(m_context);
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    VkDescriptorPoolSize imgui_pool_size{};
-    imgui_pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    imgui_pool_size.descriptorCount = 1;
+    VkDescriptorPoolSize imgui_pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+                                               {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+                                               {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+                                               {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+                                               {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+                                               {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+                                               {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+                                               {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+                                               {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+                                               {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+                                               {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
 
     m_resources = new ImGuiResources();
-    m_resources->CreateDescriptorPool(&imgui_pool_size, 1, 1024);
+    m_resources->CreateDescriptorPool(imgui_pool_sizes, std::size(imgui_pool_sizes), 1024);
 
-    ImGui_ImplGlfw_InitForVulkan(*m_window, true);
+    const auto &window = Application::Get().window;
+    ImGui_ImplGlfw_InitForVulkan(*window, m_installCallbacks);
+
+
     ImGui_ImplVulkan_InitInfo info{};
     info.Instance = VulkanInstance::Get();
     info.PhysicalDevice = *m_device;
@@ -58,8 +73,10 @@ void Gui::Init()
     info.MinImageCount = Engine::MAX_FRAMES_IN_FLIGHT;
     info.ImageCount = Engine::MAX_FRAMES_IN_FLIGHT;
     info.MSAASamples = GraphicsSettings::Get().MSAA_SAMPLES;
-    ImGui_ImplVulkan_Init(&info, GraphicsEngine::Get().windowRenderPass->vkRenderPass);
 
+    ImGui_ImplVulkan_Init(&info, m_renderPass->vkRenderPass);
+
+    // Create font atlas
     SingleUseCommandBuffer command_buffer(*GraphicsEngine::Get().memoryCommandPool);
     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
     command_buffer.Submit();
@@ -69,11 +86,9 @@ void Gui::Init()
     m_initialized = true;
 }
 
-void Gui::StartNewFrame()
+void Gui::StartNewFrame() const
 {
-    if (!m_initialized)
-        return;
-
+    ImGui::SetCurrentContext(m_context);
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -83,9 +98,6 @@ void Gui::StartNewFrame()
 
 void Gui::EndNewFrame(VkCommandBuffer CommandBuffer)
 {
-    if (!m_initialized)
-        return;
-
     ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), CommandBuffer);
 }
@@ -94,21 +106,11 @@ void Gui::Shutdown()
 {
     if (!m_initialized)
         return;
-
+    ImGui::SetCurrentContext(m_context);
     vkDestroyDescriptorPool(*m_device, m_resources->imGuiDescriptorPool, nullptr);
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-}
-
-void Gui::OnUpdate()
-{
-    AppComponent::OnUpdate();
-}
-
-void Gui::OnGuiRender()
-{
-    AppComponent::OnGuiRender();
 }
 
 void Gui::SetupDocksapce()
@@ -126,7 +128,7 @@ void Gui::SetupDocksapce()
                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
     window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     window_flags |= ImGuiWindowFlags_NoBackground;
-    //window_flags |= ImGuiWindowFlags_NoInputs ;
+    // window_flags |= ImGuiWindowFlags_NoInputs ;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     bool window_open = true;
     ImGui::Begin("Dockspace Window", &window_open, window_flags);

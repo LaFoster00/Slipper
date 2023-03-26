@@ -5,6 +5,7 @@ int main(int argc, char *argv[]);
 
 namespace Slipper
 {
+class RenderingStage;
 class Event;
 class Gui;
 class Ecs;
@@ -47,7 +48,7 @@ class Application
     NonOwningPtr<T> AddComponent(T *ProgramComponent)
     {
         ProgramComponent->Init();
-        return static_cast<T*>(appComponents.emplace_back(ProgramComponent).get());
+        return static_cast<T *>(appComponents.emplace_back(ProgramComponent).get());
     }
 
     void Close();
@@ -63,7 +64,7 @@ class Application
     virtual void OnWindowResize(Window *Window, int Width, int Height);
     virtual void OnViewportResize(uint32_t Width, uint32_t Height);
     void AddViewportResizeCallback(std::function<void(uint32_t, uint32_t)> Callback);
-    void AddAdditionalRenderStage(std::function<void()> RenderStage);
+    void AddAdditionalRenderStageUpdate(NonOwningPtr<RenderingStage> Stage, std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction);
 
  private:
     void WindowResize();
@@ -89,6 +90,8 @@ class Application
     NonOwningPtr<Gui> guiComponent;
     std::vector<OwningPtr<AppComponent>> appComponents;
 
-    std::vector<std::function<void()>> additionalRenderStages;
+    std::unordered_map<NonOwningPtr<RenderingStage>,
+                       std::vector<std::function<void(NonOwningPtr<RenderingStage>)>>>
+        additionalRenderStagesUpdate;
 };
 }  // namespace Slipper

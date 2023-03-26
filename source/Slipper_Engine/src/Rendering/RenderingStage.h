@@ -67,6 +67,11 @@ class RenderingStage : public DeviceDependentObject
         return *commandPool;
     }
 
+    bool IsPresentStage() const
+    {
+        return m_nativeSwapChain;
+    }
+
  public:
     std::string name;
     SwapChainVariants swapChain;

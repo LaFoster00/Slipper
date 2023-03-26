@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/AppComponent.h"
+#include "EditorAppComponent.h"
 
 namespace Slipper
 {
@@ -8,20 +8,20 @@ namespace Slipper
 
 namespace Slipper::Editor
 {
-class Editor : public AppComponent
+class Editor : public EditorAppComponent
 {
  public:
-    Editor() : AppComponent("Editor")
+    Editor() : EditorAppComponent("Editor")
     {
     }
     void Init() override;
     void Shutdown() override;
     void OnUpdate() override;
-    void OnGuiRender() override;
+    void OnEditorGuiUpdate() override;
 
     void OnViewportResize(uint32_t Width, uint32_t Height);
 
- private:
+private:
     GraphicsEngine *m_graphicsEngine = nullptr;
     std::vector<VkImageView> m_viewportImages;
     std::vector<VkDescriptorSet> m_imguiViewportImages;

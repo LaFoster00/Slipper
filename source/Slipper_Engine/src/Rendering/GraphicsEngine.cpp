@@ -34,8 +34,7 @@ GraphicsEngine::GraphicsEngine()
 
 GraphicsEngine::~GraphicsEngine()
 {
-    viewportRenderingStage.reset();
-    windowRenderingStage.reset();
+    renderingStages.clear();
 
     renderPassNames.clear();
     renderPasses.clear();
@@ -83,7 +82,7 @@ void GraphicsEngine::Init()
                                                       Engine::MAX_FRAMES_IN_FLIGHT,
                                                       true);
 
-    m_graphicsInstance->viewportRenderingStage = new RenderingStage(
+    m_graphicsInstance->viewportRenderingStage = m_graphicsInstance->AddRenderingStage(
         "Viewport",
         viewport_swap_chain,
         device.graphicsQueue,
@@ -153,14 +152,14 @@ void GraphicsEngine::AddWindow(Window &Window)
     windows.insert(&Window);
     Window.GetSurface().CreateSwapChain();
 
-    m_graphicsInstance->windowRenderingStage = new RenderingStage(
+    windowRenderingStage = AddRenderingStage(
         "Window",
         Window.GetSurface().swapChain.get(),
         device.graphicsQueue,
         device.queueFamilyIndices.graphicsFamily.value(),
         true);
 
-    m_graphicsInstance->windowRenderingStage->RegisterForRenderPass(windowRenderPass);
+    windowRenderingStage->RegisterForRenderPass(windowRenderPass);
 }
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface)
@@ -201,43 +200,34 @@ void GraphicsEngine::SetupSimpleDraw()
         });
 }
 
-void GraphicsEngine::BeginUpdate()
+void GraphicsEngine::BeginRender() const
 {
-    vkWaitForFences(device,
-                    1,
-                    &m_inFlightFences[GraphicsEngine::Get().GetCurrentFrame()],
-                    VK_TRUE,
-                    UINT64_MAX);
+    vkWaitForFences(device, 1, &m_inFlightFences[GetCurrentFrame()], VK_TRUE, UINT64_MAX);
 
-    m_currentSurface = &(*windows.begin())->GetSurface();
-    viewportRenderingStage->BeginRender();
+    for (auto &rendering_stage : renderingStages | std::ranges::views::values)
+    {
+        rendering_stage->BeginRender();
+    }
 }
 
-void GraphicsEngine::EndUpdate() const
+void GraphicsEngine::EndRender()
 {
-    viewportRenderingStage->EndRender();
-}
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
+        rendering_stage->EndRender();
+    }
 
-void GraphicsEngine::BeginGuiUpdate() const
-{
-    windowRenderingStage->BeginRender();
-}
-
-void GraphicsEngine::EndGuiUpdate() const
-{
-    windowRenderingStage->EndRender();
-}
-
-void GraphicsEngine::Render()
-{
     vkResetFences(device, 1, &m_inFlightFences[GetCurrentFrame()]);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    const std::array command_buffers = {
-        viewportRenderingStage->commandPool->vkCommandBuffers[m_currentFrame],
-        windowRenderingStage->commandPool->vkCommandBuffers[m_currentFrame]};
+    std::vector<VkCommandBuffer> command_buffers;
+    command_buffers.reserve(renderingStages.size());
+
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values)
+    {
+        command_buffers.push_back(rendering_stage->commandPool->vkCommandBuffers[m_currentFrame]);
+    }
 
     const VkSemaphore wait_semaphores[] = {
         windowRenderingStage->GetCurrentImageAvailableSemaphore()};
@@ -262,10 +252,17 @@ void GraphicsEngine::Render()
     present_info.waitSemaphoreCount = 1;
     present_info.pWaitSemaphores = signal_semaphores;
 
-    const std::vector<VkSwapchainKHR> present_swap_chains = {
-        windowRenderingStage->GetSwapChain()->vkSwapChain};
-    const std::vector<uint32_t> swap_chain_image_indices = {
-        windowRenderingStage->GetCurrentImageIndex()};
+	std::vector<VkSwapchainKHR> present_swap_chains;
+    std::vector<uint32_t> swap_chain_image_indices;
+
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
+        if (rendering_stage->IsPresentStage())
+        {
+            present_swap_chains.push_back(rendering_stage->GetSwapChain()->vkSwapChain);
+            swap_chain_image_indices.push_back(rendering_stage->GetCurrentImageIndex());
+        }
+    }
+
     present_info.swapchainCount = static_cast<uint32_t>(present_swap_chains.size());
     present_info.pSwapchains = present_swap_chains.data();
     present_info.pImageIndices = swap_chain_image_indices.data();
