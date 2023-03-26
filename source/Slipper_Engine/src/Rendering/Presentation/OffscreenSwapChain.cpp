@@ -1,7 +1,7 @@
 #include "OffscreenSwapChain.h"
 
-#include "GraphicsEngine.h"
 #include "Core/Application.h"
+#include "GraphicsEngine.h"
 #include "Texture/Texture2D.h"
 #include "Window.h"
 
@@ -15,28 +15,13 @@ OffscreenSwapChain::OffscreenSwapChain(const VkExtent2D &Extent,
       withPresentationTextures(WithPresentationTextures),
       numImages(NumImages)
 {
-    OffscreenSwapChain::Create();
+    Create();
 }
 
 OffscreenSwapChain::~OffscreenSwapChain()
 {
-    OffscreenSwapChain::ClearImages();
-}
+	OffscreenSwapChain::Impl_Cleanup();
 
-void OffscreenSwapChain::ClearImages()
-{
-    SwapChain::ClearImages();
-
-    presentationTextures.clear();
-
-    for (const auto vk_image : GetVkImages()) {
-        vkDestroyImage(device, vk_image, nullptr);
-    }
-    GetVkImages().clear();
-    for (const auto vk_image_memory : vkImageMemory) {
-        vkFreeMemory(device, vk_image_memory, nullptr);
-    }
-    vkImageMemory.clear();
 }
 
 void OffscreenSwapChain::UpdatePresentationTextures(VkCommandBuffer CommandBuffer,
@@ -59,7 +44,7 @@ uint32_t OffscreenSwapChain::GetCurrentSwapChainImageIndex() const
     return GraphicsEngine::Get().GetCurrentFrame();
 }
 
-void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
+void OffscreenSwapChain::Impl_Create()
 {
     std::unordered_set unique_queue_families = {device.queueFamilyIndices.graphicsFamily.value(),
                                                 device.queueFamilyIndices.transferFamily.value()};
@@ -109,8 +94,6 @@ void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
         vkBindImageMemory(device, GetVkImages()[i], vkImageMemory[i], 0);
     }
 
-    SwapChain::Create(OldSwapChain);
-
     if (withPresentationTextures) {
         presentationTextures.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
         for (uint32_t i = 0; i < numImages; ++i) {
@@ -120,5 +103,23 @@ void OffscreenSwapChain::Create(VkSwapchainKHR OldSwapChain)
                                                          false));
         }
     }
+}
+
+void OffscreenSwapChain::Impl_Cleanup()
+{
+    presentationTextures.clear();
+
+    for (const auto vk_image : GetVkImages()) {
+        vkDestroyImage(device, vk_image, nullptr);
+    }
+
+    for (const auto vk_image_memory : vkImageMemory) {
+        vkFreeMemory(device, vk_image_memory, nullptr);
+    }
+}
+
+VkSwapchainKHR OffscreenSwapChain::Impl_GetSwapChain() const
+{
+    return VK_NULL_HANDLE;
 }
 }  // namespace Slipper

@@ -1,5 +1,7 @@
 #include "Gui.h"
 
+#include <imgui_internal.h>
+
 #include "Core/Application.h"
 #include "Drawing/CommandPool.h"
 #include "GraphicsEngine.h"
@@ -40,7 +42,7 @@ void Gui::Init()
 
     // For each context we can initialize a new Imgui vulkan backend and therefore a different
     // render pass
-    m_context = ImGui::CreateContext();
+    m_context = ImGui::CreateContext(m_fontAtlas);
     ImGui::SetCurrentContext(m_context);
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
@@ -75,12 +77,15 @@ void Gui::Init()
 
     ImGui_ImplVulkan_Init(&info, m_renderPass->vkRenderPass);
 
-    // Create font atlas
-    SingleUseCommandBuffer command_buffer(*GraphicsEngine::Get().memoryCommandPool);
-    ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-    command_buffer.Submit();
-    vkDeviceWaitIdle(*m_device);
-    ImGui_ImplVulkan_DestroyFontUploadObjects();
+    if (!m_fontAtlas) {
+        // Create font atlas
+        SingleUseCommandBuffer command_buffer(*GraphicsEngine::Get().memoryCommandPool);
+        ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+        command_buffer.Submit();
+        vkDeviceWaitIdle(*m_device);
+        ImGui_ImplVulkan_DestroyFontUploadObjects();
+        m_fontAtlas = ImGui::GetIO().Fonts;
+    }
 
     m_initialized = true;
 }
@@ -91,14 +96,18 @@ void Gui::StartNewFrame() const
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGuizmo::BeginFrame();
+    //ImGuizmo::BeginFrame();
     SetupDocksapce();
 }
 
-void Gui::EndNewFrame(VkCommandBuffer CommandBuffer)
+void Gui::EndNewFrame(NonOwningPtr<RenderingStage> RenderingStage) const
 {
     ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), CommandBuffer);
+    const auto draw_data = ImGui::GetDrawData();
+
+    RenderingStage->SubmitSingleDrawCommand(m_renderPass, [=](const VkCommandBuffer &CommandBuffer) {
+        ImGui_ImplVulkan_RenderDrawData(draw_data, CommandBuffer);
+    });
 }
 
 void Gui::Shutdown()

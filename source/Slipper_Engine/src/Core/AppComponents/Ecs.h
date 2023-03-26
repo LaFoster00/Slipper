@@ -16,8 +16,8 @@ class Ecs : public AppComponent
     void Shutdown() override;
     void OnUpdate() override;
     void OnEvent(Event& Event) override;
+    void OnGuiRender() override;
 
-    public:
     OwningPtr<EcsInterface> interface;
 };
 }  // namespace Slipper

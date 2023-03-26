@@ -36,6 +36,7 @@ IMPLEMENT_GLFW_CALLBACK(FramebufferResize, int Width, int Height)
 IMPLEMENT_GLFW_CALLBACK(Key, int Key, int Scancode, int Action, int Mods)
 {
     ImGuiIO &io = ImGui::GetIO();
+
     if (!io.WantCaptureMouse) {
         Slipper::Window &window = *static_cast<Slipper::Window *>(
             glfwGetWindowUserPointer(Window));

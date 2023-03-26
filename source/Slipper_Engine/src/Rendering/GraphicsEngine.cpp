@@ -77,10 +77,10 @@ void GraphicsEngine::Init()
     m_graphicsInstance->viewportRenderPass = m_graphicsInstance->CreateRenderPass(
         "Viewport", Engine::TARGET_VIEWPORT_COLOR_FORMAT, Texture2D::FindDepthFormat(), false);
 
-    auto viewport_swap_chain = new OffscreenSwapChain(Application::Get().window->GetSize(),
-                                                      Engine::TARGET_VIEWPORT_COLOR_FORMAT,
-                                                      Engine::MAX_FRAMES_IN_FLIGHT,
-                                                      true);
+    const auto viewport_swap_chain = new OffscreenSwapChain(Application::Get().window->GetSize(),
+                                                            Engine::TARGET_VIEWPORT_COLOR_FORMAT,
+                                                            Engine::MAX_FRAMES_IN_FLIGHT,
+                                                            true);
 
     m_graphicsInstance->viewportRenderingStage = m_graphicsInstance->AddRenderingStage(
         "Viewport",
@@ -152,21 +152,18 @@ void GraphicsEngine::AddWindow(Window &Window)
     windows.insert(&Window);
     Window.GetSurface().CreateSwapChain();
 
-    windowRenderingStage = AddRenderingStage(
-        "Window",
-        Window.GetSurface().swapChain.get(),
-        device.graphicsQueue,
-        device.queueFamilyIndices.graphicsFamily.value(),
-        true);
+    windowRenderingStage = AddRenderingStage("Window",
+                                             Window.GetSurface().swapChain.get(),
+                                             device.graphicsQueue,
+                                             device.queueFamilyIndices.graphicsFamily.value(),
+                                             true);
 
     windowRenderingStage->RegisterForRenderPass(windowRenderPass);
 }
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface)
 {
-    auto debug_shader = ShaderManager::GetShader("Basic");
-    debug_shader->RegisterForRenderPass(viewportRenderPass, Surface.GetResolution());
-
+    ShaderManager::GetShader("Basic")->RegisterRenderPass(viewportRenderPass);
     SetupSimpleDraw();
 }
 
@@ -175,8 +172,8 @@ void GraphicsEngine::SetupSimpleDraw()
     viewportRenderingStage->SubmitRepeatedDrawCommand(
         viewportRenderPass,
         [=, this](const VkCommandBuffer &CommandBuffer, const RenderPass &RenderPass) {
-            const auto debug_shader = *RenderPass.registeredShaders.begin();
-            debug_shader->Use(CommandBuffer, &RenderPass);
+            const auto debug_shader = ShaderManager::GetShader("Basic");
+            debug_shader->Use(CommandBuffer, &RenderPass, viewportRenderingStage->GetSwapChain()->GetResolution());
 
             auto &camera = GetDefaultCamera();
             auto &cam_parameters = camera.GetComponent<Camera::Parameters>();
@@ -200,23 +197,38 @@ void GraphicsEngine::SetupSimpleDraw()
         });
 }
 
-void GraphicsEngine::BeginRender() const
+void GraphicsEngine::NewFrame() const
 {
-    vkWaitForFences(device, 1, &m_inFlightFences[GetCurrentFrame()], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+}
 
-    for (auto &rendering_stage : renderingStages | std::ranges::views::values)
-    {
-        rendering_stage->BeginRender();
+void GraphicsEngine::BeginRenderingStage(std::string_view Name)
+{
+    if (m_currentRenderingStage) {
+        LOG_FORMAT("Already rendering stage '{}'. End it first!", m_currentRenderingStage->name);
+        return;
+    }
+
+    if (renderingStages.contains(static_cast<std::string>(Name))) {
+        m_currentRenderingStage = renderingStages.at(static_cast<std::string>(Name));
+        m_currentRenderingStage->BeginRender();
+        return;
+    }
+
+    LOG_FORMAT("Rendering stage '{}' was not found.", Name);
+}
+
+void GraphicsEngine::EndRenderingStage()
+{
+    if (m_currentRenderingStage) {
+        m_currentRenderingStage->EndRender();
+        m_currentRenderingStage = nullptr;
     }
 }
 
-void GraphicsEngine::EndRender()
+void GraphicsEngine::EndFrame()
 {
-    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
-        rendering_stage->EndRender();
-    }
-
-    vkResetFences(device, 1, &m_inFlightFences[GetCurrentFrame()]);
+    vkResetFences(device, 1, &m_inFlightFences[m_currentFrame]);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -224,23 +236,32 @@ void GraphicsEngine::EndRender()
     std::vector<VkCommandBuffer> command_buffers;
     command_buffers.reserve(renderingStages.size());
 
-    for (const auto &rendering_stage : renderingStages | std::ranges::views::values)
-    {
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
         command_buffers.push_back(rendering_stage->commandPool->vkCommandBuffers[m_currentFrame]);
     }
 
-    const VkSemaphore wait_semaphores[] = {
-        windowRenderingStage->GetCurrentImageAvailableSemaphore()};
+    std::vector<VkSemaphore> wait_semaphores;
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
+        if (rendering_stage->IsPresentStage()) {
+            wait_semaphores.emplace_back(rendering_stage->GetCurrentImageAvailableSemaphore());
+        }
+    }
+    
     constexpr VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = wait_semaphores;
+    submit_info.waitSemaphoreCount = wait_semaphores.size();
+    submit_info.pWaitSemaphores = wait_semaphores.data();
     submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
     submit_info.pCommandBuffers = command_buffers.data();
-    const VkSemaphore signal_semaphores[] = {
-        windowRenderingStage->GetCurrentRenderFinishSemaphore()};
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = signal_semaphores;
+
+    std::vector<VkSemaphore> signal_semaphores;
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
+        if (rendering_stage->IsPresentStage()) {
+            signal_semaphores.emplace_back(rendering_stage->GetCurrentRenderFinishSemaphore());
+        }
+    }
+    submit_info.signalSemaphoreCount = signal_semaphores.size();
+    submit_info.pSignalSemaphores = signal_semaphores.data();
 
     VK_ASSERT(
         vkQueueSubmit(device.graphicsQueue, 1, &submit_info, m_inFlightFences[m_currentFrame]),
@@ -249,16 +270,15 @@ void GraphicsEngine::EndRender()
     VkPresentInfoKHR present_info{};
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = signal_semaphores;
+    present_info.waitSemaphoreCount = signal_semaphores.size();
+    present_info.pWaitSemaphores = signal_semaphores.data();
 
-	std::vector<VkSwapchainKHR> present_swap_chains;
+    std::vector<VkSwapchainKHR> present_swap_chains;
     std::vector<uint32_t> swap_chain_image_indices;
 
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
-        if (rendering_stage->IsPresentStage())
-        {
-            present_swap_chains.push_back(rendering_stage->GetSwapChain()->vkSwapChain);
+        if (rendering_stage->IsPresentStage()) {
+            present_swap_chains.push_back(*rendering_stage->GetSwapChain());
             swap_chain_image_indices.push_back(rendering_stage->GetCurrentImageIndex());
         }
     }
@@ -274,6 +294,7 @@ void GraphicsEngine::EndRender()
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
         // This should be handled by even OnWindowResize
         // current_surface->RecreateSwapChain();
+        ASSERT(1, "Hallo")
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to present swap chain image!");

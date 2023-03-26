@@ -22,11 +22,19 @@ void Ecs::OnUpdate()
 
 void Ecs::OnEvent(Event &Event)
 {
-    switch (Event.GetEventType()) {
-        case EventType::MouseMoved:
-            auto &cast_event = static_cast<MouseMovedEvent&>(Event);
-            LOG_FORMAT("Event '{}' data: x{} y{}", Event.GetName(), cast_event.mouseX, cast_event.mouseY); 
-            break;
+
+}
+
+void Ecs::OnGuiRender()
+{
+	AppComponent::OnGuiRender();
+
+    bool open = true;
+    ImGui::SetNextWindowSize({300, 300});
+    ImGui::Begin("Hello World", &open);
+    if (ImGui::IsItemHovered()) {
+        LOG_FORMAT("HELLO {}", Engine::FRAME_COUNT);
     }
+    ImGui::End();
 }
 }  // namespace Slipper

@@ -7,7 +7,9 @@
 namespace Slipper
 {
 SurfaceSwapChain::SurfaceSwapChain(Surface &Surface)
-    : SwapChain({}, Engine::TARGET_WINDOW_COLOR_FORMAT), surface(Surface)
+    : SwapChain({}, Engine::TARGET_WINDOW_COLOR_FORMAT),
+      surface(Surface),
+      vkSwapChain(VK_NULL_HANDLE)
 {
     swapChainSupport = device.QuerySwapChainSupport(&Surface);
     resolution = ChoseExtent(Surface);
@@ -15,13 +17,12 @@ SurfaceSwapChain::SurfaceSwapChain(Surface &Surface)
     imageRenderingFormat = format;
     imageColorSpace = color_space;
 
-    SurfaceSwapChain::Create(VK_NULL_HANDLE);
+    Create();
 }
 
 SurfaceSwapChain::~SurfaceSwapChain()
 {
-    SwapChain::ClearImages();
-    vkDestroySwapchainKHR(device.logicalDevice, vkSwapChain, nullptr);
+	SurfaceSwapChain::Impl_Cleanup();
 
     for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
         vkDestroySemaphore(device, image_available_semaphore, nullptr);
@@ -57,6 +58,17 @@ VkSurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
     return swapChainSupport.formats[0];
 }
 
+void SurfaceSwapChain::Impl_Cleanup()
+{
+    vkDestroySwapchainKHR(device, vkSwapChain, nullptr);
+    vkSwapChain = VK_NULL_HANDLE;
+}
+
+VkSwapchainKHR SurfaceSwapChain::Impl_GetSwapChain() const
+{
+    return vkSwapChain;
+}
+
 VkResult SurfaceSwapChain::AcquireNextImageKhr()
 {
     return vkAcquireNextImageKHR(
@@ -73,7 +85,7 @@ uint32_t SurfaceSwapChain::GetCurrentSwapChainImageIndex() const
     return m_currentImageIndex;
 }
 
-void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
+void SurfaceSwapChain::Impl_Create()
 {
     const VkPresentModeKHR present_mode = ChoosePresentMode();
     uint32_t image_count = Device::CapabilitiesSwapChainImageCount(swapChainSupport);
@@ -106,7 +118,7 @@ void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
     create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     create_info.presentMode = present_mode;
     create_info.clipped = VK_TRUE;
-    create_info.oldSwapchain = OldSwapChain;
+    create_info.oldSwapchain = vkSwapChain;
 
     VK_ASSERT(vkCreateSwapchainKHR(device, &create_info, nullptr, &vkSwapChain),
               "Failed to create swap chain!");
@@ -132,8 +144,6 @@ void SurfaceSwapChain::Create(VkSwapchainKHR OldSwapChain)
             vkCreateSemaphore(device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
             "Failed to create semaphore!")
     }
-
-    SwapChain::Create(OldSwapChain);
 }
 
 VkExtent2D SurfaceSwapChain::ChoseExtent(const Surface &Surface) const

@@ -1,5 +1,6 @@
 #include "Editor.h"
 
+#include "Core/AppComponents/Gui.h"
 #include "Core/Application.h"
 #include "Drawing/Sampler.h"
 #include "EntityOutliner.h"
@@ -63,7 +64,9 @@ void Editor::OnEditorGuiUpdate()
                                             static_cast<uint32_t>(window_size.y));
     }
     ImGui::Image(m_imguiViewportImages[current_frame], window_size);
+    //ImGui::SetWindowHitTestHole(ImGui::GetCurrentWindow(), ImGui::GetWindowPos(), window_size);
     if (ImGui::IsItemHovered()) {
+        viewportHovered = true;
         ImGui::CaptureMouseFromApp(false);
     }
     last_window_size = window_size;

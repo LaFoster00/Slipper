@@ -54,22 +54,10 @@ VkPipelineViewportStateCreateInfo PipelineLayout::SetupViewportState(VkViewport 
                                                                      VkRect2D &Scissor,
                                                                      const VkExtent2D &Extent)
 {
-    Viewport.x = 0.0f;
-    Viewport.y = 0.0f;
-    Viewport.width = static_cast<float>(Extent.width);
-    Viewport.height = static_cast<float>(Extent.height);
-    Viewport.minDepth = 0.0f;
-    Viewport.maxDepth = 1.0f;
-
-    Scissor.offset = {0, 0};
-    Scissor.extent = Extent;
-
     VkPipelineViewportStateCreateInfo viewport_state{};
     viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewport_state.viewportCount = 1;
-    viewport_state.pViewports = &Viewport;
     viewport_state.scissorCount = 1;
-    viewport_state.pScissors = &Scissor;
 
     return viewport_state;
 }

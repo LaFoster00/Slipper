@@ -66,8 +66,10 @@ class GraphicsEngine : DeviceDependentObject
             .first->second.get();
     }
 
-    void BeginRender() const;
-    void EndRender();
+    void NewFrame() const;
+    void BeginRenderingStage(std::string_view Name);
+    void EndRenderingStage();
+    void EndFrame();
 
     static void OnViewportResize(uint32_t Width, uint32_t Height);
     static void OnWindowResized(Window *Window, int Width, int Height);
@@ -76,7 +78,7 @@ class GraphicsEngine : DeviceDependentObject
 
     [[nodiscard]] VkCommandBuffer GetCurrentGuiCommandBuffer() const
     {
-        return windowRenderingStage->commandPool->vkCommandBuffers[m_currentFrame];
+        return viewportRenderingStage->commandPool->vkCommandBuffers[m_currentFrame];
     }
 
     [[nodiscard]] uint32_t GetCurrentFrame() const
@@ -118,6 +120,7 @@ class GraphicsEngine : DeviceDependentObject
 
     uint32_t m_currentFrame = 0;
     NonOwningPtr<RenderPass> m_currentRenderPass = nullptr;
+    NonOwningPtr<RenderingStage> m_currentRenderingStage = nullptr;
 
     Entity m_defaultCamera;
 };

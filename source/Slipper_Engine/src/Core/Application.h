@@ -92,6 +92,6 @@ class Application
 
     std::unordered_map<NonOwningPtr<RenderingStage>,
                        std::vector<std::function<void(NonOwningPtr<RenderingStage>)>>>
-        additionalRenderStagesUpdate;
+        renderingStagesUpdate;
 };
 }  // namespace Slipper

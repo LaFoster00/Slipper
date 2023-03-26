@@ -12,8 +12,19 @@ class SlipperEditor : public Application
 
     void Init() override;
 
+    NonOwningPtr<Editor> GetEditor() const
+    {
+        return m_editor;
+    }
+
+    NonOwningPtr<Gui> GetEditorGui() const
+    {
+        return m_editorGui;
+    }
+
 private:
     void UpdateEditor(NonOwningPtr<RenderingStage> RenderingStage) const;
+    
 
  private:
     NonOwningPtr<Editor> m_editor;

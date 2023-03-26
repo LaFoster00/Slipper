@@ -25,9 +25,6 @@ RenderingStage::RenderingStage(std::string Name,
 
 RenderingStage::~RenderingStage()
 {
-    for (const auto render_pass : renderPasses) {
-        render_pass->DestroySwapChainFramebuffers(GetSwapChain());
-    }
     renderPasses.clear();
 }
 
@@ -45,7 +42,8 @@ VkCommandBuffer RenderingStage::BeginRender()
             throw std::runtime_error("Failed to acquire swap chain image!");
         }
     }
-    const auto draw_command_buffer = commandPool->vkCommandBuffers[GetCurrentImageIndex()];
+    const auto draw_command_buffer =
+        commandPool->vkCommandBuffers[GraphicsEngine::Get().GetCurrentFrame()];
     commandPool->BeginCommandBuffer(draw_command_buffer);
 
     for (const auto render_pass : renderPasses) {
@@ -57,18 +55,19 @@ VkCommandBuffer RenderingStage::BeginRender()
 
 void RenderingStage::EndRender()
 {
-    const auto draw_command_buffer = commandPool->vkCommandBuffers[GetCurrentImageIndex()];
+    const auto draw_command_buffer =
+        commandPool->vkCommandBuffers[GraphicsEngine::Get().GetCurrentFrame()];
 
     for (auto render_pass : renderPasses) {
+        for (auto &repeated_draw_command : repeatedCommands[render_pass]) {
+            repeated_draw_command(draw_command_buffer, *render_pass);
+        }
+
         for (auto &single_draw_command : singleCommands[render_pass]) {
             single_draw_command(draw_command_buffer);
         }
 
         singleCommands.at(render_pass).clear();
-
-        for (auto &repeated_draw_command : repeatedCommands[render_pass]) {
-            repeated_draw_command(draw_command_buffer, *render_pass);
-        }
 
         render_pass->EndRenderPass(draw_command_buffer);
 
@@ -90,7 +89,7 @@ void RenderingStage::SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
                                 const glm::mat4 &Transform)
 {
     SubmitSingleDrawCommand(RenderPass, [=, this](const VkCommandBuffer &CommandBuffer) {
-        Shader->Use(CommandBuffer, RenderPass);
+        Shader->Use(CommandBuffer, RenderPass, GetSwapChain()->GetResolution());
 
         UniformVP vp;
         const auto resolution = GetSwapChain()->GetResolution();
@@ -127,7 +126,7 @@ void RenderingStage::RegisterForRenderPass(NonOwningPtr<RenderPass> RenderPass)
     if (renderPasses.contains(RenderPass))
         return;
 
-    RenderPass->CreateSwapChainFramebuffers(GetSwapChain());
+    GetSwapChain()->CreateFramebuffers(RenderPass);
     renderPasses.insert(RenderPass);
 }
 
@@ -135,15 +134,12 @@ void RenderingStage::UnregisterFromRenderPass(NonOwningPtr<RenderPass> RenderPas
 {
     if (renderPasses.contains(RenderPass))
         renderPasses.erase(RenderPass);
-    RenderPass->DestroySwapChainFramebuffers(GetSwapChain());
+    GetSwapChain()->DestroyFramebuffers(RenderPass);
 }
 
 void RenderingStage::ChangeResolution(uint32_t Width, uint32_t Height)
 {
     GetSwapChain()->Recreate(Width, Height);
-    for (auto render_pass : renderPasses) {
-        render_pass->RecreateSwapChainResources(GetSwapChain());
-    }
 }
 
 bool RenderingStage::HasPresentationTextures() const
@@ -179,14 +175,13 @@ uint32_t RenderingStage::GetCurrentImageIndex() const
         return GraphicsEngine::Get().GetCurrentFrame();
 }
 
-template <>
+template<>
 NonOwningPtr<OffscreenSwapChain> RenderingStage::GetSwapChain<OffscreenSwapChain>() const
 {
-	return std::get<OwningPtr<OffscreenSwapChain>>(swapChain);
+    return std::get<OwningPtr<OffscreenSwapChain>>(swapChain);
 }
 
-template <>
-NonOwningPtr<SurfaceSwapChain> RenderingStage::GetSwapChain<SurfaceSwapChain>() const
+template<> NonOwningPtr<SurfaceSwapChain> RenderingStage::GetSwapChain<SurfaceSwapChain>() const
 {
     return std::get<NonOwningPtr<SurfaceSwapChain>>(swapChain);
 }

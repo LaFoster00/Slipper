@@ -13,16 +13,14 @@ class GraphicsPipeline
  public:
     GraphicsPipeline() = delete;
     GraphicsPipeline(const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
-                     VkExtent2D Extent,
-                     const RenderPass *RenderPass,
+                     NonOwningPtr<const RenderPass> RenderPass,
                      const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts);
     ~GraphicsPipeline();
 
-    void Bind(const VkCommandBuffer &CommandBuffer) const;
-    void ChangeResolution(const VkExtent2D &Resolution);
+    void Bind(const VkCommandBuffer &CommandBuffer, VkExtent2D Extent) const;
 
  private:
-    void Create(VkExtent2D Extent);
+    void Create();
 
  public:
     Device &device;
@@ -31,7 +29,10 @@ class GraphicsPipeline
     VkPipeline vkGraphicsPipeline;
 
  private:
-    const RenderPass *m_renderPass;
+    NonOwningPtr<const RenderPass> m_renderPass;
     const std::vector<VkPipelineShaderStageCreateInfo> m_shaderStages;
+
+    VkViewport m_vkViewport;
+    VkRect2D m_vkScissor;
 };
 }  // namespace Slipper

@@ -21,7 +21,11 @@ class Editor : public EditorAppComponent
 
     void OnViewportResize(uint32_t Width, uint32_t Height);
 
-private:
+
+public:
+    static inline bool viewportHovered = false;
+
+ private:
     GraphicsEngine *m_graphicsEngine = nullptr;
     std::vector<VkImageView> m_viewportImages;
     std::vector<VkDescriptorSet> m_imguiViewportImages;

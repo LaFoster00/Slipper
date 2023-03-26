@@ -98,19 +98,18 @@ class Shader : public DeviceDependentObject
 
     Shader() = delete;
     Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
-           std::optional<std::vector<RenderPass *>> RenderPasses = {},
-           std::optional<VkExtent2D> RenderPassesExtent = {});
+           std::optional<std::vector<RenderPass *>> RenderPasses = {});
     ~Shader();
 
-    GraphicsPipeline &RegisterForRenderPass(RenderPass *RenderPass, VkExtent2D Extent);
-    bool UnregisterFromRenderPass(RenderPass *RenderPass);
-    void ChangeResolutionForRenderPass(RenderPass *RenderPass, VkExtent2D Resolution) const;
+    GraphicsPipeline &RegisterRenderPass(NonOwningPtr<const RenderPass> RenderPass);
 
     /* Binds the shaders pipeline and its descriptor sets
      * Current frame is optional and will be fetched from the currentFrame of the GraphicsEngine if
      * empty.
      */
-    void Use(const VkCommandBuffer &CommandBuffer, const RenderPass *RenderPass) const;
+    void Use(const VkCommandBuffer &CommandBuffer,
+             NonOwningPtr<const RenderPass> RenderPass,
+             VkExtent2D Extent) const;
 
     bool BindShaderParameter(const std::string Name, const auto &Object) const
     {
@@ -143,8 +142,7 @@ class Shader : public DeviceDependentObject
     void AllocateDescriptorSets();
 
     GraphicsPipeline &CreateGraphicsPipeline(
-        RenderPass *RenderPass,
-        VkExtent2D &Extent,
+        NonOwningPtr<const RenderPass> RenderPass,
         const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts);
 
     static VkShaderModule CreateShaderModule(const std::vector<char> &Code);
@@ -165,7 +163,8 @@ class Shader : public DeviceDependentObject
         m_vkDescriptorSets;  // One set for every frame
     std::unordered_map<ShaderType, ShaderStage> m_shaderStages;
     std::map<uint32_t, VkDescriptorSetLayout> m_vkDescriptorSetLayouts;  // One layout for set
-    std::unordered_map<const RenderPass *, std::unique_ptr<GraphicsPipeline>> m_graphicsPipelines;
+    std::unordered_map<NonOwningPtr<const RenderPass>, OwningPtr<GraphicsPipeline>>
+        m_graphicsPipelines;
 };
 
 template<typename T>

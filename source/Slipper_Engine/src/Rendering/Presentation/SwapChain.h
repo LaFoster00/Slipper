@@ -2,6 +2,8 @@
 
 namespace Slipper
 {
+class RenderPass;
+class Framebuffer;
 class DepthBuffer;
 class RenderTarget;
 class Texture2D;
@@ -17,7 +19,7 @@ class SwapChain : public DeviceDependentObject
 
     operator VkSwapchainKHR() const
     {
-        return vkSwapChain;
+        return Impl_GetSwapChain();
     }
 
     [[nodiscard]] const VkExtent2D &GetResolution() const
@@ -35,10 +37,11 @@ class SwapChain : public DeviceDependentObject
         return depthFormat;
     }
 
-	virtual void ClearImages();
-    virtual void Recreate(uint32_t Width, uint32_t Height);
+    void Recreate(uint32_t Width, uint32_t Height);
+    void CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass);
+    void DestroyFramebuffers(NonOwningPtr<RenderPass> RenderPass);
 
-    virtual VkImage GetCurrentSwapChainImage() const ;
+    virtual VkImage GetCurrentSwapChainImage() const;
     virtual uint32_t GetCurrentSwapChainImageIndex() const = 0;
 
     std::vector<VkImageView> &GetVkImageViews()
@@ -46,10 +49,27 @@ class SwapChain : public DeviceDependentObject
         return m_vkImageViews;
     }
 
+    const std::unordered_map<NonOwningPtr<RenderPass>, std::vector<VkFramebuffer>>
+        &GetVkFramebuffers() const
+    {
+        return m_vkFramebuffers;
+    }
+
+	VkFramebuffer GetVkFramebuffer(NonOwningPtr<RenderPass> RenderPass, uint32_t Frame)
+    {
+        return m_vkFramebuffers[RenderPass][Frame];
+    }
+
  protected:
-    SwapChain(VkExtent2D Extent,
-              VkFormat RenderingFormat);
-    virtual void Create(VkSwapchainKHR OldSwapChain = VK_NULL_HANDLE);
+    SwapChain(VkExtent2D Extent, VkFormat RenderingFormat);
+
+    void Create();
+    virtual void Impl_Create() = 0;
+    void Cleanup(bool KeepRenderPasses, bool CalledFromDestructor = false);
+    virtual void Impl_Cleanup() = 0;
+
+    virtual VkSwapchainKHR Impl_GetSwapChain() const = 0;
+
     void CreateImageViews();
 
     std::vector<VkImage> &GetVkImages()
@@ -59,8 +79,6 @@ class SwapChain : public DeviceDependentObject
 
  public:
     static VkFormat swapChainFormat;
-
-    VkSwapchainKHR vkSwapChain;
     SwapChainSupportDetails swapChainSupport;
 
     std::unique_ptr<RenderTarget> renderTarget;
@@ -72,8 +90,9 @@ class SwapChain : public DeviceDependentObject
     VkFormat depthFormat;
     VkExtent2D resolution;
 
-private:
+ private:
     std::vector<VkImage> m_vkImages;
     std::vector<VkImageView> m_vkImageViews;
+    std::unordered_map<NonOwningPtr<RenderPass>, std::vector<VkFramebuffer>> m_vkFramebuffers;
 };
 }  // namespace Slipper

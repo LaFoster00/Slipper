@@ -59,6 +59,19 @@ void Application::Init()
     GraphicsEngine::Get().AddWindow(*window);
 
     guiComponent = AddComponent(new Gui("Viewport", GraphicsEngine::Get().viewportRenderPass));
+
+    AddAdditionalRenderStageUpdate(GraphicsEngine::Get().viewportRenderingStage,
+                                   [&](NonOwningPtr<RenderingStage> RS) {
+                                       for (const auto &app_component : appComponents) {
+                                           app_component->OnUpdate();
+                                       }
+
+                                       guiComponent->StartNewFrame();
+                                       for (const auto &app_component : appComponents) {
+                                           app_component->OnGuiRender();
+                                       }
+                                       guiComponent->EndNewFrame(RS);
+                                   });
 }
 
 void Application::Close()
@@ -98,26 +111,23 @@ void Application::Run()
                 window->SetTitle(ss.str());
             }
 
-            GraphicsEngine::Get().BeginRender();
+            // Render loop
+            GraphicsEngine::Get().NewFrame();
 
-            for (const auto &app_component : appComponents) {
-                app_component->OnUpdate();
-            }
-
-            guiComponent->StartNewFrame();
-            for (const auto &app_component : appComponents) {
-                app_component->OnGuiRender();
-            }
-            guiComponent->EndNewFrame(GraphicsEngine::Get().GetCurrentGuiCommandBuffer());
-
+            // All render stages will be rendered here
+            //  That includes the viewport and the window render stage
+            //  The Update events are executed via the function added to the viewport stage in
+            //  Init()
             for (auto &rendering_stage :
                  GraphicsEngine::Get().renderingStages | std::ranges::views::values) {
-                for (auto &stage_update : additionalRenderStagesUpdate[rendering_stage]) {
+                for (auto &stage_update : renderingStagesUpdate[rendering_stage]) {
+                    GraphicsEngine::Get().BeginRenderingStage(rendering_stage->name);
                     stage_update(rendering_stage.get());
+                    GraphicsEngine::Get().EndRenderingStage();
                 }
             }
 
-            GraphicsEngine::Get().EndRender();
+            GraphicsEngine::Get().EndFrame();
         }
     }
 }
@@ -173,11 +183,12 @@ void Application::AddAdditionalRenderStageUpdate(
     NonOwningPtr<RenderingStage> Stage,
     std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction)
 {
-    additionalRenderStagesUpdate[Stage].emplace_back(UpdateFunction);
+    renderingStagesUpdate[Stage].emplace_back(UpdateFunction);
 }
 
 void Application::WindowResize()
 {
+    vkDeviceWaitIdle(Device::Get());
     windowResize.resized = false;
     GraphicsEngine::OnWindowResized(
         std::any_cast<Window *>(windowResize.context), windowResize.width, windowResize.height);
@@ -185,6 +196,7 @@ void Application::WindowResize()
 
 void Application::ViewportResize()
 {
+    vkDeviceWaitIdle(Device::Get());
     viewportResize.resized = false;
     GraphicsEngine::OnViewportResize(viewportResize.width, viewportResize.height);
     for (auto viewport_resize_callback : viewportResizeCallbacks) {

@@ -18,18 +18,9 @@ class RenderPass : DeviceDependentObject
                VkFormat DepthFormat,
                bool ForPresentation = true);
     ~RenderPass();
-
-    void DestroyAllFrameBuffers();
-    bool DestroySwapChainFramebuffers(NonOwningPtr<SwapChain> SwapChain);
-    void CreateSwapChainFramebuffers(NonOwningPtr<SwapChain> SwapChain);
-
-    void RecreateSwapChainResources(SwapChain *SwapChain);
     
     void BeginRenderPass(SwapChain *SwapChain, uint32_t ImageIndex, VkCommandBuffer CommandBuffer);
     void EndRenderPass(VkCommandBuffer commandBuffer);
-
-    void RegisterShader(Shader *Shader);
-    void UnregisterShader(Shader *Shader);
 
     [[nodiscard]] SwapChain *GetActiveSwapChain() const
     {
@@ -44,11 +35,7 @@ class RenderPass : DeviceDependentObject
  public:
     std::string name;
     VkRenderPass vkRenderPass;
-
-    std::unordered_map<SwapChain *, std::vector<std::unique_ptr<Framebuffer>>>
-        swapChainFramebuffers;
-
-    std::unordered_set<NonOwningPtr<Shader>> registeredShaders;
+    
     std::unordered_set<NonOwningPtr<RenderingStage>> registeredRenderingStages;
 
  private:

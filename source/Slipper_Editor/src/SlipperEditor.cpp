@@ -30,9 +30,11 @@ void SlipperEditor::Init()
     GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
 
     m_editor = AddComponent(new Editor());
-    m_editorGui = AddComponent(new Gui("Editor Gui", GraphicsEngine::Get().windowRenderPass, true));
-    AddAdditionalRenderStageUpdate(GraphicsEngine::Get().windowRenderingStage,
-                                   std::bind(&SlipperEditor::UpdateEditor, this, std::placeholders::_1));
+    m_editorGui = AddComponent(
+        new Gui("Editor Gui", GraphicsEngine::Get().windowRenderPass, true));
+    AddAdditionalRenderStageUpdate(
+        GraphicsEngine::Get().windowRenderingStage,
+        std::bind(&SlipperEditor::UpdateEditor, this, std::placeholders::_1));
 }
 
 void SlipperEditor::UpdateEditor(NonOwningPtr<RenderingStage> RenderingStage) const
@@ -46,7 +48,6 @@ void SlipperEditor::UpdateEditor(NonOwningPtr<RenderingStage> RenderingStage) co
         }
     }
 
-    m_editorGui->EndNewFrame(
-        RenderingStage->commandPool->vkCommandBuffers[GraphicsEngine::Get().GetCurrentFrame()]);
+    m_editorGui->EndNewFrame(RenderingStage);
 }
 }  // namespace Slipper::Editor

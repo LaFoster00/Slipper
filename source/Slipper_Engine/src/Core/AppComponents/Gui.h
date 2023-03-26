@@ -4,7 +4,8 @@
 
 namespace Slipper
 {
-class RenderPass;
+	class RenderingStage;
+	class RenderPass;
 class Device;
 class Window;
 
@@ -22,7 +23,11 @@ class Gui : public AppComponent
  public:
     explicit Gui(std::string_view Name, NonOwningPtr<RenderPass> RenderPass, bool InstallCallbacks = false);
 	void StartNewFrame() const;
-    static void EndNewFrame(VkCommandBuffer CommandBuffer);
+	void EndNewFrame(NonOwningPtr<RenderingStage> RenderingStage) const;
+    NonOwningPtr<ImGuiContext> GetImguiContext() const
+    {
+        return m_context;
+    }
 
  private:
     static void SetupDocksapce();
@@ -32,9 +37,13 @@ class Gui : public AppComponent
     void Shutdown() override;
 
  private:
+    static Device *m_device;
+
+    static inline ImFontAtlas *m_fontAtlas = nullptr;
+
 	bool m_initialized = false;
     bool m_installCallbacks;
-    static Device *m_device;
+    
 	ImGuiResources *m_resources = nullptr;
     ImGuiContext *m_context = nullptr;
     NonOwningPtr<RenderPass> m_renderPass;

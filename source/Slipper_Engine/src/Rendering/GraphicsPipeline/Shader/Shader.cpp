@@ -3,16 +3,15 @@
 #include "File.h"
 #include "GraphicsPipeline.h"
 #include "Mesh/UniformBuffer.h"
+#include "Presentation/SwapChain.h"
 #include "RenderPass.h"
-#include "Texture/Texture.h"
 
 namespace Slipper
 {
 const char *ShaderTypeNames[]{"UNDEFINED", "Vertex", "Fragment", "Compute"};
 
 Shader::Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
-               const std::optional<std::vector<RenderPass *>> RenderPasses,
-               std::optional<VkExtent2D> RenderPassesExtent)
+               const std::optional<std::vector<RenderPass *>> RenderPasses)
 {
     LoadShader(ShaderStagesCode);
 
@@ -24,7 +23,7 @@ Shader::Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &Shad
 
     if (RenderPasses.has_value()) {
         for (const auto render_pass : RenderPasses.value()) {
-            RegisterForRenderPass(render_pass, RenderPassesExtent.value());
+            RegisterRenderPass(render_pass);
         }
     }
 }
@@ -46,58 +45,38 @@ Shader::~Shader()
     }
 }
 
-// TODO Introduce surface dependency since this is not only dependent on render pass
-GraphicsPipeline &Shader::RegisterForRenderPass(RenderPass *RenderPass, VkExtent2D Extent)
+GraphicsPipeline &Shader::RegisterRenderPass(NonOwningPtr<const RenderPass> RenderPass)
 {
-    RenderPass->RegisterShader(this);
-    std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
-
     std::vector<VkDescriptorSetLayout> layouts;
     layouts.reserve((m_vkDescriptorSetLayouts | std::ranges::views::values).size());
     for (auto descriptor_set_layout : m_vkDescriptorSetLayouts | std::ranges::views::values) {
         layouts.push_back(descriptor_set_layout);
     }
 
-    return CreateGraphicsPipeline(RenderPass, Extent, layouts);
+    return CreateGraphicsPipeline(RenderPass, layouts);
 }
 
-bool Shader::UnregisterFromRenderPass(RenderPass *RenderPass)
+void Shader::Use(const VkCommandBuffer &CommandBuffer,
+                 NonOwningPtr<const RenderPass> RenderPass,
+                 VkExtent2D Extent) const
 {
-    if (m_graphicsPipelines.contains(RenderPass)) {
-        RenderPass->UnregisterShader(this);
-        m_graphicsPipelines.erase(RenderPass);
-        return true;
-    }
-    return false;
-}
-
-// TODO change this to swap chain dependency instead of resolution, shader should be able to be
-// bound to multiple render passes and swapchains
-void Shader::ChangeResolutionForRenderPass(RenderPass *RenderPass, VkExtent2D Resolution) const
-{
-    if (m_graphicsPipelines.contains(RenderPass)) {
-        m_graphicsPipelines.at(RenderPass)->ChangeResolution(Resolution);
-    }
-}
-
-void Shader::Use(const VkCommandBuffer &CommandBuffer, const RenderPass *RenderPass) const
-{
-    if (m_graphicsPipelines.contains(RenderPass)) {
-        m_graphicsPipelines.at(RenderPass)->Bind(CommandBuffer);
-
-        const auto descriptor_sets = GetDescriptorSets();
-        vkCmdBindDescriptorSets(CommandBuffer,
-                                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                m_graphicsPipelines.at(RenderPass)->vkPipelineLayout,
-                                0,
-                                static_cast<uint32_t>(descriptor_sets.size()),
-                                descriptor_sets.data(),
-                                0,
-                                nullptr);
-    }
-    else {
+    if (!m_graphicsPipelines.contains(RenderPass)) {
         ASSERT(true, "RenderPass {} is not registered for this shader.", RenderPass->name)
     }
+
+    auto &pipeline = m_graphicsPipelines.at(RenderPass);
+
+    pipeline->Bind(CommandBuffer, Extent);
+
+    const auto descriptor_sets = GetDescriptorSets();
+    vkCmdBindDescriptorSets(CommandBuffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            pipeline->vkPipelineLayout,
+                            0,
+                            static_cast<uint32_t>(descriptor_sets.size()),
+                            descriptor_sets.data(),
+                            0,
+                            nullptr);
 }
 
 template<>
@@ -159,7 +138,6 @@ UniformBuffer *Shader::GetUniformBuffer(const std::string Name,
     ASSERT(true, "Object '{}' does not exist.", Name);
 }
 
-// TODO this isn't setup for use with multiple descriptor sets
 std::vector<VkDescriptorSet> Shader::GetDescriptorSets(const std::optional<uint32_t> Index) const
 {
     std::vector<VkDescriptorSet> ds;
@@ -212,19 +190,18 @@ void Shader::CreateDescriptorPool()
 }
 
 GraphicsPipeline &Shader::CreateGraphicsPipeline(
-    RenderPass *RenderPass,
-    VkExtent2D &Extent,
-    const std::vector<VkDescriptorSetLayout> &DescriptorSetLayout)
+    NonOwningPtr<const RenderPass> RenderPass,
+    const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts)
 {
     std::vector<VkPipelineShaderStageCreateInfo> createInfos;
     createInfos.reserve(m_shaderStages.size());
-    for (auto &[shaderType, shaderStage] : m_shaderStages) {
+    for (auto &shaderStage : m_shaderStages | std::views::values) {
         createInfos.push_back(shaderStage.pipelineStageCrateInfo);
     }
+
     return *m_graphicsPipelines
-                .emplace(std::make_pair(RenderPass,
-                                        std::make_unique<GraphicsPipeline>(
-                                            createInfos, Extent, RenderPass, DescriptorSetLayout)))
+                .emplace(RenderPass,
+                         new GraphicsPipeline(createInfos, RenderPass, DescriptorSetLayouts))
                 .first->second;
 }
 
