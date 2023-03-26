@@ -44,24 +44,23 @@ void Gui::Init()
     ImGui::SetCurrentContext(m_context);
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    VkDescriptorPoolSize imgui_pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
-                                               {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
-                                               {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
-                                               {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
-                                               {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
-                                               {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
-                                               {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
-                                               {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
-                                               {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
-                                               {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
-                                               {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+    VkDescriptorPoolSize imgui_pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 64},
+                                               {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64},
+                                               {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 64},
+                                               {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 64},
+                                               {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 64},
+                                               {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 64},
+                                               {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 64},
+                                               {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 64},
+                                               {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 64},
+                                               {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 64},
+                                               {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 64}};
 
     m_resources = new ImGuiResources();
     m_resources->CreateDescriptorPool(imgui_pool_sizes, std::size(imgui_pool_sizes), 1024);
 
     const auto &window = Application::Get().window;
     ImGui_ImplGlfw_InitForVulkan(*window, m_installCallbacks);
-
 
     ImGui_ImplVulkan_InitInfo info{};
     info.Instance = VulkanInstance::Get();

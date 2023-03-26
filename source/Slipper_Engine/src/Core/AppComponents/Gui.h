@@ -35,7 +35,7 @@ class Gui : public AppComponent
 	bool m_initialized = false;
     bool m_installCallbacks;
     static Device *m_device;
-	static inline ImGuiResources *m_resources = nullptr;
+	ImGuiResources *m_resources = nullptr;
     ImGuiContext *m_context = nullptr;
     NonOwningPtr<RenderPass> m_renderPass;
 };
