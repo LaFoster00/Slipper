@@ -23,6 +23,11 @@ void InputManager::RegisterInputCallbacks(const Window &Window)
     glfwSetFramebufferSizeCallback(Window, FramebufferResize_Callback);
 }
 
+void InputManager::SetInputOffset(glm::vec2 Offset)
+{
+    InputManager::Offset = Offset;
+}
+
 IMPLEMENT_GLFW_CALLBACK(FramebufferResize, int Width, int Height)
 {
     Slipper::Window &window = *static_cast<Slipper::Window *>(glfwGetWindowUserPointer(Window));
@@ -90,7 +95,7 @@ IMPLEMENT_GLFW_CALLBACK(CursorPos, double XPos, double YPos)
     if (!io.WantCaptureMouse) {
         Slipper::Window &window = *static_cast<Slipper::Window *>(
             glfwGetWindowUserPointer(Window));
-        MouseMovedEvent event(XPos, YPos);
+        MouseMovedEvent event(XPos - Offset.x, YPos - Offset.y);
         window.m_eventCallback(event);
     }
 }

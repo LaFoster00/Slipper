@@ -180,6 +180,7 @@ class InputManager
 {
  public:
     static void RegisterInputCallbacks(const Window &Window);
+    static void SetInputOffset(glm::vec2 Offset);
 
 private:
     DECLARE_GLFW_CALLBACK(FramebufferResize, int Width, int Height);
@@ -191,6 +192,9 @@ private:
     DECLARE_GLFW_CALLBACK(WindowMaximize, int Maximized);
     DECLARE_GLFW_CALLBACK(WindowFocus, int Focused);
     DECLARE_GLFW_DIRECT_CALLBACK(WindowClose);
+
+private:
+    static inline glm::vec2 Offset = {};
 };
 
 }  // namespace Slipper

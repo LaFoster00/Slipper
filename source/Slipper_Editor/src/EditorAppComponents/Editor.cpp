@@ -4,6 +4,7 @@
 
 #include "Core/AppComponents/Gui.h"
 #include "Core/Application.h"
+#include "Core/Input.h"
 #include "Drawing/Sampler.h"
 #include "EntityOutliner.h"
 #include "GraphicsEngine.h"
@@ -65,8 +66,10 @@ void Editor::OnEditorGuiUpdate()
         Application::Get().OnViewportResize(static_cast<uint32_t>(window_size.x),
                                             static_cast<uint32_t>(window_size.y));
     }
+    auto viewport_pos = ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos();
+    InputManager::SetInputOffset({viewport_pos.x, viewport_pos.y});
     ImGui::Image(m_imguiViewportImages[current_frame], window_size);
-    //ImGui::SetWindowHitTestHole(ImGui::GetCurrentWindow(), ImGui::GetWindowPos(), window_size);
+    // ImGui::SetWindowHitTestHole(ImGui::GetCurrentWindow(), ImGui::GetWindowPos(), window_size);
     if (ImGui::IsItemHovered()) {
         viewportHovered = true;
         ImGui::CaptureMouseFromApp(false);
