@@ -2,10 +2,10 @@
 
 namespace Slipper
 {
+class OffscreenSwapChain;
 class Mesh;
 class Shader;
 class Texture2D;
-class OffscreenSwapChain;
 class SurfaceSwapChain;
 class SwapChain;
 class RenderPass;

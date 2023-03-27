@@ -1,4 +1,5 @@
 #pragma once
+#include "IEcsComponent.h"
 
 namespace Slipper
 {
@@ -6,7 +7,7 @@ struct Transform;
 
 namespace Camera
 {
-struct Parameters
+struct Parameters : public IEcsComponent
 {
     float fov = 45.0f;
     float nearPlane = 0.1f;

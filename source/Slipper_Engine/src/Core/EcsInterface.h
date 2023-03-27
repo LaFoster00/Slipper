@@ -4,19 +4,25 @@
 
 namespace Slipper
 {
+struct EcsSystemData;
+
 class EcsInterface
 {
     friend struct Entity;
+
  public:
-    static void Create();
-    static void Destroy();
+    EcsInterface();
+
+    static bool AddSystem(EcsSystemData &Data);
+    static void RunSystems();
 
     static EcsInterface &Get()
     {
-        return *m_instance;
+        static EcsInterface instance;
+        return instance;
     }
 
-public:
+ public:
     entt::registry &GetRegistry()
     {
         return m_registry;
@@ -26,7 +32,7 @@ public:
     entt::entity CreateEntity();
 
  private:
-    static EcsInterface *m_instance;
     entt::registry m_registry;
+    std::vector<Ref<EcsSystemData>> m_ecsSystems;
 };
 }  // namespace Slipper

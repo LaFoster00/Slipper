@@ -2,22 +2,21 @@
 
 #include "Core/EcsInterface.h"
 #include "Core/Event.h"
-#include "Core/InputEvent.h"
 
 namespace Slipper
 {
 void Ecs::Init()
 {
-    EcsInterface::Create();
 }
 
 void Ecs::Shutdown()
 {
-    EcsInterface::Destroy();
+
 }
 
 void Ecs::OnUpdate()
 {
+    EcsInterface::RunSystems();
 }
 
 void Ecs::OnEvent(Event &Event)

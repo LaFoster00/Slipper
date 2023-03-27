@@ -38,6 +38,9 @@ set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
     src
     src/EditorAppComponents
     src/Editors
+    src/Ecs
+    src/Ecs/Components
+    src/Ecs/Systems
 )
 GroupSources(src Source)
 

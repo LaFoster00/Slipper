@@ -66,7 +66,9 @@ set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     src/Tutorial
     src/Window
     src/Platform
-    src/Components
+    src/Ecs
+    src/Ecs/Components
+    src/Ecs/Systems
     src/SceneObjects
 )
 GroupSources(src Source)

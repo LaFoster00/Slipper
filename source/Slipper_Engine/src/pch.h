@@ -46,13 +46,15 @@
 
 #include "magic_enum.hpp"
 
-#include "Core/Entity.h"
+#include "common_defines.h"
 
 #include "Core/Pointer.h"
+
+#include "Core/Entity.h"
+
 #include "DeviceDependentObject.h"
 #include "Engine.h"
 #include "Setup/Device.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
 #include "Util/StringUtil.h"
-#include "common_defines.h"

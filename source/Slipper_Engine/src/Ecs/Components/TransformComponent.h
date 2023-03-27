@@ -1,10 +1,11 @@
 #pragma once
+#include "IEcsComponent.h"
 
 namespace Slipper
 {
 using TransformChangeCallback = std::function<void()>;
 
-struct Transform
+struct Transform : public IEcsComponent
 {
     Transform(glm::vec3 Location = glm::vec3(0),
               glm::vec3 Scale = glm::vec3(1),

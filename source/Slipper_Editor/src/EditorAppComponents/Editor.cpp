@@ -2,6 +2,7 @@
 
 #include <imgui_internal.h>
 
+#include "EditorCameraSystem.h"
 #include "Core/AppComponents/Gui.h"
 #include "Core/Application.h"
 #include "Core/Input.h"
@@ -20,6 +21,7 @@ void Editor::Init()
     Application::Get().AddViewportResizeCallback(
         std::bind(&Editor::OnViewportResize, this, std::placeholders::_1, std::placeholders::_2));
     m_graphicsEngine = &GraphicsEngine::Get();
+    m_graphicsEngine->GetDefaultCamera().AddComponent<EditorCameraComponent>();
 }
 
 void Editor::Shutdown()

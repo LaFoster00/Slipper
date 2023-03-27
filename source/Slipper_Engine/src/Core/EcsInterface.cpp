@@ -1,21 +1,27 @@
 #include "EcsInterface.h"
 
+#include "IEcsSystem.h"
+
 namespace Slipper
 {
-EcsInterface *EcsInterface::m_instance = nullptr;
-
-void EcsInterface::Create()
+EcsInterface::EcsInterface()
 {
-    if (!m_instance)
-        m_instance = new EcsInterface();
-
-    m_instance->m_registry = entt::registry();
+    m_registry = entt::registry();
 }
 
-void EcsInterface::Destroy()
+bool EcsInterface::AddSystem(EcsSystemData &Data)
 {
-    delete m_instance;
-    m_instance = nullptr;
+    Get().m_ecsSystems.push_back(Data);
+    return true;
+}
+
+void EcsInterface::RunSystems()
+{
+    auto &registry = Get().m_registry;
+	for (const auto &ecs_system : Get().m_ecsSystems)
+	{
+		ecs_system->executeFunction(registry);
+	}
 }
 
 entt::entity EcsInterface::CreateEntity()
