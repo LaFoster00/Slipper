@@ -11,11 +11,7 @@ void EditorCameraSystem::Execute(entt::registry &Registry)
     for (auto entity : view) {
         auto &transform = view.get<Transform>(entity);
         auto &camera_params = view.get<Camera::Parameters>(entity);
-        transform.Rotate({
-            0.5,
-            0,
-            0,
-        });
+        
     }
 }
 }  // namespace Slipper::Editor

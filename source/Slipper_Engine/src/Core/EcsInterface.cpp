@@ -18,10 +18,11 @@ bool EcsInterface::AddSystem(EcsSystemData &Data)
 void EcsInterface::RunSystems()
 {
     auto &registry = Get().m_registry;
-	for (const auto &ecs_system : Get().m_ecsSystems)
-	{
-		ecs_system->executeFunction(registry);
-	}
+    for (const auto &ecs_system : Get().m_ecsSystems) {
+        if (ecs_system.get().executeFunction) {
+            ecs_system.get().executeFunction(registry);
+        }
+    }
 }
 
 entt::entity EcsInterface::CreateEntity()
