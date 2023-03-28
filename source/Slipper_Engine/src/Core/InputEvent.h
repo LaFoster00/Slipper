@@ -51,13 +51,13 @@ class MouseButtonEvent : public Event
     std::string ToString() const override
     {
         std::stringstream ss;
-        ss << "MouseButtonEvent: " << button;
+        ss << "MouseButtonEvent: " << magic_enum::enum_name(button);
         return ss.str();
     }
 
     EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput | EventCategoryMouseButton)
  protected:
-    MouseButtonEvent(const MouseCode button) : button(button)
+    MouseButtonEvent(const MouseCode Button) : button(Button)
     {
     }
 
@@ -68,14 +68,14 @@ class MouseButtonEvent : public Event
 class MouseButtonPressedEvent : public MouseButtonEvent
 {
  public:
-    MouseButtonPressedEvent(MouseCode button) : MouseButtonEvent(button)
+    MouseButtonPressedEvent(const MouseCode Button) : MouseButtonEvent(Button)
     {
     }
 
     std::string ToString() const override
     {
         std::stringstream ss;
-        ss << "MouseButtonPressedEvent: " << button;
+        ss << "MouseButtonPressedEvent: " << magic_enum::enum_name(button);
         return ss.str();
     }
 
@@ -85,14 +85,14 @@ class MouseButtonPressedEvent : public MouseButtonEvent
 class MouseButtonReleasedEvent : public MouseButtonEvent
 {
  public:
-    MouseButtonReleasedEvent(MouseCode button) : MouseButtonEvent(button)
+    MouseButtonReleasedEvent(const MouseCode Button) : MouseButtonEvent(Button)
     {
     }
 
     std::string ToString() const override
     {
         std::stringstream ss;
-        ss << "MouseButtonReleasedEvent: " << button;
+        ss << "MouseButtonReleasedEvent: " << magic_enum::enum_name(button);
         return ss.str();
     }
 
@@ -124,7 +124,7 @@ class KeyPressedEvent : public KeyEvent
     std::string ToString() const override
     {
         std::stringstream ss;
-        ss << "KeyPressedEvent: " << key;
+        ss << "KeyPressedEvent: " << magic_enum::enum_name(key);
         return ss.str();
     }
 
@@ -144,7 +144,7 @@ class KeyReleasedEvent : public KeyEvent
     std::string ToString() const override
     {
         std::stringstream ss;
-        ss << "KeyReleasedEvent: " << key;
+        ss << "KeyReleasedEvent: " << magic_enum::enum_name(key);
         return ss.str();
     }
 

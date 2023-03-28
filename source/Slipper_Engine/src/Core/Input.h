@@ -1,13 +1,13 @@
 #pragma once
 #include <cstdint>
 
+#include "AppComponent.h"
+
 namespace Slipper
 {
-using MouseCode = uint16_t;
+using MouseCodeT = uint16_t;
 
-namespace Mouse
-{
-enum : MouseCode
+enum class MouseCode : MouseCodeT
 {
     // From glfw3.h
     Button0 = 0,
@@ -22,15 +22,14 @@ enum : MouseCode
     ButtonLast = Button7,
     ButtonLeft = Button0,
     ButtonRight = Button1,
-    ButtonMiddle = Button2
+    ButtonMiddle = Button2,
+
+    None = UINT16_MAX,
 };
-}
 
-using KeyCode = uint16_t;
+using KeyCodeT = uint16_t;
 
-namespace Key
-{
-enum : KeyCode
+enum class KeyCode : KeyCodeT
 {
     // From glfw3.h
     Space = 32,
@@ -164,25 +163,82 @@ enum : KeyCode
     RightSuper = 347,
     Menu = 348
 };
-}
 
 #define DECLARE_GLFW_DIRECT_CALLBACK(FnName) static void FnName##_Callback(GLFWwindow *Window)
 
 #define DECLARE_GLFW_CALLBACK(FnName, ...) \
     static void FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
 
-#define IMPLEMENT_GLFW_DIRECT_CALLBACK(FnName) void InputManager::FnName##_Callback(GLFWwindow *Window)
+#define IMPLEMENT_GLFW_DIRECT_CALLBACK(FnName) \
+    void InputManager::FnName##_Callback(GLFWwindow *Window)
 
 #define IMPLEMENT_GLFW_CALLBACK(FnName, ...) \
     void InputManager::FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
 
-class InputManager
+struct MouseInput
 {
+    struct MouseButtonInput
+    {
+        MouseCode button = MouseCode::None;
+        bool down = false;
+        bool changed = false;
+    };
+    std::unordered_map<MouseCode, MouseButtonInput> buttons;
+
+    glm::vec2 movement = {};
+};
+
+struct KeyInput
+{
+    bool down = false;
+    bool changed = false;
+};
+
+class InputManager;
+class Application;
+
+class Input
+{
+    friend InputManager;
+    friend Application;
+
  public:
+    static bool GetMouseButtonDown(MouseCode Button);
+    static bool GetMouseButtonReleased(MouseCode Button);
+    static bool GetMouseButtonPressed(MouseCode Button);
+
+    static void CaptureMouse(bool Capture);
+    static glm::vec2 GetMouseMovement();
+
+    static bool GetKeyDown(KeyCode Key);
+    static bool GetKeyReleased(KeyCode Key);
+    static bool GetKeyPressed(KeyCode Key);
+
+ private:
+    static void UpdateInputs();
+
+ public:
+    static inline bool enteredWindow;
+    static inline bool exitedWindow;
+    static inline bool insideWindow;
+    static inline MouseInput mouseInput;
+    static inline std::unordered_map<KeyCode, KeyInput> keyInputs;
+
+    static inline bool captureMouseCursor;
+};
+
+class InputManager : public AppComponent
+{
+    friend Input;
+ public:
+    InputManager() : AppComponent("Input Manager")
+    {
+    }
+
     static void RegisterInputCallbacks(const Window &Window);
     static void SetInputOffset(glm::vec2 Offset);
 
-private:
+ private:
     DECLARE_GLFW_CALLBACK(FramebufferResize, int Width, int Height);
     DECLARE_GLFW_CALLBACK(Key, int Key, int Scancode, int Action, int Mods);
     DECLARE_GLFW_CALLBACK(Scroll, double XOffset, double YOffset);
@@ -193,7 +249,7 @@ private:
     DECLARE_GLFW_CALLBACK(WindowFocus, int Focused);
     DECLARE_GLFW_DIRECT_CALLBACK(WindowClose);
 
-private:
+ private:
     static inline glm::vec2 Offset = {};
 };
 

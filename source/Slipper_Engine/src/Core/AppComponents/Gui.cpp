@@ -102,6 +102,7 @@ void Gui::StartNewFrame() const
 
 void Gui::EndNewFrame(NonOwningPtr<RenderingStage> RenderingStage) const
 {
+    ImGui::SetCurrentContext(m_context);
     ImGui::Render();
     const auto draw_data = ImGui::GetDrawData();
 

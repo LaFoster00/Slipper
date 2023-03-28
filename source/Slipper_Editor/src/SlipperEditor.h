@@ -22,9 +22,9 @@ class SlipperEditor : public Application
         return m_editorGui;
     }
 
-private:
+ private:
     void UpdateEditor(NonOwningPtr<RenderingStage> RenderingStage) const;
-    
+    void RenderEditor(NonOwningPtr<RenderingStage> RenderingStage) const;
 
  private:
     NonOwningPtr<Editor> m_editor;

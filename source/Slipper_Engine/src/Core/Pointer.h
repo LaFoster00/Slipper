@@ -14,70 +14,71 @@ template<typename T> struct NonOwningPtr
     friend std::hash<NonOwningPtr<T>>;
 
  public:
-    NonOwningPtr() : m_ptr(nullptr)
+    constexpr NonOwningPtr() : m_ptr(nullptr)
     {
     }
 
-    NonOwningPtr(std::nullptr_t) : m_ptr(nullptr)
+    constexpr NonOwningPtr(std::nullptr_t) : m_ptr(nullptr)
     {
     }
 
-    template<ConvertiblePtr<T> U> NonOwningPtr(U *Ptr) : m_ptr(Ptr)
-    {
-    }
-
-    template<ConvertiblePtr<T> U> NonOwningPtr(const NonOwningPtr<U> &Other) : m_ptr(Other.get())
+    template<ConvertiblePtr<T> U> constexpr NonOwningPtr(U *Ptr) : m_ptr(Ptr)
     {
     }
 
     template<ConvertiblePtr<T> U>
-    NonOwningPtr(const OwningPtr<U> &OwningPtr) : m_ptr(OwningPtr.get())
+    constexpr NonOwningPtr(const NonOwningPtr<U> &Other) : m_ptr(Other.get())
     {
     }
 
-    T &operator*() const
+    template<ConvertiblePtr<T> U>
+    constexpr NonOwningPtr(const OwningPtr<U> &OwningPtr) : m_ptr(OwningPtr.get())
+    {
+    }
+
+    constexpr T &operator*() const
     {
         return *m_ptr;
     }
 
-    T *operator->() const
+    constexpr T *operator->() const
     {
         return m_ptr;
     }
 
-    T *get() const
+    constexpr T *get() const
     {
         return m_ptr;
     }
 
-    operator T *() const
+    constexpr operator T *() const
     {
         return m_ptr;
     }
 
-    template<ConvertiblePtr<T> U> NonOwningPtr<T> &operator=(U *Ptr)
+    template<ConvertiblePtr<T> U> constexpr NonOwningPtr<T> &operator=(U *Ptr)
     {
         m_ptr = Ptr;
         return *this;
     }
 
-    template<ConvertiblePtr<T> U> NonOwningPtr<T> &operator=(NonOwningPtr<U> &Other)
+    template<ConvertiblePtr<T> U> constexpr NonOwningPtr<T> &operator=(NonOwningPtr<U> &Other)
     {
         m_ptr = Other.m_ptr;
         return *this;
     }
 
-    explicit operator bool() const noexcept
+    constexpr explicit operator bool() const noexcept
     {
         return IsValid();
     }
 
-    bool IsValid() const noexcept
+    constexpr bool IsValid() const noexcept
     {
         return bool(m_ptr);
     }
 
-    template<ConvertibleFromPtr<T> U> NonOwningPtr<U> Cast()
+    template<ConvertibleFromPtr<T> U> constexpr NonOwningPtr<U> Cast()
     {
         return NonOwningPtr<U>(m_ptr);
     }
@@ -102,69 +103,68 @@ template<typename T> struct OwningPtr
     friend std::hash<OwningPtr<T>>;
 
  public:
-    OwningPtr() : m_ptr(nullptr)
+    constexpr OwningPtr() : m_ptr(nullptr)
     {
     }
 
-    template<ConvertiblePtr<T> U> OwningPtr(U *Ptr) : m_ptr(Ptr)
+    template<ConvertiblePtr<T> U> constexpr OwningPtr(U *Ptr) : m_ptr(Ptr)
     {
     }
-
-    template<ConvertiblePtr<T> U> explicit OwningPtr(const NonOwningPtr<U> &Ptr) : m_ptr(Ptr)
-    {
-    }
-
-    template<ConvertiblePtr<T> U> explicit OwningPtr(const SharedPtr<T> &Ptr) = delete;
-    template<ConvertiblePtr<T> U> explicit OwningPtr(const OwningPtr<T> &Ptr) = delete;
 
     template<ConvertiblePtr<T> U>
-    OwningPtr(OwningPtr<U> &&Other) noexcept : m_ptr(std::move(Other.m_ptr))
+    constexpr explicit OwningPtr(const NonOwningPtr<U> &Ptr) : m_ptr(Ptr)
+    {
+    }
+
+    template<ConvertiblePtr<T> U> constexpr explicit OwningPtr(const SharedPtr<T> &Ptr) = delete;
+    template<ConvertiblePtr<T> U> constexpr explicit OwningPtr(const OwningPtr<T> &Ptr) = delete;
+
+    template<ConvertiblePtr<T> U>
+    constexpr OwningPtr(OwningPtr<U> &&Other) noexcept : m_ptr(std::move(Other.m_ptr))
     {
     }
 
     OwningPtr(OwningPtr<T> &Other) = delete;
 
-    void reset(T *Ptr = nullptr)
+    constexpr void reset(T *Ptr = nullptr)
     {
         m_ptr.reset(Ptr);
     }
 
-    T &operator*() const
+    constexpr T &operator*() const
     {
         return *m_ptr;
     }
 
-    T *operator->() const
+    constexpr T *operator->() const
     {
         return m_ptr.get();
     }
 
-    OwningPtr<T> &operator=(std::nullptr_t)
+    constexpr OwningPtr<T> &operator=(std::nullptr_t)
     {
         m_ptr.reset();
         return *this;
     }
 
-    template<ConvertiblePtr<T> U> OwningPtr<T> &operator=(U *Ptr)
+    template<ConvertiblePtr<T> U> constexpr OwningPtr<T> &operator=(U *Ptr)
     {
         m_ptr.reset(Ptr);
         return *this;
     }
 
-    OwningPtr<T> &operator=(const OwningPtr<T> &Other) = delete;
-
     // Returns the underlying ptr
-    T *get() const
+    constexpr T *get() const
     {
         return m_ptr.get();
     }
 
-    [[nodiscard]] explicit operator bool() const noexcept
+    [[nodiscard]] constexpr explicit operator bool() const noexcept
     {
         return IsValid();
     }
 
-    [[nodiscard]] bool IsValid() const noexcept
+    [[nodiscard]] constexpr bool IsValid() const noexcept
     {
         return bool(m_ptr);
     }
@@ -266,50 +266,50 @@ template<typename T> struct hash<SharedPtr<T>>
 
 template<typename T> using Ref = std::reference_wrapper<T>;
 
-//template<typename From, typename To>
-//concept ConvertibleRef = std::is_convertible_v<From, To &>;
+// template<typename From, typename To>
+// concept ConvertibleRef = std::is_convertible_v<From, To &>;
 //
-//template<typename T> struct Ref
+// template<typename T> struct Ref
 //{
-//    friend std::hash<NonOwningPtr<T>>;
+//     friend std::hash<NonOwningPtr<T>>;
 //
-// public:
-//    // This should cover all use cases since it does not allow construction using wrappers
-//    template<typename U>
-//        requires(!std::is_same_v<Ref, std::remove_cvref_t<U>>) && ConvertibleRef<U, T>
-//    constexpr Ref(U &&Object) : m_ref(std::addressof(std::forward<U>(Object)))
-//    {
-//    }
+//  public:
+//     // This should cover all use cases since it does not allow construction using wrappers
+//     template<typename U>
+//         requires(!std::is_same_v<Ref, std::remove_cvref_t<U>>) && ConvertibleRef<U, T>
+//     constexpr Ref(U &&Object) : m_ref(std::addressof(std::forward<U>(Object)))
+//     {
+//     }
 //
-//    // Access
-//    constexpr operator T &() const noexcept
-//    {
-//        return *m_ref;
-//    }
+//     // Access
+//     constexpr operator T &() const noexcept
+//     {
+//         return *m_ref;
+//     }
 //
-//    constexpr T &get() noexcept
-//    {
-//        return *m_ref;
-//    }
+//     constexpr T &get() noexcept
+//     {
+//         return *m_ref;
+//     }
 //
-//    constexpr T &get() const noexcept
-//    {
-//        return *m_ref;
-//    }
+//     constexpr T &get() const noexcept
+//     {
+//         return *m_ref;
+//     }
 //
-//    // Not quite like real refs but at least we know it has to hold a valid value
-//    constexpr T *operator->() const
-//    {
-//        return m_ref;
-//    }
+//     // Not quite like real refs but at least we know it has to hold a valid value
+//     constexpr T *operator->() const
+//     {
+//         return m_ref;
+//     }
 //
-//    template<class... ArgTypes>
-//    constexpr std::invoke_result_t<T &, ArgTypes...> operator()(ArgTypes &&...args) const
-//        noexcept(std::is_nothrow_invocable_v<T &, ArgTypes...>)
-//    {
-//        return std::invoke(get(), std::forward<ArgTypes>(args)...);
-//    }
+//     template<class... ArgTypes>
+//     constexpr std::invoke_result_t<T &, ArgTypes...> operator()(ArgTypes &&...args) const
+//         noexcept(std::is_nothrow_invocable_v<T &, ArgTypes...>)
+//     {
+//         return std::invoke(get(), std::forward<ArgTypes>(args)...);
+//     }
 //
-// private:
-//    T *m_ref;
-//};
+//  private:
+//     T *m_ref;
+// };

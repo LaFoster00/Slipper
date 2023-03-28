@@ -1,12 +1,10 @@
 #include "Editor.h"
 
-#include <imgui_internal.h>
-
-#include "EditorCameraSystem.h"
 #include "Core/AppComponents/Gui.h"
 #include "Core/Application.h"
 #include "Core/Input.h"
 #include "Drawing/Sampler.h"
+#include "EditorCameraSystem.h"
 #include "EntityOutliner.h"
 #include "GraphicsEngine.h"
 #include "Presentation/OffscreenSwapChain.h"
@@ -72,10 +70,25 @@ void Editor::OnEditorGuiUpdate()
     InputManager::SetInputOffset({viewport_pos.x, viewport_pos.y});
     ImGui::Image(m_imguiViewportImages[current_frame], window_size);
     // ImGui::SetWindowHitTestHole(ImGui::GetCurrentWindow(), ImGui::GetWindowPos(), window_size);
+
+    static bool last_frame_viewport_hovered = false;
     if (ImGui::IsItemHovered()) {
         viewportHovered = true;
         ImGui::CaptureMouseFromApp(false);
+        if (Input::captureMouseCursor)
+        {
+            ImGui::SetCursorPos({0, 0});
+        }
     }
+    else {
+        viewportHovered = false;
+    }
+
+    Input::insideWindow = viewportHovered;
+    Input::enteredWindow = !last_frame_viewport_hovered && viewportHovered;
+    Input::exitedWindow = last_frame_viewport_hovered && !viewportHovered;
+    last_frame_viewport_hovered = viewportHovered;
+
     last_window_size = window_size;
     ImGui::End();
     ImGui::PopStyleVar();

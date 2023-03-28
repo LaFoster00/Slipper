@@ -4,6 +4,8 @@
 #include "Editor.h"
 #include "GraphicsEngine.h"
 #include "Window.h"
+#include "Core/AppComponents/Ecs.h"
+
 
 int main(int argc, char *argv[])
 {
@@ -28,8 +30,7 @@ void SlipperEditor::Init()
 {
     Application::Init();
     GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
-
-    m_editor = AddComponent(new Editor());
+    m_editor = AddComponent(new Editor(), ecsComponent);
     m_editorGui = AddComponent(
         new Gui("Editor Gui", GraphicsEngine::Get().windowRenderPass, true));
     AddAdditionalRenderStageUpdate(

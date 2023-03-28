@@ -22,6 +22,11 @@ void Transform::Rotate(const glm::vec3 Rotation)
     m_rotation = glm::quat(glm::radians(Rotation)) * m_rotation;
 }
 
+void Transform::Rotate(float Angle, glm::vec3 Axis)
+{
+    m_rotation = glm::rotate(m_rotation, glm::radians(Angle), glm::inverse(m_rotation) * Axis);
+}
+
 void Transform::SetRotation(const glm::vec3 Rotation)
 {
     m_rotation = glm::quat(glm::radians(Rotation));

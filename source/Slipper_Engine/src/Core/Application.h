@@ -40,6 +40,7 @@ class Application
     NonOwningPtr<T> AddComponent(NonOwningPtr<T> ProgramComponent)
     {
         ProgramComponent->Init();
+        appComponentsOrdered.emplace_back(ProgramComponent);
         return static_cast<T *>(appComponents.emplace_back(ProgramComponent).get());
     }
 
@@ -47,6 +48,21 @@ class Application
         requires IsAppComponent<T>
     NonOwningPtr<T> AddComponent(T *ProgramComponent)
     {
+        ProgramComponent->Init();
+        appComponentsOrdered.emplace_back(ProgramComponent);
+        return static_cast<T *>(appComponents.emplace_back(ProgramComponent).get());
+    }
+
+    template<typename T, typename U>
+        requires IsAppComponent<T> && IsAppComponent<U>
+    NonOwningPtr<T> AddComponent(T *ProgramComponent, NonOwningPtr<U> ExecuteBefore)
+    {
+        auto execute_before_itr = std::find(
+            appComponentsOrdered.begin(), appComponentsOrdered.end(), ExecuteBefore);
+        if (execute_before_itr != appComponentsOrdered.end()) {
+            appComponentsOrdered.emplace(execute_before_itr, ProgramComponent);
+        }
+
         ProgramComponent->Init();
         return static_cast<T *>(appComponents.emplace_back(ProgramComponent).get());
     }
@@ -64,7 +80,12 @@ class Application
     virtual void OnWindowResize(Window *Window, int Width, int Height);
     virtual void OnViewportResize(uint32_t Width, uint32_t Height);
     void AddViewportResizeCallback(std::function<void(uint32_t, uint32_t)> Callback);
-    void AddAdditionalRenderStageUpdate(NonOwningPtr<RenderingStage> Stage, std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction);
+    void AddAdditionalRenderStageUpdate(
+        NonOwningPtr<RenderingStage> Stage,
+        std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction);
+    void AddAdditionalRenderStageUpdateFront(
+        NonOwningPtr<RenderingStage> Stage,
+        std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction);
 
  private:
     void WindowResize();
@@ -88,6 +109,7 @@ class Application
 
     NonOwningPtr<Ecs> ecsComponent;
     std::vector<OwningPtr<AppComponent>> appComponents;
+    std::vector<NonOwningPtr<AppComponent>> appComponentsOrdered;
 
     std::unordered_map<NonOwningPtr<RenderingStage>,
                        std::vector<std::function<void(NonOwningPtr<RenderingStage>)>>>

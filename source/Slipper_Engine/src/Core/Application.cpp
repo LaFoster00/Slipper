@@ -2,10 +2,10 @@
 
 #include "AppComponent.h"
 #include "AppComponents/Ecs.h"
-#include "AppComponents/Gui.h"
 #include "AppEvents.h"
 #include "Event.h"
 #include "GraphicsEngine.h"
+#include "Input.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
 #include "Time/Time.h"
@@ -30,6 +30,7 @@ Application::~Application()
     for (const auto &app_component : appComponents) {
         app_component->Shutdown();
     }
+    appComponentsOrdered.clear();
     appComponents.clear();
 
     GraphicsEngine::Shutdown();
@@ -54,19 +55,19 @@ void Application::Init()
     GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableSampleCount();
 
     ecsComponent = AddComponent(new Ecs());
+    AddComponent(new InputManager(), ecsComponent);
 
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
 
-    
     AddAdditionalRenderStageUpdate(GraphicsEngine::Get().viewportRenderingStage,
                                    [&](NonOwningPtr<RenderingStage> RS) {
-                                       for (const auto &app_component : appComponents) {
-                                           app_component->OnUpdate();
-                                       }
-                                       
-                                       for (const auto &app_component : appComponents) {
+                                       for (const auto &app_component : appComponentsOrdered) {
                                            app_component->OnGuiRender();
+                                       }
+
+                                       for (const auto &app_component : appComponentsOrdered) {
+                                           app_component->OnUpdate();
                                        }
                                    });
 }
@@ -86,6 +87,7 @@ void Application::CloseWindow(const Window *Window)
 void Application::Run()
 {
     while (running) {
+        Input::UpdateInputs();
         window->OnUpdate();
         if (!running)
             return;
@@ -131,7 +133,7 @@ void Application::Run()
 
 void Application::OnEvent(Event &Event)
 {
-    std::cout << Event.ToString() << '\n';
+    //std::cout << Event.ToString() << '\n';
     switch (Event.GetEventType()) {
         case EventType::WindowClose: {
             WindowCloseEvent &window_close_event = *static_cast<WindowCloseEvent *>(&Event);
@@ -181,6 +183,13 @@ void Application::AddAdditionalRenderStageUpdate(
     std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction)
 {
     renderingStagesUpdate[Stage].emplace_back(UpdateFunction);
+}
+
+void Application::AddAdditionalRenderStageUpdateFront(NonOwningPtr<RenderingStage> Stage,
+	std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction)
+{
+    auto &updates = renderingStagesUpdate[Stage]; 
+    updates.emplace(updates.begin(), UpdateFunction);
 }
 
 void Application::WindowResize()

@@ -179,7 +179,8 @@ void GraphicsEngine::SetupSimpleDraw()
             auto &cam_parameters = camera.GetComponent<Camera::Parameters>();
             auto &cam_transform = camera.GetComponent<Transform>();
             cam_parameters.UpdateViewTransform(cam_transform);
-            Transform transform({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
+            Transform
+                transform;  //({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
 
             UniformVP vp;
             vp.view = cam_parameters.view;

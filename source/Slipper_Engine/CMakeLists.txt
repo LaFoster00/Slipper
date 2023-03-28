@@ -98,8 +98,10 @@ else()
     endif()
 endif()
 
+set(ENGINE_PRECOMPILE_HEADER ${CMAKE_CURRENT_LIST_DIR}/src/pch.h CACHE INTERNAL "")
+
 target_precompile_headers(${SLIPPER_ENGINE_NAME} PUBLIC
-    src/pch.h
+    ${ENGINE_PRECOMPILE_HEADER}
 )
 
 #Append external source files to project
