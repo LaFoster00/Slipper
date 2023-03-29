@@ -4,35 +4,35 @@
 
 namespace Slipper
 {
-glm::mat4 Camera::GetProjection(float Aspect)
+glm::mat4 Camera::GetProjection(float Aspect, bool OpenGlStyle) const
 {
     auto projection = glm::perspective(glm::radians(fov), Aspect, nearPlane, farPlane);
-    projection[1][1] *= -1;
+    if (!OpenGlStyle)
+        projection[1][1] *= -1;
     return projection;
 }
 
-glm::mat4 Camera::GetView()
+glm::mat4 Camera::GetView() const
 {
-    return view;
+    const auto &transform = entity.GetComponent<Transform>();
+    return glm::inverse(transform.GetModelMatrix());
 }
 
-std::tuple<glm::mat4, glm::mat4> Camera::GetViewProjection(float Aspect, Transform &Transform)
+glm::mat4 Camera::GetView(const Transform &Transform) const
 {
-    UpdateViewTransform(Transform);
-    return {GetView(), GetProjection(Aspect)};
+    return glm::inverse(Transform.GetModelMatrix());
+}
+
+std::tuple<glm::mat4, glm::mat4> Camera::GetViewProjection(float Aspect, bool OpenGlStyle) const
+{
+    return {GetView(), GetProjection(Aspect, OpenGlStyle)};
 }
 
 std::tuple<glm::mat4, glm::mat4> Camera::GetViewProjection(Entity Entity, float Aspect)
 {
-    auto &camera_transform = Entity.GetComponent<Transform>();
-    auto &camera_parameters = Entity.GetComponent<Camera>();
+    const auto &camera_parameters = Entity.GetComponent<Camera>();
 
-    return camera_parameters.GetViewProjection(Aspect, camera_transform);
-}
-
-void Camera::UpdateViewTransform(Transform &Transform)
-{
-    view = glm::inverse(Transform.GetModelMatrix());
+    return camera_parameters.GetViewProjection(Aspect);
 }
 
 void Camera::SetFov(const float Fov)
