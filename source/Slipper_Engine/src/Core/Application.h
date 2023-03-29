@@ -92,7 +92,7 @@ class Application
     void ViewportResize();
 
  public:
-    std::unique_ptr<Window> window;
+    OwningPtr<Window> window;
 
  protected:
     static Application *instance;
@@ -105,7 +105,7 @@ class Application
     ResizeInfo viewportResize;
     std::vector<std::function<void(uint32_t, uint32_t)>> viewportResizeCallbacks;
 
-    std::unique_ptr<VulkanInstance> vulkanInstance;
+    OwningPtr<VulkanInstance> vulkanInstance;
 
     NonOwningPtr<Ecs> ecsComponent;
     std::vector<OwningPtr<AppComponent>> appComponents;

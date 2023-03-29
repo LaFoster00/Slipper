@@ -42,13 +42,14 @@ Application::~Application()
 void Application::Init()
 {
     glfwInit();
-    vulkanInstance = std::make_unique<VulkanInstance>();
+    vulkanInstance = new VulkanInstance();
 
     WindowInfo window_create_info;
     window_create_info.width = 1280;
     window_create_info.height = 720;
     window_create_info.name = name;
-    window = std::make_unique<Window>(window_create_info);
+    window_create_info.resizable = true;
+    window = new Window(window_create_info);
     window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
     Device::PickPhysicalDevice(&window->GetSurface(), true);
