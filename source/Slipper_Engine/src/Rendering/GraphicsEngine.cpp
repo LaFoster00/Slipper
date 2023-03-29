@@ -177,13 +177,11 @@ void GraphicsEngine::SetupSimpleDraw() const
 
             auto camera = GetDefaultCamera();
             auto &cam_parameters = camera.GetComponent<Camera>();
-            auto &cam_transform = camera.GetComponent<Transform>();
-            cam_parameters.UpdateViewTransform(cam_transform);
             Transform
                 transform;  //({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
 
             UniformVP vp;
-            vp.view = cam_parameters.view;
+            vp.view = cam_parameters.GetView();
             vp.projection = cam_parameters.GetProjection(
                 RenderPass.GetActiveSwapChain()->GetResolution().width /
                 static_cast<float>(RenderPass.GetActiveSwapChain()->GetResolution().height));
