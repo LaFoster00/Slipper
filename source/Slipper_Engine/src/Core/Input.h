@@ -189,6 +189,8 @@ struct MouseInput
     std::array<MouseButtonInput, static_cast<size_t>(MouseCode::ArraySize)> buttons;
 
     glm::vec2 movement = {};
+    glm::vec2 position = {};
+    glm::vec2 preCapturePosition = {};
 };
 
 struct KeyInput
@@ -217,14 +219,17 @@ class Input
     static bool GetKeyReleased(KeyCode Key);
     static bool GetKeyPressed(KeyCode Key);
 
+
  private:
     static void UpdateInputs();
 
  public:
-    static inline bool enteredWindow;
-    static inline bool exitedWindow;
+     //Mouse Cursor info
+	static inline bool enteredWindow;
+	static inline bool exitedWindow;
     static inline bool insideWindow;
     static inline MouseInput mouseInput;
+
     static inline std::array<KeyInput, static_cast<std::size_t>(KeyCode::ArraySize)> keyInputs;
 
     static inline bool captureMouseCursor;
@@ -239,6 +244,7 @@ class InputManager : public AppComponent
     {
     }
 
+    static void SetImGuiInputContext(NonOwningPtr<ImGuiContext> Context);
     static void RegisterInputCallbacks(const Window &Window);
     static void SetInputOffset(glm::vec2 Offset);
 
@@ -255,6 +261,6 @@ class InputManager : public AppComponent
 
  private:
     static inline glm::vec2 Offset = {};
+    static inline NonOwningPtr<ImGuiContext> context = nullptr;
 };
-
 }  // namespace Slipper

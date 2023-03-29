@@ -14,8 +14,14 @@ void EditorCameraSystem::Execute(entt::registry &Registry)
 
         // transform.Translate(-transform.Up() * Time::DeltaTime());
 
-        if (Input::GetMouseButtonDown(MouseCode::ButtonRight)) {
+        if (Input::GetMouseButtonPressed(MouseCode::ButtonRight)) {
             Input::CaptureMouse(true);
+        }
+        else if (Input::GetMouseButtonReleased(MouseCode::ButtonRight)) {
+            Input::CaptureMouse(false);
+        }
+
+        if (Input::GetMouseButtonDown(MouseCode::ButtonRight)) {
             auto &transform = view.get<Transform>(entity);
             auto &camera_params = view.get<Camera::Parameters>(entity);
 

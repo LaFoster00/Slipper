@@ -15,6 +15,8 @@ Window::Window(WindowInfo CreateInfo)
 
     glfwWindow = glfwCreateWindow(
         m_info.width, m_info.height, m_info.name.c_str(), nullptr, nullptr);
+    if (glfwRawMouseMotionSupported())
+        glfwSetInputMode(glfwWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
     glfwSetWindowUserPointer(glfwWindow, this);
 

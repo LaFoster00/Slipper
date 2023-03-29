@@ -305,9 +305,9 @@ void GraphicsEngine::EndFrame()
 }
 
 // Dont call while rendering
-void GraphicsEngine::OnViewportResize(uint32_t Width, uint32_t Height)
+void GraphicsEngine::OnViewportResize(NonOwningPtr<RenderingStage> Stage, uint32_t Width, uint32_t Height)
 {
-    m_graphicsInstance->viewportRenderingStage->ChangeResolution(Width, Height);
+    Stage->ChangeResolution(Width, Height);
 }
 
 void GraphicsEngine::OnWindowResized(Window *Window, int Width, int Height)

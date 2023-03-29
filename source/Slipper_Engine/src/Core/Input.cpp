@@ -1,5 +1,7 @@
 #include "Input.h"
 
+#include <imgui_internal.h>
+
 #include "AppEvents.h"
 #include "Application.h"
 #include "InputEvent.h"
@@ -26,14 +28,28 @@ bool Input::GetMouseButtonPressed(MouseCode Button)
 
 void Input::CaptureMouse(bool Capture)
 {
+    if (Capture == captureMouseCursor)
+        return;
+
+    glfwSetInputMode(Application::Get().window->glfwWindow,
+                     GLFW_CURSOR,
+                     Capture ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+
+    if (Capture) {
+        mouseInput.preCapturePosition = mouseInput.position;
+    }
+    else {
+        mouseInput.position = mouseInput.preCapturePosition;
+        mouseInput.movement = {};
+    }
+
     captureMouseCursor = Capture;
 }
 
 glm::vec2 Input::GetMouseMovement()
 {
-    // LOG_FORMAT("Inside window : {}", enteredWindow)
     // LOG_FORMAT("Entered window : {}", enteredWindow)
-    if (!insideWindow || enteredWindow) {
+    if (!captureMouseCursor && (!insideWindow || enteredWindow)) {
         return {};
     }
     else {
@@ -63,11 +79,15 @@ void Input::UpdateInputs()
         data.changed = false;
     }
     mouseInput.movement = {};
-    captureMouseCursor = false;
 
     for (auto &data : keyInputs) {
         data.changed = false;
     }
+}
+
+void InputManager::SetImGuiInputContext(NonOwningPtr<ImGuiContext> Context)
+{
+    context = Context;
 }
 
 void InputManager::RegisterInputCallbacks(const Window &Window)
@@ -99,13 +119,14 @@ IMPLEMENT_GLFW_CALLBACK(FramebufferResize, int Width, int Height)
 
     window.m_info.width = Width;
     window.m_info.height = Height;
+    auto io = ImGui::GetIO();
 }
 
 IMPLEMENT_GLFW_CALLBACK(Key, int Key, int Scancode, int Action, int Mods)
 {
     ImGuiIO &io = ImGui::GetIO();
 
-    if (!io.WantCaptureMouse) {
+    if (!io.WantCaptureMouse || Input::captureMouseCursor) {
         Slipper::Window &window = *static_cast<Slipper::Window *>(
             glfwGetWindowUserPointer(Window));
 
@@ -137,7 +158,7 @@ IMPLEMENT_GLFW_CALLBACK(Key, int Key, int Scancode, int Action, int Mods)
 IMPLEMENT_GLFW_CALLBACK(Scroll, double XOffset, double YOffset)
 {
     ImGuiIO &io = ImGui::GetIO();
-    if (!io.WantCaptureMouse) {
+    if (!io.WantCaptureMouse || Input::captureMouseCursor) {
         Slipper::Window &window = *static_cast<Slipper::Window *>(
             glfwGetWindowUserPointer(Window));
         MouseScrolledEvent event(XOffset, YOffset);
@@ -147,9 +168,8 @@ IMPLEMENT_GLFW_CALLBACK(Scroll, double XOffset, double YOffset)
 
 IMPLEMENT_GLFW_CALLBACK(CursorEnter, int Entered)
 {
-    LOG_FORMAT("Entered: {}", Entered);
     ImGuiIO &io = ImGui::GetIO();
-    if (!io.WantCaptureMouse) {
+    if (!io.WantCaptureMouse || Input::captureMouseCursor) {
         Slipper::Window &window = *static_cast<Slipper::Window *>(
             glfwGetWindowUserPointer(Window));
         CursorEnterEvent event(window, Entered);
@@ -162,11 +182,12 @@ IMPLEMENT_GLFW_CALLBACK(CursorPos, double XPos, double YPos)
     static glm::vec2 last_position = {XPos, YPos};
 
     ImGuiIO &io = ImGui::GetIO();
-    if (!io.WantCaptureMouse) {
+    if (!io.WantCaptureMouse || Input::captureMouseCursor) {
         Slipper::Window &window = *static_cast<Slipper::Window *>(
             glfwGetWindowUserPointer(Window));
 
-        Input::mouseInput.movement = glm::vec2{XPos, YPos} - last_position;
+        Input::mouseInput.position = glm::vec2{XPos, YPos};
+        Input::mouseInput.movement = Input::mouseInput.position - last_position;
         MouseMovedEvent event(XPos - Offset.x, YPos - Offset.y);
         window.m_eventCallback(event);
     }
@@ -178,14 +199,11 @@ IMPLEMENT_GLFW_CALLBACK(MouseButton, int Button, int Action, int Mods)
 {
     ImGuiIO &io = ImGui::GetIO();
 
-    if (!io.WantCaptureMouse) {
+    if (!io.WantCaptureMouse || Input::captureMouseCursor) {
         Slipper::Window &window = *static_cast<Slipper::Window *>(
             glfwGetWindowUserPointer(Window));
         switch (Action) {
             case GLFW_PRESS: {
-                if (Input::insideWindow && Action == GLFW_PRESS) {
-                    io.MouseDrawCursor = false;
-                }
                 Input::mouseInput.buttons[Button].down = true;
                 Input::mouseInput.buttons[Button].changed = true;
                 MouseButtonPressedEvent event(static_cast<MouseCode>(Button));
@@ -193,10 +211,6 @@ IMPLEMENT_GLFW_CALLBACK(MouseButton, int Button, int Action, int Mods)
                 break;
             }
             case GLFW_RELEASE: {
-                if (Input::insideWindow && Action == GLFW_PRESS) {
-                    ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-                    io.MouseDrawCursor = true;
-                }
                 Input::mouseInput.buttons[Button].down = false;
                 Input::mouseInput.buttons[Button].changed = true;
                 MouseButtonReleasedEvent event(static_cast<MouseCode>(Button));

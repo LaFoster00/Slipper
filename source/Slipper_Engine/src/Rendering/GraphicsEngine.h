@@ -71,7 +71,9 @@ class GraphicsEngine : DeviceDependentObject
     void EndRenderingStage();
     void EndFrame();
 
-    static void OnViewportResize(uint32_t Width, uint32_t Height);
+    static void OnViewportResize(NonOwningPtr<RenderingStage> Stage,
+                                 uint32_t Width,
+                                 uint32_t Height);
     static void OnWindowResized(Window *Window, int Width, int Height);
 
     Entity &GetDefaultCamera();

@@ -96,8 +96,10 @@ void Application::Run()
         if (windowResize.resized) {
             WindowResize();
         }
-        if (viewportResize.resized) {
-            ViewportResize();
+        for (auto &[Stage, Info] : viewportsResize) {
+            if (Info.resized) {
+                ViewportResize(Stage);
+            }
         }
 
         if (!minimized) {
@@ -134,7 +136,7 @@ void Application::Run()
 
 void Application::OnEvent(Event &Event)
 {
-    //std::cout << Event.ToString() << '\n';
+    // std::cout << Event.ToString() << '\n';
     switch (Event.GetEventType()) {
         case EventType::WindowClose: {
             WindowCloseEvent &window_close_event = *static_cast<WindowCloseEvent *>(&Event);
@@ -167,14 +169,19 @@ void Application::OnWindowResize(Window *Window, int Width, int Height)
     windowResize.height = Height;
 }
 
-void Application::OnViewportResize(uint32_t Width, uint32_t Height)
+void Application::OnViewportResize(NonOwningPtr<RenderingStage> Stage,
+                                   uint32_t Width,
+                                   uint32_t Height)
 {
-    viewportResize.resized = true;
-    viewportResize.width = Width;
-    viewportResize.height = Height;
+    auto &[context, resized, width, height] = viewportsResize[Stage];
+    context = Stage;
+    resized = true;
+    width = Width;
+    height = Height;
 }
 
-void Application::AddViewportResizeCallback(std::function<void(uint32_t, uint32_t)> Callback)
+void Application::AddViewportResizeCallback(
+    std::function<void(NonOwningPtr<RenderingStage>, uint32_t, uint32_t)> Callback)
 {
     viewportResizeCallbacks.push_back(Callback);
 }
@@ -186,10 +193,11 @@ void Application::AddAdditionalRenderStageUpdate(
     renderingStagesUpdate[Stage].emplace_back(UpdateFunction);
 }
 
-void Application::AddAdditionalRenderStageUpdateFront(NonOwningPtr<RenderingStage> Stage,
-	std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction)
+void Application::AddAdditionalRenderStageUpdateFront(
+    NonOwningPtr<RenderingStage> Stage,
+    std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction)
 {
-    auto &updates = renderingStagesUpdate[Stage]; 
+    auto &updates = renderingStagesUpdate[Stage];
     updates.emplace(updates.begin(), UpdateFunction);
 }
 
@@ -201,13 +209,14 @@ void Application::WindowResize()
         std::any_cast<Window *>(windowResize.context), windowResize.width, windowResize.height);
 }
 
-void Application::ViewportResize()
+void Application::ViewportResize(NonOwningPtr<RenderingStage> Stage)
 {
     vkDeviceWaitIdle(Device::Get());
-    viewportResize.resized = false;
-    GraphicsEngine::OnViewportResize(viewportResize.width, viewportResize.height);
+    auto &[context, resized, width, height] = viewportsResize.at(Stage);
+    resized = false;
+    GraphicsEngine::OnViewportResize(Stage, width, height);
     for (auto viewport_resize_callback : viewportResizeCallbacks) {
-        viewport_resize_callback(viewportResize.width, viewportResize.height);
+        viewport_resize_callback(Stage, width, height);
     }
 }
 }  // namespace Slipper

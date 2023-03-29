@@ -75,11 +75,19 @@ class Application
         return *instance;
     }
 
+    template<typename T> T &Get()
+    {
+        return *dynamic_cast<T *>(this);
+    }
+
     virtual void Run();
     virtual void OnEvent(Event &Event);
     virtual void OnWindowResize(Window *Window, int Width, int Height);
-    virtual void OnViewportResize(uint32_t Width, uint32_t Height);
-    void AddViewportResizeCallback(std::function<void(uint32_t, uint32_t)> Callback);
+    virtual void OnViewportResize(NonOwningPtr<RenderingStage> Stage,
+                                  uint32_t Width,
+                                  uint32_t Height);
+    void AddViewportResizeCallback(
+        std::function<void(NonOwningPtr<RenderingStage>, uint32_t, uint32_t)> Callback);
     void AddAdditionalRenderStageUpdate(
         NonOwningPtr<RenderingStage> Stage,
         std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction);
@@ -89,7 +97,7 @@ class Application
 
  private:
     void WindowResize();
-    void ViewportResize();
+    void ViewportResize(NonOwningPtr<RenderingStage> Stage);
 
  public:
     OwningPtr<Window> window;
@@ -102,8 +110,9 @@ class Application
     bool minimized = false;
 
     ResizeInfo windowResize;
-    ResizeInfo viewportResize;
-    std::vector<std::function<void(uint32_t, uint32_t)>> viewportResizeCallbacks;
+    std::unordered_map<NonOwningPtr<RenderingStage>, ResizeInfo> viewportsResize;
+    std::vector<std::function<void(NonOwningPtr<RenderingStage>, uint32_t, uint32_t)>>
+        viewportResizeCallbacks;
 
     OwningPtr<VulkanInstance> vulkanInstance;
 
