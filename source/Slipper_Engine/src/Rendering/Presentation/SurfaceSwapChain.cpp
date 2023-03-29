@@ -22,7 +22,7 @@ SurfaceSwapChain::SurfaceSwapChain(Surface &Surface)
 
 SurfaceSwapChain::~SurfaceSwapChain()
 {
-	SurfaceSwapChain::Impl_Cleanup();
+    SurfaceSwapChain::Impl_Cleanup();
 
     for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
         vkDestroySemaphore(device, image_available_semaphore, nullptr);
@@ -130,19 +130,21 @@ void SurfaceSwapChain::Impl_Create()
     imageRenderingFormat = create_info.imageFormat;
     resolution = create_info.imageExtent;
 
-    VkSemaphoreCreateInfo semaphore_info{};
-    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    if (m_imageAvailableSemaphores.empty()) {
+        VkSemaphoreCreateInfo semaphore_info{};
+        semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    m_imageAvailableSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
-    m_renderFinishedSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+        m_imageAvailableSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+        m_renderFinishedSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
 
-    for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
-        VK_ASSERT(
-            vkCreateSemaphore(device, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
-            "Failed to create semaphore!")
-        VK_ASSERT(
-            vkCreateSemaphore(device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
-            "Failed to create semaphore!")
+        for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
+            VK_ASSERT(vkCreateSemaphore(
+                          device, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
+                      "Failed to create semaphore!")
+            VK_ASSERT(vkCreateSemaphore(
+                          device, &semaphore_info, nullptr, &m_renderFinishedSemaphores[i]),
+                      "Failed to create semaphore!")
+        }
     }
 }
 
