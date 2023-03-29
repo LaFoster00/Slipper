@@ -9,17 +9,19 @@ namespace Slipper
 {
 bool Input::GetMouseButtonDown(MouseCode Button)
 {
-    return mouseInput.buttons[Button].down;
+    return mouseInput.buttons[static_cast<size_t>(Button)].down;
 }
 
 bool Input::GetMouseButtonReleased(MouseCode Button)
 {
-    return !mouseInput.buttons[Button].down && mouseInput.buttons[Button].changed;
+    return !mouseInput.buttons[static_cast<size_t>(Button)].down &&
+           mouseInput.buttons[static_cast<size_t>(Button)].changed;
 }
 
 bool Input::GetMouseButtonPressed(MouseCode Button)
 {
-    return mouseInput.buttons[Button].down && mouseInput.buttons[Button].changed;
+    return mouseInput.buttons[static_cast<size_t>(Button)].down &&
+           mouseInput.buttons[static_cast<size_t>(Button)].changed;
 }
 
 void Input::CaptureMouse(bool Capture)
@@ -29,8 +31,8 @@ void Input::CaptureMouse(bool Capture)
 
 glm::vec2 Input::GetMouseMovement()
 {
-    //LOG_FORMAT("Inside window : {}", enteredWindow)
-    //LOG_FORMAT("Entered window : {}", enteredWindow)
+    // LOG_FORMAT("Inside window : {}", enteredWindow)
+    // LOG_FORMAT("Entered window : {}", enteredWindow)
     if (!insideWindow || enteredWindow) {
         return {};
     }
@@ -41,28 +43,29 @@ glm::vec2 Input::GetMouseMovement()
 
 bool Input::GetKeyDown(KeyCode Key)
 {
-    return keyInputs[Key].down;
+    return keyInputs[static_cast<size_t>(Key)].down;
 }
 
 bool Input::GetKeyReleased(KeyCode Key)
 {
-    return !keyInputs[Key].down && keyInputs.at(Key).changed;
+    return !keyInputs[static_cast<size_t>(Key)].down &&
+           keyInputs[static_cast<size_t>(Key)].changed;
 }
 
 bool Input::GetKeyPressed(KeyCode Key)
 {
-    return keyInputs[Key].down && keyInputs.at(Key).changed;
+    return keyInputs[static_cast<size_t>(Key)].down && keyInputs[static_cast<size_t>(Key)].changed;
 }
 
 void Input::UpdateInputs()
 {
-    for (auto &[button, data] : mouseInput.buttons) {
+    for (auto &data : mouseInput.buttons) {
         data.changed = false;
     }
     mouseInput.movement = {};
     captureMouseCursor = false;
 
-    for (auto &[key, data] : keyInputs) {
+    for (auto &data : keyInputs) {
         data.changed = false;
     }
 }
@@ -108,15 +111,15 @@ IMPLEMENT_GLFW_CALLBACK(Key, int Key, int Scancode, int Action, int Mods)
 
         switch (Action) {
             case GLFW_PRESS: {
-                Input::keyInputs[static_cast<KeyCode>(Key)].down = true;
-                Input::keyInputs.at(static_cast<KeyCode>(Key)).changed = true;
+                Input::keyInputs[Key].down = true;
+                Input::keyInputs[Key].changed = true;
                 KeyPressedEvent event(static_cast<KeyCode>(Key), false);
                 window.m_eventCallback(event);
                 break;
             }
             case GLFW_RELEASE: {
-                Input::keyInputs[static_cast<KeyCode>(Key)].down = false;
-                Input::keyInputs.at(static_cast<KeyCode>(Key)).changed = true;
+                Input::keyInputs[Key].down = false;
+                Input::keyInputs[Key].changed = true;
                 KeyReleasedEvent event(static_cast<KeyCode>(Key));
                 window.m_eventCallback(event);
                 break;
@@ -144,6 +147,7 @@ IMPLEMENT_GLFW_CALLBACK(Scroll, double XOffset, double YOffset)
 
 IMPLEMENT_GLFW_CALLBACK(CursorEnter, int Entered)
 {
+    LOG_FORMAT("Entered: {}", Entered);
     ImGuiIO &io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
         Slipper::Window &window = *static_cast<Slipper::Window *>(
@@ -182,8 +186,8 @@ IMPLEMENT_GLFW_CALLBACK(MouseButton, int Button, int Action, int Mods)
                 if (Input::insideWindow && Action == GLFW_PRESS) {
                     io.MouseDrawCursor = false;
                 }
-                Input::mouseInput.buttons[static_cast<MouseCode>(Button)].down = true;
-                Input::mouseInput.buttons.at(static_cast<MouseCode>(Button)).changed = true;
+                Input::mouseInput.buttons[Button].down = true;
+                Input::mouseInput.buttons[Button].changed = true;
                 MouseButtonPressedEvent event(static_cast<MouseCode>(Button));
                 window.m_eventCallback(event);
                 break;
@@ -193,8 +197,8 @@ IMPLEMENT_GLFW_CALLBACK(MouseButton, int Button, int Action, int Mods)
                     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
                     io.MouseDrawCursor = true;
                 }
-                Input::mouseInput.buttons[static_cast<MouseCode>(Button)].down = false;
-                Input::mouseInput.buttons.at(static_cast<MouseCode>(Button)).changed = true;
+                Input::mouseInput.buttons[Button].down = false;
+                Input::mouseInput.buttons[Button].changed = true;
                 MouseButtonReleasedEvent event(static_cast<MouseCode>(Button));
                 window.m_eventCallback(event);
                 break;

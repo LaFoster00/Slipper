@@ -24,7 +24,8 @@ enum class MouseCode : MouseCodeT
     ButtonRight = Button1,
     ButtonMiddle = Button2,
 
-    None = UINT16_MAX,
+    None = 8,
+    ArraySize = 9
 };
 
 using KeyCodeT = uint16_t;
@@ -161,7 +162,9 @@ enum class KeyCode : KeyCodeT
     RightControl = 345,
     RightAlt = 346,
     RightSuper = 347,
-    Menu = 348
+    Menu = 348,
+
+    ArraySize = 349
 };
 
 #define DECLARE_GLFW_DIRECT_CALLBACK(FnName) static void FnName##_Callback(GLFWwindow *Window)
@@ -183,7 +186,7 @@ struct MouseInput
         bool down = false;
         bool changed = false;
     };
-    std::unordered_map<MouseCode, MouseButtonInput> buttons;
+    std::array<MouseButtonInput, static_cast<size_t>(MouseCode::ArraySize)> buttons;
 
     glm::vec2 movement = {};
 };
@@ -222,7 +225,7 @@ class Input
     static inline bool exitedWindow;
     static inline bool insideWindow;
     static inline MouseInput mouseInput;
-    static inline std::unordered_map<KeyCode, KeyInput> keyInputs;
+    static inline std::array<KeyInput, static_cast<std::size_t>(KeyCode::ArraySize)> keyInputs;
 
     static inline bool captureMouseCursor;
 };
@@ -230,6 +233,7 @@ class Input
 class InputManager : public AppComponent
 {
     friend Input;
+
  public:
     InputManager() : AppComponent("Input Manager")
     {
