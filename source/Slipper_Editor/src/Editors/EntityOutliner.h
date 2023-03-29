@@ -10,6 +10,6 @@ namespace Slipper::Editor
 class EntityOutliner
 {
  public:
-    static void DrawEntity(Entity &Entity);
+    static void DrawEntity(Entity Entity);
 };
 }  // namespace Slipper::Editor

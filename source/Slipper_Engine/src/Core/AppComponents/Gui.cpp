@@ -96,7 +96,7 @@ void Gui::StartNewFrame() const
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    // ImGuizmo::BeginFrame();
+    ImGuizmo::BeginFrame();
     SetupDocksapce();
 }
 

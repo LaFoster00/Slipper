@@ -1,14 +1,13 @@
 #include "Camera.h"
 
+#include "CameraComponent.h"
+
 namespace Slipper
 {
-namespace Camera
-{
-Entity Create(glm::vec3 Location, glm::vec3 Scale, glm::vec3 Rotation)
+Entity CreateCamera(glm::vec3 Location, glm::vec3 Scale, glm::vec3 Rotation)
 {
     auto camera = SceneObject::Create(Location, Scale, Rotation);
-    camera.AddComponent<Parameters>();
+    camera.AddComponent<Camera>();
     return camera;
 }
-}  // namespace Camera
 }  // namespace Slipper

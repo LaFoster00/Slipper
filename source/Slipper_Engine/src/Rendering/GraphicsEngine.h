@@ -32,8 +32,8 @@ class GraphicsEngine : DeviceDependentObject
     static void Shutdown();
 
     static void SetupDebugResources();
-    void SetupDebugRender(Surface &Surface);
-    void SetupSimpleDraw();
+    void SetupDebugRender(Surface &Surface) const;
+    void SetupSimpleDraw() const;
 
     RenderPass *CreateRenderPass(const std::string &Name,
                                  VkFormat RenderingFormat,
@@ -76,7 +76,7 @@ class GraphicsEngine : DeviceDependentObject
                                  uint32_t Height);
     static void OnWindowResized(Window *Window, int Width, int Height);
 
-    Entity &GetDefaultCamera();
+    static Entity GetDefaultCamera();
 
     [[nodiscard]] VkCommandBuffer GetCurrentGuiCommandBuffer() const
     {
@@ -123,7 +123,5 @@ class GraphicsEngine : DeviceDependentObject
     uint32_t m_currentFrame = 0;
     NonOwningPtr<RenderPass> m_currentRenderPass = nullptr;
     NonOwningPtr<RenderingStage> m_currentRenderingStage = nullptr;
-
-    Entity m_defaultCamera;
 };
 }  // namespace Slipper

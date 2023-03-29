@@ -24,4 +24,9 @@ EditorDrawFallback &EditorRegistry::GetEditorFallback()
 {
     return FallbackDraw;
 }
+
+EditorDrawFallback &EditorRegistry::GetEmptyEditor()
+{
+    return EmptyDraw;
+}
 }  // namespace Slipper::Editor

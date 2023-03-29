@@ -1,24 +1,20 @@
 
 #include "GraphicsEngine.h"
 
-#include "Drawing/CommandPool.h"
-#include "GraphicsPipeline/RenderPass.h"
-#include "Mesh/Mesh.h"
-#include "Mesh/UniformBuffer.h"
-#include "Presentation/Surface.h"
-
 #include "Camera.h"
+#include "CameraComponent.h"
 #include "Core/Application.h"
 #include "Core/ModelManager.h"
 #include "Core/ShaderManager.h"
 #include "Core/TextureManager.h"
-#include "Drawing/Sampler.h"
+#include "Mesh/Mesh.h"
+#include "Mesh/UniformBuffer.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
-#include "RenderingStage.h"
-#include "Shader/Shader.h"
+#include "Presentation/Surface.h"
+#include "RenderPass.h"
+#include "RendererComponent.h"
 #include "Texture/Texture2D.h"
-#include "Time/Time.h"
 #include "TransformComponent.h"
 #include "Window.h"
 
@@ -110,7 +106,7 @@ void GraphicsEngine::SetupDebugResources()
     TextureManager::Load2D(DEMO_TEXTURE_PATH, true);
     ModelManager::Load(DEMO_MODEL_PATH);
 
-    /* Create shader for this pipeline. */
+    /* CreateCamera shader for this pipeline. */
     ShaderManager::LoadShader({{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
                                {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}})
         ->BindShaderParameter("texSampler", TextureManager::Get2D("viking_room"));
@@ -136,15 +132,12 @@ void GraphicsEngine::DestroyRenderPass(RenderPass *RenderPass)
     }
 }
 
-Entity &GraphicsEngine::GetDefaultCamera()
+Entity GraphicsEngine::GetDefaultCamera()
 {
-    static bool init = false;
-    if (!init) {
-        m_defaultCamera = Camera::Create();
-        init = true;
+    for (const auto entity : EcsInterface::GetRegistry().view<Camera>()) {
+        return entity;
     }
-
-    return m_defaultCamera;
+    return CreateCamera();
 }
 
 void GraphicsEngine::AddWindow(Window &Window)
@@ -161,22 +154,29 @@ void GraphicsEngine::AddWindow(Window &Window)
     windowRenderingStage->RegisterForRenderPass(windowRenderPass);
 }
 
-void GraphicsEngine::SetupDebugRender(Surface &Surface)
+void GraphicsEngine::SetupDebugRender(Surface &Surface) const
 {
     ShaderManager::GetShader("Basic")->RegisterRenderPass(viewportRenderPass);
     SetupSimpleDraw();
 }
 
-void GraphicsEngine::SetupSimpleDraw()
+void GraphicsEngine::SetupSimpleDraw() const
 {
+    Entity debug_model = SceneObject::Create();
+    Renderer &debug_model_renderer = debug_model.AddComponent<Renderer>();
+    debug_model_renderer.shader = ShaderManager::GetShader("Basic");
+    debug_model_renderer.model = ModelManager::GetModel("viking_room");
+
     viewportRenderingStage->SubmitRepeatedDrawCommand(
         viewportRenderPass,
         [=, this](const VkCommandBuffer &CommandBuffer, const RenderPass &RenderPass) {
-            const auto debug_shader = ShaderManager::GetShader("Basic");
-            debug_shader->Use(CommandBuffer, &RenderPass, viewportRenderingStage->GetSwapChain()->GetResolution());
+            debug_model_renderer.shader->Use(
+                CommandBuffer,
+                &RenderPass,
+                viewportRenderingStage->GetSwapChain()->GetResolution());
 
-            auto &camera = GetDefaultCamera();
-            auto &cam_parameters = camera.GetComponent<Camera::Parameters>();
+            auto camera = GetDefaultCamera();
+            auto &cam_parameters = camera.GetComponent<Camera>();
             auto &cam_transform = camera.GetComponent<Transform>();
             cam_parameters.UpdateViewTransform(cam_transform);
             Transform
@@ -191,10 +191,10 @@ void GraphicsEngine::SetupSimpleDraw()
             UniformModel model;
             model.model = transform.GetModelMatrix();
 
-            debug_shader->GetUniformBuffer("vp")->SubmitData(&vp);
-            debug_shader->GetUniformBuffer("m")->SubmitData(&model);
+            debug_model_renderer.shader->GetUniformBuffer("vp")->SubmitData(&vp);
+            debug_model_renderer.shader->GetUniformBuffer("m")->SubmitData(&model);
 
-            ModelManager::GetModel("viking_room")->Draw(CommandBuffer);
+            debug_model_renderer.model->Draw(CommandBuffer);
         });
 }
 
@@ -247,7 +247,7 @@ void GraphicsEngine::EndFrame()
             wait_semaphores.emplace_back(rendering_stage->GetCurrentImageAvailableSemaphore());
         }
     }
-    
+
     constexpr VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submit_info.waitSemaphoreCount = wait_semaphores.size();
     submit_info.pWaitSemaphores = wait_semaphores.data();
@@ -305,7 +305,9 @@ void GraphicsEngine::EndFrame()
 }
 
 // Dont call while rendering
-void GraphicsEngine::OnViewportResize(NonOwningPtr<RenderingStage> Stage, uint32_t Width, uint32_t Height)
+void GraphicsEngine::OnViewportResize(NonOwningPtr<RenderingStage> Stage,
+                                      uint32_t Width,
+                                      uint32_t Height)
 {
     Stage->ChangeResolution(Width, Height);
 }

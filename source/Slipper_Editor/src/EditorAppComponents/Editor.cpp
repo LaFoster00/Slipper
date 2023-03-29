@@ -2,6 +2,7 @@
 
 #include <imgui_internal.h>
 
+#include "CameraComponent.h"
 #include "Core/AppComponents/Gui.h"
 #include "Core/Application.h"
 #include "Core/Input.h"
@@ -100,17 +101,18 @@ void Editor::DrawViewport(RenderingStage &Stage)
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
     ImGui::Begin("Viewport", &open);
-    static ImVec2 last_window_size = {0, 0};
-    auto window_size = ImGui::GetContentRegionAvail();
-    window_size.x = std::max(1.0f, window_size.x);
-    window_size.y = std::max(1.0f, window_size.y);
-    if (last_window_size.x != window_size.x || last_window_size.y != window_size.y) {
-        Application::Get().OnViewportResize(
-            &Stage, static_cast<uint32_t>(window_size.x), static_cast<uint32_t>(window_size.y));
+    static ImVec2 last_viewport_size = {0, 0};
+    auto viewport_size = ImGui::GetContentRegionAvail();
+    viewport_size.x = std::max(1.0f, viewport_size.x);
+    viewport_size.y = std::max(1.0f, viewport_size.y);
+    if (last_viewport_size.x != viewport_size.x || last_viewport_size.y != viewport_size.y) {
+        Application::Get().OnViewportResize(&Stage,
+                                            static_cast<uint32_t>(viewport_size.x),
+                                            static_cast<uint32_t>(viewport_size.y));
     }
     auto viewport_pos = ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos();
     InputManager::SetInputOffset({viewport_pos.x, viewport_pos.y});
-    ImGui::Image(viewport_data->descriptors[current_frame], window_size);
+    ImGui::Image(viewport_data->descriptors[current_frame], viewport_size);
     // ImGui::SetWindowHitTestHole(ImGui::GetCurrentWindow(), ImGui::GetWindowPos(), window_size);
 
     static bool last_frame_viewport_hovered = false;
@@ -127,7 +129,16 @@ void Editor::DrawViewport(RenderingStage &Stage)
     Input::exitedWindow = last_frame_viewport_hovered && !viewportHovered;
     last_frame_viewport_hovered = viewportHovered;
 
-    last_window_size = window_size;
+    last_viewport_size = viewport_size;
+
+    ImGuizmo::SetOrthographic(false);
+    ImGuizmo::SetDrawlist();
+    ImGuizmo::SetRect(viewport_pos.x, viewport_pos.y, last_viewport_size.x, last_viewport_size.y);
+    Entity camera = m_graphicsEngine->GetDefaultCamera();
+    auto &camera_params = camera.GetComponent<Camera>();
+
+
+
     ImGui::End();
 }
 }  // namespace Slipper::Editor

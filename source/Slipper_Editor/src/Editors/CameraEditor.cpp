@@ -2,7 +2,7 @@
 
 namespace Slipper::Editor
 {
-void CameraEditor::DrawEditor(entt::type_info Type, Camera::Parameters &Component)
+void CameraEditor::DrawEditor(entt::type_info Type, Camera &Component)
 {
     ImGui::DragFloat("Far Plane", &Component.farPlane, 0.1f, 0.01f);
     ImGui::DragFloat("Near Plane", &Component.nearPlane, 0.1f, 0.01f);

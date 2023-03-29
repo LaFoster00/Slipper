@@ -4,7 +4,7 @@
 
 namespace Slipper::Editor
 {
-struct EditorCameraComponent : public IEcsComponent
+struct EditorCameraComponent : public IEcsComponent<EditorCameraComponent>
 {
 };
 

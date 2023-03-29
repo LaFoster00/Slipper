@@ -5,9 +5,7 @@ namespace Slipper
 {
 struct Transform;
 
-namespace Camera
-{
-struct Parameters : public IEcsComponent
+struct Camera : public IEcsComponent<Camera>
 {
     float fov = 45.0f;
     float nearPlane = 0.1f;
@@ -21,7 +19,7 @@ struct Parameters : public IEcsComponent
     [[nodiscard]] glm::mat4 GetView();
     [[nodiscard]] std::tuple<glm::mat4, glm::mat4> GetViewProjection(float Aspect,
                                                                      Transform &Transform);
-    [[nodiscard]] static std::tuple<glm::mat4, glm::mat4> GetViewProjection(Entity &Camera,
+    [[nodiscard]] static std::tuple<glm::mat4, glm::mat4> GetViewProjection(Entity Camera,
         float Aspect);
     void UpdateViewTransform(Transform &Transform);
 
@@ -32,5 +30,4 @@ struct Parameters : public IEcsComponent
     // Full frame camera
     float GetFocalLength() const;
 };
-}  // namespace Camera
 }  // namespace Slipper

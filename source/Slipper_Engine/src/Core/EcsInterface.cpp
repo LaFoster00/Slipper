@@ -4,21 +4,16 @@
 
 namespace Slipper
 {
-EcsInterface::EcsInterface()
-{
-    m_registry = entt::registry();
-}
-
 bool EcsInterface::AddSystem(EcsSystemData &Data)
 {
-    Get().m_ecsSystems.push_back(Data);
+    m_ecsSystems.push_back(Data);
     return true;
 }
 
 void EcsInterface::RunSystems()
 {
-    auto &registry = Get().m_registry;
-    for (const auto &ecs_system : Get().m_ecsSystems) {
+    auto &registry = m_registry;
+    for (const auto &ecs_system : m_ecsSystems) {
         if (ecs_system.get().executeFunction) {
             ecs_system.get().executeFunction(registry);
         }

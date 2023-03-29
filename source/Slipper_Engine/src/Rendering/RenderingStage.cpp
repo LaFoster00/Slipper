@@ -93,7 +93,7 @@ void RenderingStage::SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
 
         UniformVP vp;
         const auto resolution = GetSwapChain()->GetResolution();
-        auto [view, projection] = Camera::Parameters::GetViewProjection(
+        auto [view, projection] = Camera::GetViewProjection(
             GraphicsEngine::Get().GetDefaultCamera(), resolution.width / resolution.height);
         vp.view = view;
         vp.projection = projection;

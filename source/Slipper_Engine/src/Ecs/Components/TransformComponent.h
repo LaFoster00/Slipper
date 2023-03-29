@@ -5,7 +5,7 @@ namespace Slipper
 {
 using TransformChangeCallback = std::function<void()>;
 
-struct Transform : public IEcsComponent
+struct Transform : public IEcsComponent<Transform>
 {
     Transform(glm::vec3 Location = glm::vec3(0),
               glm::vec3 Scale = glm::vec3(1),

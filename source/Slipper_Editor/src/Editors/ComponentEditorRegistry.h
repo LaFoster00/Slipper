@@ -17,7 +17,8 @@ class EditorRegistry
     static std::optional<const EditorInfo *> TryGetEditor(const entt::type_info &Type);
 
     static EditorDrawFallback &GetEditorFallback();
+    static EditorDrawFallback &GetEmptyEditor();
 
- private:
+private:
 };
 }  // namespace Slipper::Editor

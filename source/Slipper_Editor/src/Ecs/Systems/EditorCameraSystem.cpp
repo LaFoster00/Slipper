@@ -9,7 +9,7 @@ namespace Slipper::Editor
 {
 void EditorCameraSystem::Execute(entt::registry &Registry)
 {
-    auto view = Registry.view<Transform, Camera::Parameters, EditorCameraComponent>();
+    auto view = Registry.view<Transform, Camera, EditorCameraComponent>();
     for (auto entity : view) {
 
         // transform.Translate(-transform.Up() * Time::DeltaTime());
@@ -23,7 +23,7 @@ void EditorCameraSystem::Execute(entt::registry &Registry)
 
         if (Input::GetMouseButtonDown(MouseCode::ButtonRight)) {
             auto &transform = view.get<Transform>(entity);
-            auto &camera_params = view.get<Camera::Parameters>(entity);
+            auto &camera_params = view.get<Camera>(entity);
 
             auto view_rotation = Input::GetMouseMovement() * 100.0f * Time::DeltaTime();
             transform.Rotate(-view_rotation.x, {0, 0, 1});
