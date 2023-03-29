@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EcsInterface.h"
+#include "IEcsComponent.h"
 
 namespace Slipper
 {
@@ -26,9 +27,20 @@ struct Entity
     // lifetime to be bound this wrapper
     void Destroy();
 
-    template<typename T, typename... Args> decltype(auto) AddComponent(Args &&...args)
+    template<typename T, typename... Args>
+        requires(std::is_base_of_v<IEcsComponent<T>, T> &&
+                 !std::is_base_of_v<IEcsComponentWithEntity<T>, T>) decltype(auto)
+    AddComponent(Args &&...args)
     {
         return EcsInterface::m_registry.emplace<T>(m_entity, std::forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+        requires(std::is_base_of_v<IEcsComponent<T>, T> &&
+                 std::is_base_of_v<IEcsComponentWithEntity<T>, T>) decltype(auto)
+    AddComponent(Args &&...args)
+    {
+        return EcsInterface::m_registry.emplace<T>(m_entity, *this, std::forward<Args>(args)...);
     }
 
     template<typename T> decltype(auto) GetComponent() const
