@@ -33,6 +33,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"

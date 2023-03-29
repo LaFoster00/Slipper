@@ -11,7 +11,9 @@
 #include "EntityOutliner.h"
 #include "GraphicsEngine.h"
 #include "Presentation/OffscreenSwapChain.h"
+#include "RendererComponent.h"
 #include "Texture/Texture2D.h"
+#include "TransformComponent.h"
 #include "Window.h"
 
 namespace Slipper::Editor
@@ -133,11 +135,24 @@ void Editor::DrawViewport(RenderingStage &Stage)
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::SetDrawlist();
-    ImGuizmo::SetRect(viewport_pos.x, viewport_pos.y, last_viewport_size.x, last_viewport_size.y);
-    Entity camera = m_graphicsEngine->GetDefaultCamera();
-    auto &camera_params = camera.GetComponent<Camera>();
+    ImGuizmo::SetRect(ImGui::GetWindowPos().x,
+                      ImGui::GetWindowPos().y,
+                      ImGui::GetWindowWidth(),
+                      ImGui::GetWindowHeight());
+    const Entity camera = m_graphicsEngine->GetDefaultCamera();
+    const auto &camera_params = camera.GetComponent<Camera>();
+    
+    auto view = camera_params.GetView();
+    auto projection = camera_params.GetProjection(viewport_size.x / viewport_size.y, true);
 
-
+    Entity active_entity = *EcsInterface::GetRegistry().view<Renderer>().begin();
+    auto &active_entity_transform = active_entity.GetComponent<Transform>();
+    auto transform = active_entity_transform.GetModelMatrix();
+    ImGuizmo::Manipulate(glm::value_ptr(view),
+                         glm::value_ptr(projection),
+                         ImGuizmo::OPERATION::TRANSLATE,
+                         ImGuizmo::WORLD,
+                         glm::value_ptr(transform));
 
     ImGui::End();
 }
