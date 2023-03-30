@@ -43,7 +43,9 @@ struct Entity
         return EcsInterface::m_registry.emplace<T>(m_entity, *this, std::forward<Args>(args)...);
     }
 
-    template<typename T> decltype(auto) GetComponent() const
+    template<typename T>
+        requires std::is_base_of_v<IEcsComponent<T>, T> decltype(auto)
+    GetComponent() const
     {
         return EcsInterface::m_registry.get<T>(m_entity);
     }
