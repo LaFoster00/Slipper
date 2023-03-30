@@ -141,18 +141,31 @@ void Editor::DrawViewport(RenderingStage &Stage)
                       ImGui::GetWindowHeight());
     const Entity camera = m_graphicsEngine->GetDefaultCamera();
     const auto &camera_params = camera.GetComponent<Camera>();
-    
+
     auto view = camera_params.GetView();
     auto projection = camera_params.GetProjection(viewport_size.x / viewport_size.y, true);
 
     Entity active_entity = *EcsInterface::GetRegistry().view<Renderer>().begin();
     auto &active_entity_transform = active_entity.GetComponent<Transform>();
     auto transform = active_entity_transform.GetModelMatrix();
-    ImGuizmo::Manipulate(glm::value_ptr(view),
-                         glm::value_ptr(projection),
-                         ImGuizmo::OPERATION::TRANSLATE,
-                         ImGuizmo::WORLD,
-                         glm::value_ptr(transform));
+    if (ImGuizmo::Manipulate(glm::value_ptr(view),
+                             glm::value_ptr(projection),
+                             ImGuizmo::OPERATION::TRANSLATE,
+                             ImGuizmo::WORLD,
+                             glm::value_ptr(transform))) {
+
+        glm::vec3 new_location;
+        glm::vec3 new_rotation;
+        glm::vec3 new_scale;
+        ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform),
+                                              glm::value_ptr(new_location),
+                                              glm::value_ptr(new_rotation),
+                                              glm::value_ptr(new_scale));
+
+        active_entity_transform.SetLocation(new_location);
+        active_entity_transform.SetRotation(new_rotation);
+        active_entity_transform.SetScale(new_scale);
+    }
 
     ImGui::End();
 }
