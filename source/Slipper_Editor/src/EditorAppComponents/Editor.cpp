@@ -12,9 +12,11 @@
 #include "GraphicsEngine.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "RendererComponent.h"
+#include "SceneOutliner.h"
 #include "Texture/Texture2D.h"
 #include "TransformComponent.h"
 #include "Window.h"
+#include <ImGuizmo.cpp>
 
 namespace Slipper::Editor
 {
@@ -52,7 +54,10 @@ void Editor::OnEditorGuiUpdate()
 
     // ImGui::ShowDemoWindow(&open);
 
-    EntityOutliner::DrawEntity(m_graphicsEngine->GetDefaultCamera());
+    SceneOutliner::Draw();
+    if (SceneOutliner::IsEntitySelected()) {
+        EntityOutliner::DrawEntity(SceneOutliner::GetSelectedEntity());
+    }
 }
 
 void Editor::OnViewportResize(NonOwningPtr<RenderingStage> Stage, uint32_t Width, uint32_t Height)
@@ -114,7 +119,10 @@ void Editor::DrawViewport(RenderingStage &Stage)
     }
     auto viewport_pos = ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos();
     InputManager::SetInputOffset({viewport_pos.x, viewport_pos.y});
+
+    ImGui::BeginChild("Content");
     ImGui::Image(viewport_data->descriptors[current_frame], viewport_size);
+
     // ImGui::SetWindowHitTestHole(ImGui::GetCurrentWindow(), ImGui::GetWindowPos(), window_size);
 
     static bool last_frame_viewport_hovered = false;
@@ -139,34 +147,113 @@ void Editor::DrawViewport(RenderingStage &Stage)
                       ImGui::GetWindowPos().y,
                       ImGui::GetWindowWidth(),
                       ImGui::GetWindowHeight());
+
+    ImGui::EndChild();
+
     const Entity camera = m_graphicsEngine->GetDefaultCamera();
     const auto &camera_params = camera.GetComponent<Camera>();
 
     auto view = camera_params.GetView();
     auto projection = camera_params.GetProjection(viewport_size.x / viewport_size.y, true);
 
-    Entity active_entity = *EcsInterface::GetRegistry().view<Renderer>().begin();
-    auto &active_entity_transform = active_entity.GetComponent<Transform>();
-    auto transform = active_entity_transform.GetModelMatrix();
-    if (ImGuizmo::Manipulate(glm::value_ptr(view),
-                             glm::value_ptr(projection),
-                             ImGuizmo::OPERATION::TRANSLATE,
-                             ImGuizmo::WORLD,
-                             glm::value_ptr(transform))) {
+    if (SceneOutliner::IsEntitySelected()) {
 
-        glm::vec3 new_location;
-        glm::vec3 new_rotation;
-        glm::vec3 new_scale;
-        ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform),
-                                              glm::value_ptr(new_location),
-                                              glm::value_ptr(new_rotation),
-                                              glm::value_ptr(new_scale));
+        static bool settings_open = true;
+        const ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoDocking |
+                                              ImGuiWindowFlags_AlwaysAutoResize |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoFocusOnAppearing |
+                                              ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+        ImGui::SetNextWindowPos(viewport_pos + ImVec2(10.0f, 10.0f), ImGuiCond_Always, {0.0f, 0.0f});
+        ImGui::SetNextWindowViewport(ImGui::GetWindowViewport()->ID);
+        ImGui::Begin("Transform Settings", &settings_open, window_flags);
 
-        active_entity_transform.SetLocation(new_location);
-        active_entity_transform.SetRotation(new_rotation);
-        active_entity_transform.SetScale(new_scale);
+        static ImGuizmo::OPERATION current_gizmo_operation = ImGuizmo::TRANSLATE;
+        static ImGuizmo::MODE current_gizmo_mode = ImGuizmo::WORLD;
+
+        if (!Input::captureMouseCursor) {
+            if (ImGui::IsKeyPressed(ImGuiKey_W))
+                current_gizmo_operation = ImGuizmo::TRANSLATE;
+            if (ImGui::IsKeyPressed(ImGuiKey_E))
+                current_gizmo_operation = ImGuizmo::ROTATE;
+            if (ImGui::IsKeyPressed(ImGuiKey_R))
+                current_gizmo_operation = ImGuizmo::SCALE;
+        }
+        if (ImGui::RadioButton("Translate", current_gizmo_operation == ImGuizmo::TRANSLATE))
+            current_gizmo_operation = ImGuizmo::TRANSLATE;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Rotate", current_gizmo_operation == ImGuizmo::ROTATE))
+            current_gizmo_operation = ImGuizmo::ROTATE;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Scale", current_gizmo_operation == ImGuizmo::SCALE))
+            current_gizmo_operation = ImGuizmo::SCALE;
+
+        if (current_gizmo_operation != ImGuizmo::SCALE) {
+            if (ImGui::RadioButton("Local", current_gizmo_mode == ImGuizmo::LOCAL))
+                current_gizmo_mode = ImGuizmo::LOCAL;
+            ImGui::SameLine();
+            if (ImGui::RadioButton("World", current_gizmo_mode == ImGuizmo::WORLD))
+                current_gizmo_mode = ImGuizmo::WORLD;
+        }
+
+        static bool use_snap = false;
+        if (!Input::captureMouseCursor && ImGui::IsKeyPressed(ImGuiKey_S))
+            use_snap = !use_snap;
+        ImGui::Checkbox("##UseSnap", &use_snap);
+        ImGui::SameLine();
+
+        static glm::vec3 snap_translate = {0.1f, 0.1f, 0.1f};
+        static float snap_rotate = 5.0f;
+        static float snap_scale = 0.1f;
+        glm::vec4 snap_unit;  // Needs to be vec4 otherwise this wont work
+        switch (current_gizmo_operation) {
+            case ImGuizmo::TRANSLATE:
+                ImGui::DragFloat3("Translate Snap", glm::value_ptr(snap_translate));
+                snap_unit.x = snap_translate.x;
+                snap_unit.y = snap_translate.y;
+                snap_unit.z = snap_translate.z;
+                break;
+            case ImGuizmo::ROTATE:
+                ImGui::DragFloat("Angle Snap", &snap_rotate);
+                snap_unit.x = snap_rotate;
+                break;
+            case ImGuizmo::SCALE:
+                ImGui::DragFloat("Scale Snap", &snap_scale);
+                snap_unit.x = snap_rotate;
+                break;
+            default:;
+        }
+
+        ImGui::End();
+
+        const auto active_entity = SceneOutliner::GetSelectedEntity();
+        auto &active_entity_transform = active_entity.GetComponent<Transform>();
+        if (auto transform = active_entity_transform.GetModelMatrix();
+            ImGuizmo::Manipulate(glm::value_ptr(view),
+                                 glm::value_ptr(projection),
+                                 current_gizmo_operation,
+                                 current_gizmo_mode,
+                                 glm::value_ptr(transform),
+                                 nullptr,
+                                 use_snap ? glm::value_ptr(snap_unit) : nullptr)) {
+
+            glm::vec3 new_location;
+            glm::vec3 new_rotation;
+            glm::vec3 new_scale;
+            ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform),
+                                                  glm::value_ptr(new_location),
+                                                  glm::value_ptr(new_rotation),
+                                                  glm::value_ptr(new_scale));
+
+            active_entity_transform.SetLocation(new_location);
+            active_entity_transform.SetRotation(new_rotation);
+            active_entity_transform.SetScale(new_scale);
+        }
     }
 
     ImGui::End();
+
+    ImGui::ShowDemoWindow();
 }
 }  // namespace Slipper::Editor
