@@ -38,6 +38,7 @@ set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES
     src
     src/EditorAppComponents
     src/Editors
+    src/Editors/ComponentEditors
     src/Ecs
     src/Ecs/Components
     src/Ecs/Systems
