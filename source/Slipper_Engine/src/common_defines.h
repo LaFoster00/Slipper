@@ -7,6 +7,8 @@
 #    define DEBUG_BREAK __debugbreak();
 #endif
 
+#define MAX_SCENE_OBJECT_NAME_LENGTH 256
+
 inline static std::map<VkResult, std::string_view> ResultToString = {
     {VK_SUCCESS, "VK_SUCCESS"},
     {VK_NOT_READY, "VK_NOT_READY"},
