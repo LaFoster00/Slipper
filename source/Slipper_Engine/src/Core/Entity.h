@@ -12,6 +12,11 @@ struct Entity
         m_entity = EcsInterface::CreateEntity();
     }
 
+    Entity(entt::null_t)
+    {
+        m_entity = entt::null;
+    }
+
     Entity(entt::entity Entity)
     {
         m_entity = Entity;
@@ -21,6 +26,21 @@ struct Entity
     {
         m_entity = Other.m_entity;
         return *this;
+    }
+
+    operator bool() const
+    {
+        return IsValid();
+    }
+
+    bool IsValid() const
+    {
+        return !(m_entity == entt::null || !EcsInterface::m_registry.valid(m_entity));
+    }
+
+    static Entity InvalidEntity()
+    {
+        return Entity(entt::null);
     }
 
     // Destroying Entities should ony be done explicitly since there is no reason for an entities
@@ -61,6 +81,8 @@ struct Entity
     {
         return m_entity;
     }
+
+    auto operator<=>(const Entity &) const = default;
 
  private:
     entt::entity m_entity;
