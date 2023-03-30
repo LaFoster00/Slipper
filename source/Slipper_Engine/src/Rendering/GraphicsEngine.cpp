@@ -137,7 +137,7 @@ Entity GraphicsEngine::GetDefaultCamera()
     for (const auto entity : EcsInterface::GetRegistry().view<Camera>()) {
         return entity;
     }
-    return CreateCamera();
+    return CreateCamera("Default Camera");
 }
 
 void GraphicsEngine::AddWindow(Window &Window)
@@ -177,8 +177,6 @@ void GraphicsEngine::SetupSimpleDraw() const
 
             auto camera = GetDefaultCamera();
             auto &cam_parameters = camera.GetComponent<Camera>();
-            Transform
-                transform;  //({0, 0, 0}, {1, 1, 1}, {0, 0, Time::TimeSinceStartup() * 90.0f});
 
             UniformVP vp;
             vp.view = cam_parameters.GetView();
@@ -187,7 +185,7 @@ void GraphicsEngine::SetupSimpleDraw() const
                 static_cast<float>(RenderPass.GetActiveSwapChain()->GetResolution().height));
 
             UniformModel model;
-            model.model = transform.GetModelMatrix();
+            model.model = debug_model.GetComponent<Transform>().GetModelMatrix();
 
             debug_model_renderer.shader->GetUniformBuffer("vp")->SubmitData(&vp);
             debug_model_renderer.shader->GetUniformBuffer("m")->SubmitData(&model);
