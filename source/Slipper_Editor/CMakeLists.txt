@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16.0)
+cmake_minimum_required(VERSION 3.24.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -49,7 +49,7 @@ target_include_directories(${SLIPPER_EDITOR_NAME} PRIVATE ${SLIPPER_EDITOR_INCLU
 target_precompile_headers(${SLIPPER_EDITOR_NAME} PUBLIC ${ENGINE_PRECOMPILE_HEADER})
 
 set(COMMON_EDITOR_LIBS
-    ${SLIPPER_ENGINE_NAME}    
+    ${SLIPPER_ENGINE_WHOLE}
 )
 
 #Libs

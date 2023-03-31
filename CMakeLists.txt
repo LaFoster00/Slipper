@@ -106,6 +106,18 @@ function(GroupSources curdir rootsolutiondir)
     GroupSources_Internal(${curdir} ${curdir} ${rootsolutiondir}) 
 endfunction()
 
+function(AddWholeArchiveFlag lib output_var)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(${output_var} -Wl,-force_load,$<TARGET_FILE:${lib}> ${lib} CACHE INTERNAL "")
+  elseif(MSVC)
+    # In MSVC, we will add whole archive in default.
+    set(${output_var} -WHOLEARCHIVE:$<TARGET_FILE:${lib}> ${lib} CACHE INTERNAL "")
+  else()
+    # Assume everything else is like gcc
+    set(${output_var} -Wl,--whole-archive ${lib} -Wl,--no-whole-archive CACHE INTERNAL "")
+  endif()
+endfunction()
+
 
 #Vulkan
 find_package(Vulkan)
