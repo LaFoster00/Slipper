@@ -162,36 +162,10 @@ void GraphicsEngine::SetupDebugRender(Surface &Surface) const
 
 void GraphicsEngine::SetupSimpleDraw() const
 {
-    Entity debug_model = SceneObject::Create();
-    Renderer &debug_model_renderer = debug_model.AddComponent<Renderer>();
-    debug_model_renderer.shader = ShaderManager::GetShader("Basic");
-    debug_model_renderer.model = ModelManager::GetModel("viking_room");
-
-    viewportRenderingStage->SubmitRepeatedDrawCommand(
-        viewportRenderPass,
-        [=, this](const VkCommandBuffer &CommandBuffer, const RenderPass &RenderPass) {
-            debug_model_renderer.shader->Use(
-                CommandBuffer,
-                &RenderPass,
-                viewportRenderingStage->GetSwapChain()->GetResolution());
-
-            auto camera = GetDefaultCamera();
-            auto &cam_parameters = camera.GetComponent<Camera>();
-
-            UniformVP vp;
-            vp.view = cam_parameters.GetView();
-            vp.projection = cam_parameters.GetProjection(
-                RenderPass.GetActiveSwapChain()->GetResolution().width /
-                static_cast<float>(RenderPass.GetActiveSwapChain()->GetResolution().height));
-
-            UniformModel model;
-            model.model = debug_model.GetComponent<Transform>().GetModelMatrix();
-
-            debug_model_renderer.shader->GetUniformBuffer("vp")->SubmitData(&vp);
-            debug_model_renderer.shader->GetUniformBuffer("m")->SubmitData(&model);
-
-            debug_model_renderer.model->Draw(CommandBuffer);
-        });
+    Entity debug_model = SceneObject::Create("Debug Model");
+    debug_model.AddComponent<Renderer>(viewportRenderingStage,
+                                       ModelManager::GetModel("viking_room"),
+                                       ShaderManager::GetShader("Basic"));
 }
 
 void GraphicsEngine::NewFrame() const

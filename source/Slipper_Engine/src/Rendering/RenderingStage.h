@@ -2,7 +2,8 @@
 
 namespace Slipper
 {
-class OffscreenSwapChain;
+	class Model;
+	class OffscreenSwapChain;
 class Mesh;
 class Shader;
 class Texture2D;
@@ -36,7 +37,7 @@ class RenderingStage : public DeviceDependentObject
 
     void SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
                     NonOwningPtr<const Shader> Shader,
-                    NonOwningPtr<const Mesh> Mesh,
+                    NonOwningPtr<const Model> Model,
                     const glm::mat4 &Transform);
     void SubmitSingleDrawCommand(const RenderPass *RP,
                                  std::function<void(const VkCommandBuffer &)> Command);

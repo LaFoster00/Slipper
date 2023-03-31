@@ -85,27 +85,28 @@ void RenderingStage::EndRender()
 
 void RenderingStage::SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
                                 NonOwningPtr<const Shader> Shader,
-                                NonOwningPtr<const Mesh> Mesh,
+                                NonOwningPtr<const Model> Model,
                                 const glm::mat4 &Transform)
 {
     SubmitSingleDrawCommand(RenderPass, [=, this](const VkCommandBuffer &CommandBuffer) {
-        Shader->Use(CommandBuffer, RenderPass, GetSwapChain()->GetResolution());
+	    const auto resolution = GetSwapChain()->GetResolution();
+        Shader->Use(CommandBuffer, RenderPass, resolution);
+
+        const auto camera = GraphicsEngine::GetDefaultCamera();
+	    const auto &cam_parameters = camera.GetComponent<Camera>();
 
         UniformVP vp;
-        const auto resolution = GetSwapChain()->GetResolution();
-        auto [view, projection] = Camera::GetViewProjection(
-            GraphicsEngine::Get().GetDefaultCamera(), resolution.width / resolution.height);
-        vp.view = view;
-        vp.projection = projection;
+        vp.view = cam_parameters.GetView();
+        vp.projection = cam_parameters.GetProjection(static_cast<float>(resolution.width) /
+                                                     resolution.height);
 
         UniformModel model;
         model.model = Transform;
 
-        vp.projection[1][1] *= -1;
         Shader->GetUniformBuffer("vp")->SubmitData(&vp);
         Shader->GetUniformBuffer("m")->SubmitData(&model);
-        Mesh->Bind(CommandBuffer);
-        vkCmdDrawIndexed(CommandBuffer, static_cast<uint32_t>(Mesh->NumIndex()), 1, 0, 0, 0);
+
+        Model->Draw(CommandBuffer);
     });
 }
 
