@@ -171,14 +171,17 @@ void Editor::DrawViewport(RenderingStage &Stage)
 
         static ImGuizmo::OPERATION current_gizmo_operation = ImGuizmo::TRANSLATE;
         static ImGuizmo::MODE current_gizmo_mode = ImGuizmo::WORLD;
+        static bool use_snap = false;
 
-        if (!Input::captureMouseCursor) {
+        if (!Input::captureMouseCursor && viewportHovered && !ImGui::GetIO().WantTextInput) {
             if (ImGui::IsKeyPressed(ImGuiKey_W))
                 current_gizmo_operation = ImGuizmo::TRANSLATE;
             if (ImGui::IsKeyPressed(ImGuiKey_E))
                 current_gizmo_operation = ImGuizmo::ROTATE;
             if (ImGui::IsKeyPressed(ImGuiKey_R))
                 current_gizmo_operation = ImGuizmo::SCALE;
+            if (ImGui::IsKeyPressed(ImGuiKey_S))
+                use_snap = !use_snap;
         }
         if (ImGui::RadioButton("Translate", current_gizmo_operation == ImGuizmo::TRANSLATE))
             current_gizmo_operation = ImGuizmo::TRANSLATE;
@@ -197,9 +200,6 @@ void Editor::DrawViewport(RenderingStage &Stage)
                 current_gizmo_mode = ImGuizmo::WORLD;
         }
 
-        static bool use_snap = false;
-        if (!Input::captureMouseCursor && ImGui::IsKeyPressed(ImGuiKey_S))
-            use_snap = !use_snap;
         ImGui::Checkbox("##UseSnap", &use_snap);
         ImGui::SameLine();
 
