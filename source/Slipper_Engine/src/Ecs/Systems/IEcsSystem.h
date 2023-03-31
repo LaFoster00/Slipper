@@ -2,29 +2,17 @@
 
 namespace Slipper
 {
-struct EcsSystemData
+template<typename SystemT> struct IEcsSystem
 {
-    std::function<void(entt::registry &)> executeFunction;
-};
-
-template<typename System> struct IEcsSystem
-{
+	virtual ~IEcsSystem() = default;
 	virtual void Execute(entt::registry &Registry) = 0;
 
-    static bool RegisterSystem()
+    static SystemT &Get()
     {
-        EcsSystemData &data = Get().data;
-        data.executeFunction = std::bind(&System::Execute, &Get(), std::placeholders::_1);
-        return EcsInterface::AddSystem(data);
-    }
-
-    static System &Get()
-    {
-        static System system;
+        static SystemT system;
         return system;
     }
 
-    EcsSystemData data;
-    static inline bool systemAdded = RegisterSystem();
+    static inline bool systemAdded = EcsInterface::AddSystem<SystemT>();
 };
 }  // namespace Slipper

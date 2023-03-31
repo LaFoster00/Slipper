@@ -6,6 +6,11 @@ namespace Slipper
 {
 struct EcsSystemData;
 
+struct EcsSystemData
+{
+    std::function<void(entt::registry &)> executeFunction;
+};
+
 class EcsInterface
 {
     friend struct Entity;
@@ -20,7 +25,14 @@ class EcsInterface
     using ComponentTypeLookup = std::map<const entt::id_type, ComponentTypeInfo>;
 
  public:
-    static bool AddSystem(EcsSystemData &Data);
+    template<typename SystemT> static bool AddSystem()
+    {
+        EcsSystemData data;
+        data.executeFunction = std::bind(
+            &SystemT::Execute, &SystemT::Get(), std::placeholders::_1);
+        m_ecsSystems.push_back(data);
+        return true;
+    }
     static void RunSystems();
 
     static entt::registry &GetRegistry()
@@ -48,7 +60,7 @@ class EcsInterface
 
  private:
     static inline entt::registry m_registry = entt::registry();
-    static inline std::vector<Ref<EcsSystemData>> m_ecsSystems;
+    static inline std::vector<EcsSystemData> m_ecsSystems;
 
     static inline ComponentTypeLookup m_componentTypeLookup;
 };
