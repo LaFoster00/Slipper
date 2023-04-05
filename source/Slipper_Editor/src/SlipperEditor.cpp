@@ -1,20 +1,19 @@
 #include "SlipperEditor.h"
 
+#include "Core/AppComponents/Ecs.h"
 #include "Core/AppComponents/Gui.h"
 #include "Editor.h"
 #include "GraphicsEngine.h"
 #include "Window.h"
-#include "Core/AppComponents/Ecs.h"
-
 
 int main(int argc, char *argv[])
 {
     try {
         Slipper::ApplicationInfo app_info{"Slipper Engine "};
-        auto app = new Slipper::Editor::SlipperEditor(app_info);
-        app->Init();
+        const OwningPtr<Slipper::Editor::SlipperEditor> app = new Slipper::Editor::SlipperEditor();
+        app->Init(app_info);
         app->Run();
-        delete app;
+        app->Shutdown();
     }
     catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
@@ -26,13 +25,14 @@ int main(int argc, char *argv[])
 
 namespace Slipper::Editor
 {
-void SlipperEditor::Init()
+void SlipperEditor::Init(ApplicationInfo &ApplicationInfo)
 {
-    Application::Init();
+    Application::Init(ApplicationInfo);
     GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
     m_editor = AddComponent(new Editor(), ecsComponent);
     m_editorGui = AddComponent(
         new Gui("Editor Gui", GraphicsEngine::Get().windowRenderPass, true));
+    
     AddAdditionalRenderStageUpdate(
         GraphicsEngine::Get().windowRenderingStage,
         std::bind(&SlipperEditor::UpdateEditor, this, std::placeholders::_1));

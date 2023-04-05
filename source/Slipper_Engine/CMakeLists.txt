@@ -59,18 +59,21 @@ set_property(TARGET ${SLIPPER_ENGINE_NAME} PROPERTY CXX_STANDARD 20)
 
 set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     src
-    src/Engine
-    src/Filesystem
-    src/Rendering
-    src/Rendering/Data
-    src/Rendering/GraphicsPipeline
-    src/Tutorial
-    src/Window
-    src/Platform
+    src/Core
+    src/Core/AppComponents
+    src/Core/Input
     src/Ecs
     src/Ecs/Components
     src/Ecs/Systems
+    src/Engine
+    src/Filesystem
+    src/Platform
+    src/Rendering
+    src/Rendering/Data
+    src/Rendering/GraphicsPipeline
     src/SceneObjects
+    src/Tutorial
+    src/Window
 )
 GroupSources(src Source)
 target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC

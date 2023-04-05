@@ -32,6 +32,8 @@ class Editor : public EditorAppComponent
 
 
     void DrawViewport(RenderingStage &Stage);
+    static void DrawUpdateInput(ImVec2 ViewportPos);
+    void DrawGuizmo(RenderingStage &Stage, ImVec2 ViewportPos, ImVec2 ViewportSize);
 
 public:
     static inline bool viewportHovered = false;

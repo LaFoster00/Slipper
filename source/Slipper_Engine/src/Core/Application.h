@@ -5,6 +5,7 @@ int main(int argc, char *argv[]);
 
 namespace Slipper
 {
+class Application;
 class RenderingStage;
 class Event;
 class Gui;
@@ -30,10 +31,10 @@ struct ResizeInfo
 class Application
 {
  public:
-    Application(ApplicationInfo &ApplicationInfo);
-    virtual ~Application();
-
-    virtual void Init();
+    Application();
+    virtual ~Application() = default;
+    virtual void Init(ApplicationInfo &ApplicationInfo);
+    virtual void Shutdown();
 
     template<typename T>
         requires IsAppComponent<T>
@@ -69,7 +70,7 @@ class Application
 
     void Close();
     void CloseWindow(const Window *Window);
-
+    
     static Application &Get()
     {
         return *instance;
@@ -77,7 +78,7 @@ class Application
 
     template<typename T> T &Get()
     {
-        return *dynamic_cast<T *>(this);
+        return *dynamic_cast<T *>(&Get());
     }
 
     virtual void Run();
@@ -103,7 +104,7 @@ class Application
     OwningPtr<Window> window;
 
  protected:
-    static Application *instance;
+    static inline Application *instance = nullptr;
 
     std::string name;
     bool running = true;

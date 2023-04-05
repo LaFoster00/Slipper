@@ -1,11 +1,10 @@
 #pragma once
-#include <cstdint>
 
 #include "AppComponent.h"
 
 namespace Slipper
 {
-using MouseCodeT = uint16_t;
+using MouseCodeT = int;
 
 enum class MouseCode : MouseCodeT
 {
@@ -28,10 +27,11 @@ enum class MouseCode : MouseCodeT
     ArraySize = 9
 };
 
-using KeyCodeT = uint16_t;
+using KeyCodeT = int;
 
 enum class KeyCode : KeyCodeT
 {
+    None = 0,
     // From glfw3.h
     Space = 32,
     Apostrophe = 39, /* ' */
@@ -167,15 +167,15 @@ enum class KeyCode : KeyCodeT
     ArraySize = 349
 };
 
-#define DECLARE_GLFW_DIRECT_CALLBACK(FnName) static void FnName##_Callback(GLFWwindow *Window)
+#define DECLARE_INPUT_DIRECT_CALLBACK(FnName) static void FnName##_Callback(GLFWwindow *Window)
 
-#define DECLARE_GLFW_CALLBACK(FnName, ...) \
+#define DECLARE_INPUT_CALLBACK(FnName, ...) \
     static void FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
 
-#define IMPLEMENT_GLFW_DIRECT_CALLBACK(FnName) \
+#define IMPLEMENT_INPUT_DIRECT_CALLBACK(FnName) \
     void InputManager::FnName##_Callback(GLFWwindow *Window)
 
-#define IMPLEMENT_GLFW_CALLBACK(FnName, ...) \
+#define IMPLEMENT_INPUT_CALLBACK(FnName, ...) \
     void InputManager::FnName##_Callback(GLFWwindow *Window, __VA_ARGS__)
 
 struct MouseInput
@@ -243,24 +243,23 @@ class InputManager : public AppComponent
     InputManager() : AppComponent("Input Manager")
     {
     }
-
-    static void SetImGuiInputContext(NonOwningPtr<ImGuiContext> Context);
-    static void RegisterInputCallbacks(const Window &Window);
+    
+    static void RegisterGlfwInputCallbacks(const Window &Window);
     static void SetInputOffset(glm::vec2 Offset);
+    static KeyCode ImGuiToKeyCode(ImGuiKey Key);
 
  private:
-    DECLARE_GLFW_CALLBACK(FramebufferResize, int Width, int Height);
-    DECLARE_GLFW_CALLBACK(Key, int Key, int Scancode, int Action, int Mods);
-    DECLARE_GLFW_CALLBACK(Scroll, double XOffset, double YOffset);
-    DECLARE_GLFW_CALLBACK(CursorEnter, int Entered);
-    DECLARE_GLFW_CALLBACK(CursorPos, double XPos, double YPos);
-    DECLARE_GLFW_CALLBACK(MouseButton, int Button, int Action, int Mods);
-    DECLARE_GLFW_CALLBACK(WindowMaximize, int Maximized);
-    DECLARE_GLFW_CALLBACK(WindowFocus, int Focused);
-    DECLARE_GLFW_DIRECT_CALLBACK(WindowClose);
+    DECLARE_INPUT_CALLBACK(FramebufferResize, int Width, int Height);
+    DECLARE_INPUT_CALLBACK(Key, int Key, int Scancode, int Action, int Mods);
+    DECLARE_INPUT_CALLBACK(Scroll, double XOffset, double YOffset);
+    DECLARE_INPUT_CALLBACK(CursorEnter, int Entered);
+    DECLARE_INPUT_CALLBACK(CursorPos, double XPos, double YPos);
+    DECLARE_INPUT_CALLBACK(MouseButton, int Button, int Action, int Mods);
+    DECLARE_INPUT_CALLBACK(WindowMaximize, int Maximized);
+    DECLARE_INPUT_CALLBACK(WindowFocus, int Focused);
+    DECLARE_INPUT_DIRECT_CALLBACK(WindowClose);
 
  private:
     static inline glm::vec2 Offset = {};
-    static inline NonOwningPtr<ImGuiContext> context = nullptr;
 };
 }  // namespace Slipper

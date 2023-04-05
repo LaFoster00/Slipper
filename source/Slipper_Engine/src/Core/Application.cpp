@@ -13,34 +13,15 @@
 
 namespace Slipper
 {
-Application *Application::instance = nullptr;
-
-Application::Application(ApplicationInfo &ApplicationInfo)
+Application::Application()
 {
-    ASSERT(instance, "Application allready created!");
     instance = this;
+}
 
+void Application::Init(ApplicationInfo &ApplicationInfo)
+{
     name = ApplicationInfo.Name;
-}
 
-Application::~Application()
-{
-    vkDeviceWaitIdle(Device::Get());
-
-    for (const auto &app_component : appComponents) {
-        app_component->Shutdown();
-    }
-    appComponentsOrdered.clear();
-    appComponents.clear();
-
-    GraphicsEngine::Shutdown();
-    window.reset();
-    Device::Destroy();
-    glfwTerminate();
-}
-
-void Application::Init()
-{
     glfwInit();
     vulkanInstance = new VulkanInstance();
 
@@ -71,6 +52,22 @@ void Application::Init()
                                            app_component->OnUpdate();
                                        }
                                    });
+}
+
+void Application::Shutdown()
+{
+    vkDeviceWaitIdle(Device::Get());
+
+    for (const auto &app_component : appComponents) {
+        app_component->Shutdown();
+    }
+    appComponentsOrdered.clear();
+    appComponents.clear();
+
+    GraphicsEngine::Shutdown();
+    window.reset();
+    Device::Destroy();
+    glfwTerminate();
 }
 
 void Application::Close()

@@ -7,7 +7,7 @@
 
 namespace Slipper
 {
-SlipperEngine::SlipperEngine(ApplicationInfo &ApplicationInfo) : Application(ApplicationInfo)
+SlipperEngine::SlipperEngine() : Application()
 {
     GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
 }

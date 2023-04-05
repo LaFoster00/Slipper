@@ -10,7 +10,7 @@ class SlipperEditor : public Application
  public:
     using Application::Application;
 
-    void Init() override;
+    void Init(ApplicationInfo &ApplicationInfo) override;
 
     NonOwningPtr<Editor> GetEditor() const
     {
@@ -24,7 +24,6 @@ class SlipperEditor : public Application
 
  private:
     void UpdateEditor(NonOwningPtr<RenderingStage> RenderingStage) const;
-    void RenderEditor(NonOwningPtr<RenderingStage> RenderingStage) const;
 
  private:
     NonOwningPtr<Editor> m_editor;

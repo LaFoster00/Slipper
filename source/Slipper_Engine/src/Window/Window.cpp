@@ -1,6 +1,6 @@
 #include "Window.h"
 
-#include "Core/InputEvent.h"
+#include "InputEvent.h"
 #include "Presentation/Surface.h"
 
 namespace Slipper
@@ -20,7 +20,7 @@ Window::Window(WindowInfo CreateInfo)
 
     glfwSetWindowUserPointer(glfwWindow, this);
 
-    InputManager::RegisterInputCallbacks(*this);
+    InputManager::RegisterGlfwInputCallbacks(*this);
 
     m_surface = std::make_unique<Surface>(*this);
 }

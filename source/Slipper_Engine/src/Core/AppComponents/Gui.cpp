@@ -29,7 +29,7 @@ void Gui::ImGuiResources::CreateDescriptorPool(const VkDescriptorPoolSize *Sizes
 }
 
 Gui::Gui(std::string_view Name, NonOwningPtr<RenderPass> RenderPass, bool InstallCallbacks)
-    : AppComponent(Name), m_renderPass(RenderPass), m_installCallbacks(InstallCallbacks)
+    : AppComponent(Name), m_installCallbacks(InstallCallbacks), m_renderPass(RenderPass)
 {
 }
 

@@ -1,7 +1,7 @@
 #include "EditorCameraSystem.h"
 
 #include "CameraComponent.h"
-#include "Core/Input.h"
+#include "Input.h"
 #include "Time/Time.h"
 #include "TransformComponent.h"
 

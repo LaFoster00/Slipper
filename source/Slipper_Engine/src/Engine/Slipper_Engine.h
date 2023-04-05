@@ -6,7 +6,7 @@ namespace Slipper
 class SlipperEngine final : public Application
 {
  public:
-    explicit SlipperEngine(ApplicationInfo &ApplicationInfo);
+    explicit SlipperEngine();
 
     void Run() override;
 };

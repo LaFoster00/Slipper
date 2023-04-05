@@ -5,17 +5,15 @@
 #include "CameraComponent.h"
 #include "Core/AppComponents/Gui.h"
 #include "Core/Application.h"
-#include "Core/Input.h"
+#include "Input.h"
 #include "Drawing/Sampler.h"
 #include "EditorCameraSystem.h"
 #include "EntityOutliner.h"
 #include "GraphicsEngine.h"
 #include "Presentation/OffscreenSwapChain.h"
-#include "RendererComponent.h"
 #include "SceneOutliner.h"
 #include "Texture/Texture2D.h"
 #include "TransformComponent.h"
-#include "Window.h"
 #include <ImGuizmo.cpp>
 
 namespace Slipper::Editor
@@ -30,7 +28,7 @@ void Editor::Init()
                                                            std::placeholders::_2,
                                                            std::placeholders::_3));
     m_graphicsEngine = &GraphicsEngine::Get();
-    m_graphicsEngine->GetDefaultCamera().AddComponent<EditorCameraComponent>();
+    GraphicsEngine::GetDefaultCamera().AddComponent<EditorCameraComponent>();
 }
 
 void Editor::Shutdown()
@@ -102,7 +100,7 @@ NonOwningPtr<Editor::ViewportData> Editor::FetchViewportImages(NonOwningPtr<Rend
 void Editor::DrawViewport(RenderingStage &Stage)
 {
     static bool open = true;
-    auto viewport_data = FetchViewportImages(&Stage);
+    const auto viewport_data = FetchViewportImages(&Stage);
 
     const auto current_frame = Stage.GetCurrentImageIndex();
 
@@ -117,13 +115,19 @@ void Editor::DrawViewport(RenderingStage &Stage)
                                             static_cast<uint32_t>(viewport_size.x),
                                             static_cast<uint32_t>(viewport_size.y));
     }
-    auto viewport_pos = ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos();
-    InputManager::SetInputOffset({viewport_pos.x, viewport_pos.y});
-
-    ImGui::BeginChild("Content");
+    const auto viewport_pos = ImGui::GetWindowContentRegionMin() + ImGui::GetWindowPos();
     ImGui::Image(viewport_data->descriptors[current_frame], viewport_size);
+    last_viewport_size = viewport_size;
 
-    // ImGui::SetWindowHitTestHole(ImGui::GetCurrentWindow(), ImGui::GetWindowPos(), window_size);
+    DrawUpdateInput(viewport_pos);
+    DrawGuizmo(Stage, viewport_pos, viewport_size);
+
+    ImGui::End();
+}
+
+void Editor::DrawUpdateInput(ImVec2 ViewportPos)
+{
+    InputManager::SetInputOffset({ViewportPos.x, ViewportPos.y});
 
     static bool last_frame_viewport_hovered = false;
     if (ImGui::IsItemHovered()) {
@@ -138,25 +142,24 @@ void Editor::DrawViewport(RenderingStage &Stage)
     Input::enteredWindow = !last_frame_viewport_hovered && viewportHovered;
     Input::exitedWindow = last_frame_viewport_hovered && !viewportHovered;
     last_frame_viewport_hovered = viewportHovered;
+}
 
-    last_viewport_size = viewport_size;
-
-    ImGuizmo::SetOrthographic(false);
-    ImGuizmo::SetDrawlist();
-    ImGuizmo::SetRect(ImGui::GetWindowPos().x,
-                      ImGui::GetWindowPos().y,
-                      ImGui::GetWindowWidth(),
-                      ImGui::GetWindowHeight());
-
-    ImGui::EndChild();
-
-    const Entity camera = m_graphicsEngine->GetDefaultCamera();
-    const auto &camera_params = camera.GetComponent<Camera>();
-
-    auto view = camera_params.GetView();
-    auto projection = camera_params.GetProjection(viewport_size.x / viewport_size.y, true);
-
+void Editor::DrawGuizmo(RenderingStage &Stage, ImVec2 ViewportPos, ImVec2 ViewportSize)
+{
     if (SceneOutliner::IsEntitySelected()) {
+        ImGuizmo::SetOrthographic(false);
+        ImGuizmo::SetDrawlist();
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x,
+                          ImGui::GetWindowPos().y,
+                          ImGui::GetWindowWidth(),
+                          ImGui::GetWindowHeight());
+
+        const Entity camera = m_graphicsEngine->GetDefaultCamera();
+        const auto &camera_params = camera.GetComponent<Camera>();
+
+        auto view = camera_params.GetView();
+        auto projection = camera_params.GetProjection(ViewportSize.x / ViewportSize.y, true);
+
 
         static bool settings_open = true;
         const ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration |
@@ -165,7 +168,8 @@ void Editor::DrawViewport(RenderingStage &Stage)
                                               ImGuiWindowFlags_NoSavedSettings |
                                               ImGuiWindowFlags_NoFocusOnAppearing |
                                               ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
-        ImGui::SetNextWindowPos(viewport_pos + ImVec2(10.0f, 10.0f), ImGuiCond_Always, {0.0f, 0.0f});
+        ImGui::SetNextWindowPos(
+            ViewportPos + ImVec2(10.0f, 10.0f), ImGuiCond_Always, {0.0f, 0.0f});
         ImGui::SetNextWindowViewport(ImGui::GetWindowViewport()->ID);
         ImGui::Begin("Transform Settings", &settings_open, window_flags);
 
@@ -251,9 +255,5 @@ void Editor::DrawViewport(RenderingStage &Stage)
             active_entity_transform.SetScale(new_scale);
         }
     }
-
-    ImGui::End();
-
-    ImGui::ShowDemoWindow();
 }
 }  // namespace Slipper::Editor
