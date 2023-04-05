@@ -30,25 +30,30 @@ void EditorCameraSystem::Execute(entt::registry &Registry)
             transform.Rotate(-view_rotation.y, transform.Forward());
 
             const float MovementSpeed = 10.0f;
+            glm::vec3 translation{0.0f, 0.0f, 0.0f};
 
             if (Input::GetKeyDown(KeyCode::W)) {
-                transform.Translate(-transform.Up() * Time::DeltaTime() * MovementSpeed);
+                translation += -transform.Up();
             }
             if (Input::GetKeyDown(KeyCode::S)) {
-                transform.Translate(transform.Up() * Time::DeltaTime() * MovementSpeed);
+                translation += transform.Up();
             }
             if (Input::GetKeyDown(KeyCode::A)) {
-                transform.Translate(-transform.Forward() * Time::DeltaTime() * MovementSpeed);
+                translation += -transform.Forward();
             }
             if (Input::GetKeyDown(KeyCode::D)) {
-                transform.Translate(transform.Forward() * Time::DeltaTime() * MovementSpeed);
+                translation += transform.Forward();
             }
             if (Input::GetKeyDown(KeyCode::Q)) {
-                transform.Translate(-transform.Right() * Time::DeltaTime() * MovementSpeed);
+                translation += -transform.Right();
             }
             if (Input::GetKeyDown(KeyCode::E)) {
-                transform.Translate(transform.Right() * Time::DeltaTime() * MovementSpeed);
+                translation += transform.Right();
             }
+
+            if (translation != glm::vec3{0.0f, 0.0f, 0.0f})
+                translation = glm::normalize(translation);
+            transform.Translate(translation * Time::DeltaTime() * MovementSpeed);
         }
     }
 }
