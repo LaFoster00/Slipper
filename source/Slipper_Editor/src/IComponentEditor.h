@@ -14,11 +14,12 @@ inline EditorDrawFunc PlaceholderDraw = [](entt::registry &, entt::entity) {
 // For use with empty components
 inline EditorDrawFallback EmptyDraw = [](const entt::type_info &type) {
     bool open = true;
-    ImGui::BeginChild(type.name().data(), {ImGui::GetWindowContentRegionWidth(), 30.0f});
+
     auto pretty_name = type.name().substr(type.name().find_last_of(':') + 1);
     pretty_name = pretty_name.substr(0, pretty_name.find_last_of('('));
-    ImGui::Text(std::string(pretty_name).c_str());
-    ImGui::EndChild();
+    if (ImGui::CollapsingHeader(std::string(pretty_name).c_str())) {
+        ImGui::Text("This component doesn't have any data to display!");
+    }
 };
 
 inline EditorDrawFallback FallbackDraw = [](const entt::type_info &Type) {
@@ -39,7 +40,7 @@ struct EditorInfo
     // For use with zero size components. These should not have to define an actual editor
 
     EditorInfo(const std::string_view Name, const entt::type_info &type)
-        : drawFunc(PlaceholderDraw), height(1), name(Name)
+        : drawFunc(PlaceholderDraw), name(Name)
     {
         Map()[&type] = this;
         const entt::id_type id = type.hash();
@@ -49,10 +50,9 @@ struct EditorInfo
     }
 
     EditorInfo(const EditorDrawFunc DrawFunc,
-               uint32_t Height,
                const std::string_view Name,
                const entt::type_info *ComponentType)
-        : drawFunc(DrawFunc), height(Height), name(Name)
+        : drawFunc(DrawFunc), name(Name)
     {
         Map()[ComponentType] = this;
         const entt::id_type id = ComponentType->hash();
@@ -70,11 +70,10 @@ struct EditorInfo
     }
 
     static EditorInfo &Create(const EditorDrawFunc DrawFunc,
-                              uint32_t Height,
                               const std::string_view Name,
                               const entt::type_info *ComponentType)
     {
-        return *new EditorInfo(DrawFunc, Height, Name, ComponentType);
+        return *new EditorInfo(DrawFunc, Name, ComponentType);
     }
 
     static std::unordered_map<const entt::type_info *, const EditorInfo *> &Map()
@@ -90,7 +89,6 @@ struct EditorInfo
     }
 
     const EditorDrawFunc drawFunc;
-    const uint32_t height = 0;
     const std::string_view name;
 };
 
@@ -125,23 +123,17 @@ template<typename Editor, typename ComponentType> struct IComponentEditor
         }
     }
 
-    static uint32_t GetLines()
-    {
-        return Get().Impl_GetLines();
-    }
-
     static std::string_view GetName()
     {
         return Get().Impl_GetName();
     }
 
     virtual void DrawEditor(entt::type_info Type, ComponentType &Component) = 0;
-    virtual uint32_t Impl_GetLines() = 0;
     virtual std::string_view Impl_GetName() = 0;
 
  public:
     static inline const EditorInfo Info = EditorInfo::Create(
-        &Draw, GetLines(), GetName(), &GetComponentType());
+        &Draw, GetName(), &GetComponentType());
 };
 
 template<typename Editor>

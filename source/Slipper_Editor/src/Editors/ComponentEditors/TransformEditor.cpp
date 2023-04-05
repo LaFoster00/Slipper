@@ -15,11 +15,6 @@ void TransformEditor::DrawEditor(entt::type_info Type, Transform &Component)
     Component.SetScale(scale);
 }
 
-uint32_t TransformEditor::Impl_GetLines()
-{
-    return 3;
-}
-
 std::string_view TransformEditor::Impl_GetName()
 {
     return "Transform";

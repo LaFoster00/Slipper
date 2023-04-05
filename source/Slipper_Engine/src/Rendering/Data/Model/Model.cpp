@@ -48,13 +48,17 @@ Model::Model(std::string_view FilePath)
         }
     }
 
-    m_mesh = std::make_unique<Mesh>(
-        vertices.data(), vertices.size(), indices.data(), indices.size());
+    m_mesh = std::make_unique<Mesh>(File::get_file_name_from_path(FilePath),
+                                    vertices.data(),
+                                    vertices.size(),
+                                    indices.data(),
+                                    indices.size());
 }
 
 void Model::Draw(VkCommandBuffer CommandBuffer, uint32_t InstanceCount) const
 {
     m_mesh->Bind(CommandBuffer);
-    vkCmdDrawIndexed(CommandBuffer, static_cast<uint32_t>(m_mesh->NumIndex()), InstanceCount, 0, 0, 0);
+    vkCmdDrawIndexed(
+        CommandBuffer, static_cast<uint32_t>(m_mesh->NumIndex()), InstanceCount, 0, 0, 0);
 }
-}
+}  // namespace Slipper

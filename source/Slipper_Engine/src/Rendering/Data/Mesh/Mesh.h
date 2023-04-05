@@ -88,7 +88,8 @@ const std::vector<VertexIndex> DEBUG_TRIANGLE_INDICES = {0, 1, 2, 2, 3, 0, 4, 5,
 class Mesh
 {
  public:
-    Mesh(const Vertex *Vertices,
+    Mesh(std::string_view Name,
+         const Vertex *Vertices,
          size_t NumVertices,
          const VertexIndex *Indices,
          size_t NumIndices);
@@ -105,7 +106,13 @@ class Mesh
         return m_indexBuffer.numIndex;
     }
 
+    const std::string &GetName() const
+    {
+        return m_name;
+    }
+
  private:
+    const std::string m_name;
     VertexBuffer m_vertexBuffer;
     IndexBuffer m_indexBuffer;
 };

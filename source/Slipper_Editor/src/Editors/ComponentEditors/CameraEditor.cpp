@@ -25,11 +25,6 @@ void CameraEditor::DrawEditor(entt::type_info Type, Camera &Component)
     }
 }
 
-uint32_t CameraEditor::Impl_GetLines()
-{
-    return 5;
-}
-
 std::string_view CameraEditor::Impl_GetName()
 {
     return "Camera";

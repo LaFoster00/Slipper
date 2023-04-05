@@ -14,14 +14,14 @@ void EntityOutliner::DrawEntity(Entity Entity)
             const entt::id_type id = curr.first;
             if (auto editor = EditorRegistry::TryGetEditor(id)) {
                 const auto &component_type = EcsInterface::GetComponentType(id);
-                ImGui::BeginChild(
-                    component_type.typeInfo.name().data(),
-                    {ImGui::GetWindowContentRegionWidth(), 30.0f * editor.value()->height});
-                ImGui::Text(editor.value()->name.data());
-                if (component_type.size != 0) {
-                    editor.value()->drawFunc(EcsInterface::GetRegistry(), Entity);
+                if (ImGui::CollapsingHeader(editor.value()->name.data())) {
+                    ImGui::BeginGroup();
+                    if (component_type.size != 0) {
+                        editor.value()->drawFunc(EcsInterface::GetRegistry(), Entity);
+                    }
+                    // ImGui::EndChild();
+                    ImGui::EndGroup();
                 }
-                ImGui::EndChild();
             }
             else {
                 const auto &component_type = EcsInterface::GetComponentType(id);

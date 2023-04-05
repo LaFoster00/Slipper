@@ -49,6 +49,8 @@
 
 #include "common_defines.h"
 
+#include "File.h"
+
 #include "Core/Pointer.h"
 
 #include "Core/Entity.h"

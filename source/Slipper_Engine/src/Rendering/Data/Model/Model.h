@@ -27,8 +27,12 @@ class Model
     explicit Model(std::string_view FilePath);
 
     void Draw(VkCommandBuffer CommandBuffer, uint32_t InstanceCount = 1) const;
+	const Mesh &GetMesh() const
+    {
+        return *m_mesh;
+    }
 
- private:
+private:
     std::unique_ptr<Mesh> m_mesh;
 };
 }  // namespace Slipper

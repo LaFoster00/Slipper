@@ -8,11 +8,7 @@ class SceneObjectEditor : public IComponentEditor<SceneObjectEditor, SceneObject
 {
  public:
     void DrawEditor(entt::type_info Type, SceneObjectComponent &Component) override;
-
-    uint32_t Impl_GetLines() override
-    {
-        return 2;
-    }
+    
     std::string_view Impl_GetName() override
     {
         return "Scene Object";
