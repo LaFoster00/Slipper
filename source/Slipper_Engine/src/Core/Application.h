@@ -5,7 +5,8 @@ int main(int argc, char *argv[]);
 
 namespace Slipper
 {
-class Application;
+	class MaterialManager;
+	class Application;
 class RenderingStage;
 class Event;
 class Gui;
@@ -118,6 +119,7 @@ class Application
     OwningPtr<VulkanInstance> vulkanInstance;
 
     NonOwningPtr<Ecs> ecsComponent;
+    NonOwningPtr<MaterialManager> materialManager;
     std::vector<OwningPtr<AppComponent>> appComponents;
     std::vector<NonOwningPtr<AppComponent>> appComponentsOrdered;
 

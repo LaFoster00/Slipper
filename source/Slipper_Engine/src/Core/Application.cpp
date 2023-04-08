@@ -6,6 +6,7 @@
 #include "Event.h"
 #include "GraphicsEngine.h"
 #include "Input.h"
+#include "MaterialManager.h"
 #include "Setup/GraphicsSettings.h"
 #include "Setup/VulkanInstance.h"
 #include "Time/Time.h"
@@ -36,8 +37,11 @@ void Application::Init(ApplicationInfo &ApplicationInfo)
     Device::PickPhysicalDevice(&window->GetSurface(), true);
     GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableSampleCount();
 
+    // Setup Application Components
     ecsComponent = AddComponent(new Ecs());
     AddComponent(new InputManager(), ecsComponent);
+    materialManager = AddComponent(new MaterialManager());
+
 
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
@@ -101,7 +105,6 @@ void Application::Run()
 
         if (!minimized) {
             Time::Tick(Engine::FRAME_COUNT);
-            Engine::FRAME_COUNT += 1;
             if (!(Engine::FRAME_COUNT % DELTA_SMOOTH_FRAMES)) {
                 std::stringstream ss;
                 ss << name << " " << std::setw(10) << 1.0f / Time::DeltaTimeSmooth() << "fps  "
@@ -127,6 +130,8 @@ void Application::Run()
             }
 
             GraphicsEngine::Get().EndFrame();
+
+            Engine::FRAME_COUNT += 1;
         }
     }
 }

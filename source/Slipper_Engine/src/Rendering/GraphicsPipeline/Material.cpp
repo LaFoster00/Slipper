@@ -1,5 +1,6 @@
 #include "Material.h"
 
+#include "MaterialManager.h"
 #include "Shader/Shader.h"
 
 namespace Slipper
@@ -28,6 +29,8 @@ bool Material::SetUniform(std::string Name, IShaderBindableData &Uniform)
         else {
             uniforms.emplace(Name, MaterialUniform{binding.value(), &Uniform});
         }
+
+        MaterialManager::AddUniformUpdate(*this, uniforms.at(Name));
     }
     return false;
 }
@@ -36,7 +39,6 @@ void Material::Use(const VkCommandBuffer &CommandBuffer,
                    NonOwningPtr<const RenderPass> RenderPass,
                    VkExtent2D Extent) const
 {
-    BindShaderUniforms();
     shader->Use(CommandBuffer, RenderPass, Extent);
 }
 
@@ -46,11 +48,9 @@ UniformBuffer *Material::GetUniformBuffer(const std::string Name,
     return shader->GetUniformBuffer(Name, Index);
 }
 
-void Material::BindShaderUniforms() const
+void Material::BindUniformForThisFrame(const MaterialUniform &Uniform) const
 {
-    for (auto &uniform : uniforms | std::views::values) {
-        shader->BindShaderUniform(
-            uniform.shaderBinding, *uniform.data, GraphicsEngine::Get().GetCurrentFrame());
-    }
+    shader->BindShaderUniform(
+        Uniform.shaderBinding, *Uniform.data, GraphicsEngine::Get().GetCurrentFrame());
 }
 }  // namespace Slipper

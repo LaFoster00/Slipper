@@ -2,6 +2,7 @@
 
 namespace Slipper
 {
+class MaterialManager;
 class RenderPass;
 class IShaderBindableData;
 class Texture;
@@ -17,6 +18,8 @@ struct MaterialUniform
 
 class Material
 {
+    friend MaterialManager;
+
  public:
     Material(NonOwningPtr<Shader> Shader);
 
@@ -30,7 +33,7 @@ class Material
                                                   const std::optional<uint32_t> Index = {}) const;
 
  private:
-    void BindShaderUniforms() const;
+    void BindUniformForThisFrame(const MaterialUniform &Uniform) const;
 
  public:
     NonOwningPtr<Shader> shader;
