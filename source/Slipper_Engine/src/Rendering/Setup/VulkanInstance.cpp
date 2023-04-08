@@ -61,10 +61,10 @@ VulkanInstance *VulkanInstance::m_instance = nullptr;
 
 VulkanInstance::VulkanInstance()
 {
-    ASSERT(m_instance, "Instance allready created!");
+    ASSERT(!m_instance, "Instance allready created!");
     m_instance = this;
 
-    ASSERT(Engine::EnableValidationLayers && !CheckValidationLayerSupport(),
+    ASSERT(Engine::EnableValidationLayers && CheckValidationLayerSupport(),
            "Validation layers requested, but not available!")
 
     VkApplicationInfo app_info{};

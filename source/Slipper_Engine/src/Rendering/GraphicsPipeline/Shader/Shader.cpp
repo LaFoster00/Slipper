@@ -1,8 +1,9 @@
 #include "Shader.h"
 
+#include "Buffer/UniformBuffer.h"
 #include "File.h"
 #include "GraphicsPipeline.h"
-#include "Mesh/UniformBuffer.h"
+#include "IShaderBindableData.h"
 #include "Presentation/SwapChain.h"
 #include "RenderPass.h"
 
@@ -79,38 +80,6 @@ void Shader::Use(const VkCommandBuffer &CommandBuffer,
                             nullptr);
 }
 
-template<>
-bool Shader::BindShaderParameter(const std::string_view Name,
-                                 const UniformBuffer &Object,
-                                 std::optional<uint32_t> Index) const
-{
-    if (auto hash_binding = GetNamedBinding(Name); hash_binding.has_value()) {
-        const Ref<DescriptorSetLayoutBinding> binding = hash_binding.value();
-
-        ASSERT(binding.get().descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-               "Descriptor '{}' is not of type buffer",
-               Name);
-
-        ASSERT(binding.get().size != Object.vkBufferSize,
-               "Buffer '{}' size missmatch! Shader expects {} bytes but buffer has {} bytes.",
-               Name,
-               std::to_string(binding.get().size),
-               std::to_string(Object.vkBufferSize));
-
-        VkWriteDescriptorSet descriptor_write{};
-        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_write.dstBinding = binding.get().binding;
-        descriptor_write.dstArrayElement = 0;
-        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_write.descriptorCount = binding.get().descriptorCount;
-        descriptor_write.pBufferInfo = Object.GetDescriptorInfo();
-
-        UpdateDescriptorSets(descriptor_write, binding, Index);
-        return true;
-    }
-    return false;
-}
-
 UniformBuffer *Shader::GetUniformBuffer(const std::string Name,
                                         const std::optional<uint32_t> Index) const
 {
@@ -123,9 +92,9 @@ UniformBuffer *Shader::GetUniformBuffer(const std::string Name,
                                                           GraphicsEngine::Get().GetCurrentFrame()]
                 .get();
         }
-        ASSERT(true, "Uniform '{}' is not a buffer.", Name);
+        ASSERT(false, "Uniform '{}' is not a buffer.", Name);
     }
-    ASSERT(true, "Object '{}' does not exist.", Name);
+    ASSERT(false, "Object '{}' does not exist.", Name);
 }
 
 std::vector<VkDescriptorSet> Shader::GetDescriptorSets(const std::optional<uint32_t> Index) const
@@ -241,8 +210,8 @@ void Shader::CreateUniformBuffers()
         if (layout_binding->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
             auto &buffers = uniformBindingBuffers[GetHash(layout_binding)];
             for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
-                auto &new_buffer = buffers.emplace_back(std::make_unique<UniformBuffer>(layout_binding->size));
-                BindShaderParameter(layout_binding->name, *new_buffer, i);
+                auto &new_buffer = buffers.emplace_back(new UniformBuffer(layout_binding->size));
+                BindShaderUniform(layout_binding->name, *new_buffer, i);
             }
         }
     }
@@ -293,8 +262,32 @@ void Shader::AllocateDescriptorSets()
     }
 }
 
+void Shader::BindShaderUniform_Interface(const DescriptorSetLayoutBinding &Binding,
+                                         const IShaderBindableData &Object,
+                                         std::optional<uint32_t> Index) const
+{
+    VkWriteDescriptorSet descriptor_write{};
+    descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor_write.dstBinding = Binding.binding;
+    descriptor_write.dstArrayElement = 0;
+    descriptor_write.descriptorType = Object.GetDescriptorType();
+    descriptor_write.descriptorCount = Binding.descriptorCount;
+
+    const auto buffer_info = Object.GetDescriptorBufferInfo();
+    if (buffer_info.has_value()) {
+        descriptor_write.pBufferInfo = &buffer_info.value();
+    }
+
+    const auto image_info = Object.GetDescriptorImageInfo();
+    if (image_info.has_value()) {
+        descriptor_write.pImageInfo = &image_info.value();
+    }
+
+    UpdateDescriptorSets(descriptor_write, Binding, Index);
+}
+
 void Shader::UpdateDescriptorSets(VkWriteDescriptorSet DescriptorWrite,
-                                  DescriptorSetLayoutBinding &Binding,
+                                  const DescriptorSetLayoutBinding &Binding,
                                   std::optional<uint32_t> Index) const
 {
     if (Index.has_value()) {

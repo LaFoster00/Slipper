@@ -91,8 +91,9 @@ inline static std::map<VkDescriptorType, std::string_view> DescriptorTypeToStrin
     {VK_DESCRIPTOR_TYPE_MUTABLE_EXT, "VK_DESCRIPTOR_TYPE_MUTABLE_EXT"},
     {VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT, "VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT"},
     {VK_DESCRIPTOR_TYPE_MUTABLE_VALVE, "VK_DESCRIPTOR_TYPE_MUTABLE_VALVE"},
-    {VK_DESCRIPTOR_TYPE_MAX_ENUM, "VK_DESCRIPTOR_TYPE_MAX_ENUM"}
-};
+    {VK_DESCRIPTOR_TYPE_MAX_ENUM, "VK_DESCRIPTOR_TYPE_MAX_ENUM"}};
+
+
 #define VK_ASSERT(func, message, ...)                                                          \
     if (func != VK_SUCCESS) {                                                                  \
         std::cout << "\nA Vulkan exepction occured at line: VkException '"                     \
@@ -109,7 +110,7 @@ inline static std::map<VkDescriptorType, std::string_view> DescriptorTypeToStrin
 #define LOG_FORMAT(message, ...) std::cout << std::format(message, __VA_ARGS__) << '\n';
 
 #define ASSERT(statement, message, ...)                                                       \
-    if (statement) {                                                                          \
+    if (!statement) {                                                                         \
         std::string formatedMessage = "\n\t";                                                 \
         formatedMessage += std::format(message, __VA_ARGS__);                                 \
         formatedMessage += '\n';                                                              \
@@ -144,4 +145,10 @@ void hash_combine(std::size_t &Seed, const T &V, const Rest &...rest)
 template<typename T> void append(std::vector<T> &A, std::vector<T> &B)
 {
     A.insert(A.end(), B.begin(), B.end());
+}
+
+// Returns the type info of the variant held object
+template<class T> std::type_info const &var_type(T const &t)
+{
+    return std::visit([](auto &&x) -> decltype(auto) { return typeid(x); }, t);
 }

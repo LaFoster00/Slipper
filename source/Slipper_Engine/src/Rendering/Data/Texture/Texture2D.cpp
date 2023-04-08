@@ -1,7 +1,7 @@
 #include "Texture2D.h"
 
-#include "Buffer.h"
 #include "Path.h"
+#include "Buffer/Buffer.h"
 
 namespace Slipper
 {

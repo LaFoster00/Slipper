@@ -95,7 +95,7 @@ Device *Device::PickPhysicalDevice(const Surface *Surface, const bool InitLogica
         }
     }
 
-    ASSERT(devices.empty(), "Failed to find suitable GPU!");
+    ASSERT(!devices.empty(), "Failed to find suitable GPU!");
 
     if (InitLogicalDevice && devices.begin()->second->logicalDevice == VK_NULL_HANDLE) {
         devices.begin()->second->InitLogicalDevice();

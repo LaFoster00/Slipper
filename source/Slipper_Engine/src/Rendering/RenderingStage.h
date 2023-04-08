@@ -2,6 +2,7 @@
 
 namespace Slipper
 {
+	class Material;
 	class Model;
 	class OffscreenSwapChain;
 class Mesh;
@@ -36,7 +37,7 @@ class RenderingStage : public DeviceDependentObject
     void EndRender();
 
     void SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
-                    NonOwningPtr<const Shader> Shader,
+                    NonOwningPtr<const Material> Material,
                     NonOwningPtr<const Model> Model,
                     const glm::mat4 &Transform);
     void SubmitSingleDrawCommand(const RenderPass *RP,

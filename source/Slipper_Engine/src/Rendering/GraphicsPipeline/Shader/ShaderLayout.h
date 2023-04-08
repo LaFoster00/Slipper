@@ -3,7 +3,6 @@
 
 namespace Slipper
 {
-class UniformBuffer;
 class Texture;
 class Buffer;
 enum class ShaderMemberType : uint32_t;

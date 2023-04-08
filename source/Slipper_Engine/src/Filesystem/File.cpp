@@ -15,7 +15,7 @@ std::vector<char> read_binary_file(const std::string_view Filepath)
     }
     std::ifstream file(final_path.data(), std::ios::ate | std::ios::binary);
 
-    ASSERT(!file.is_open(), "Failed to open file in path {}!", Filepath)
+    ASSERT(file.is_open(), "Failed to open file in path {}!", Filepath)
 
     const size_t file_size = (size_t)file.tellg();
     std::vector<char> buffer(file_size);

@@ -1,15 +1,17 @@
 #pragma once
 
 #include "GraphicsEngine.h"
+#include "IShaderBindableData.h"
 #include "ShaderLayout.h"
 
 namespace Slipper
 {
+class UniformBuffer;
+class IShaderBindableData;
 class ShaderLayout;
 class ShaderReflection;
 class RenderPass;
 class GraphicsPipeline;
-class UniformBuffer;
 
 extern const char *ShaderTypeNames[];
 
@@ -111,33 +113,32 @@ class Shader : public DeviceDependentObject
              NonOwningPtr<const RenderPass> RenderPass,
              VkExtent2D Extent) const;
 
-    bool BindShaderParameter(const std::string_view Name, const auto &Object, std::optional<uint32_t> Index = {}) const
+    std::optional<Ref<DescriptorSetLayoutBinding>> BindShaderUniform(
+        const std::string_view Name,
+        const IShaderBindableData &Object,
+        std::optional<uint32_t> Index = {}) const
     {
-        ASSERT(true, "You cant bind an object of type {}", typeid(decltype(Object)).name())
+        if (const auto optional_binding = GetNamedBinding(Name); optional_binding.has_value()) {
+            const Ref<DescriptorSetLayoutBinding> binding = optional_binding.value();
+
+            BindShaderUniform(binding, Object, Index);
+            return optional_binding;
+        }
+        return {};
     }
 
-    template<typename T>
-        requires IsConvertibleToTexture<T> bool
-    BindShaderParameter(const std::string_view Name,
-                        const T &Object,
-                        std::optional<uint32_t> Index = {}) const;
+    void BindShaderUniform(const DescriptorSetLayoutBinding &Binding,
+                             const IShaderBindableData &Object,
+                             std::optional<uint32_t> Index = {}) const
+    {
+        ASSERT(Binding.descriptorType == Object.GetDescriptorType(),
+               "Descriptor '{}' is not of type {}",
+               Binding.name,
+               DescriptorTypeToString.at(Object.GetDescriptorType()));
 
-    template<>
-    bool BindShaderParameter(const std::string_view Name,
-                             const UniformBuffer &Object,
-                             std::optional<uint32_t> Index) const;
-    template<typename T>
-    bool BindShaderParameter(const std::string_view Name,
-                             const NonOwningPtr<T> &Object,
-                             std::optional<uint32_t> Index = {});
-    template<typename T>
-    bool BindShaderParameter(const std::string_view Name,
-                             const OwningPtr<T> &Object,
-                             std::optional<uint32_t> Index = {});
-    template<typename T>
-    bool BindShaderParameter(const std::string_view Name,
-                             const SharedPtr<T> &Object,
-                             std::optional<uint32_t> Index = {});
+        Object.AdditionalBindingChecks(Binding);
+        BindShaderUniform_Interface(Binding, Object, Index);
+    }
 
     [[nodiscard]] UniformBuffer *GetUniformBuffer(const std::string Name,
                                                   const std::optional<uint32_t> Index = {}) const;
@@ -145,8 +146,8 @@ class Shader : public DeviceDependentObject
     [[nodiscard]] std::vector<VkDescriptorSet> GetDescriptorSets(
         std::optional<uint32_t> Index = {}) const;
 
-    [[nodiscard]] std::optional<Ref<DescriptorSetLayoutBinding>>
-    GetNamedBinding(std::string_view Name) const
+    [[nodiscard]] std::optional<Ref<DescriptorSetLayoutBinding>> GetNamedBinding(
+        std::string_view Name) const
     {
         auto lowered_name = String::to_lower(Name);
         if (shaderLayout->namedLayoutBindings.contains(lowered_name)) {
@@ -162,8 +163,11 @@ class Shader : public DeviceDependentObject
     void CreateDescriptorSetLayouts();
     void AllocateDescriptorSets();
 
+    void BindShaderUniform_Interface(const DescriptorSetLayoutBinding &Binding,
+                                       const IShaderBindableData &Object,
+                                       std::optional<uint32_t> Index = {}) const;
     void UpdateDescriptorSets(VkWriteDescriptorSet DescriptorWrite,
-                              DescriptorSetLayoutBinding &Binding,
+                              const DescriptorSetLayoutBinding &Binding,
                               std::optional<uint32_t> Index) const;
 
     GraphicsPipeline &CreateGraphicsPipeline(
@@ -179,7 +183,7 @@ class Shader : public DeviceDependentObject
  public:
     std::string name;
     std::unique_ptr<ShaderLayout> shaderLayout;
-    std::map<DescriptorSetLayoutBinding::HashT, std::vector<std::unique_ptr<UniformBuffer>>>
+    std::map<DescriptorSetLayoutBinding::HashT, std::vector<OwningPtr<UniformBuffer>>>
         uniformBindingBuffers;
 
  private:
@@ -191,59 +195,6 @@ class Shader : public DeviceDependentObject
     std::unordered_map<NonOwningPtr<const RenderPass>, OwningPtr<GraphicsPipeline>>
         m_graphicsPipelines;
 };
-
-template<typename T>
-    requires IsConvertibleToTexture<T>
-inline bool Shader::BindShaderParameter(const std::string_view Name,
-                                        const T &Object,
-                                        std::optional<uint32_t> Index) const
-{
-	if (auto hash_binding = GetNamedBinding(Name); hash_binding.has_value())
-    {
-        const Ref<DescriptorSetLayoutBinding> binding = hash_binding.value();
-
-        ASSERT(binding.get().descriptorType != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-               "Descriptor '{}' is not of type combined image sampler",
-               Name);
-
-        VkWriteDescriptorSet descriptor_write{};
-        descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_write.dstBinding = binding.get().binding;
-        descriptor_write.dstArrayElement = 0;
-        descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptor_write.descriptorCount = binding.get().descriptorCount;
-        const auto image_info = Object.GetDescriptorImageInfo();
-        descriptor_write.pImageInfo = &image_info;
-
-        UpdateDescriptorSets(descriptor_write, binding, Index);
-        return true;
-    }
-    return false;
-}
-
-template<typename T>
-inline bool Shader::BindShaderParameter(const std::string_view Name,
-                                        const NonOwningPtr<T> &Object,
-                                        std::optional<uint32_t> Index)
-{
-    return BindShaderParameter(Name, *Object.get());
-}
-
-template<typename T>
-inline bool Shader::BindShaderParameter(const std::string_view Name,
-                                        const OwningPtr<T> &Object,
-                                        std::optional<uint32_t> Index)
-{
-    return BindShaderParameter(Name, *Object.get());
-}
-
-template<typename T>
-inline bool Shader::BindShaderParameter(const std::string_view Name,
-                                        const SharedPtr<T> &Object,
-                                        std::optional<uint32_t> Index)
-{
-    return BindShaderParameter(Name, *Object.get());
-}
 
 // extern template void Shader::BindShaderUniform(const std::string Name, const UniformBuffer
 // &Data); extern template void Shader::BindShaderUniform(const std::string Name, const Texture

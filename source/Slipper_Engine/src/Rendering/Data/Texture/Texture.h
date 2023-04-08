@@ -2,6 +2,7 @@
 
 #include "Drawing/CommandPool.h"
 #include "Drawing/Sampler.h"
+#include "IShaderBindableData.h"
 
 namespace Slipper
 {
@@ -27,7 +28,7 @@ struct ImageInfo
     uint32_t mipLevels = 1;
 };
 
-class Texture : DeviceDependentObject
+class Texture : DeviceDependentObject, public IShaderBindableData
 {
  public:
     Texture(VkImageType Type,
@@ -56,11 +57,26 @@ class Texture : DeviceDependentObject
 
     virtual ~Texture();
 
-    virtual void Resize(const VkExtent3D Extent);
-    VkDescriptorImageInfo GetDescriptorImageInfo() const
+    [[nodiscard]] std::optional<VkDescriptorBufferInfo> GetDescriptorBufferInfo() const override
+    {
+        return {};
+    }
+
+    [[nodiscard]] std::optional<VkDescriptorImageInfo> GetDescriptorImageInfo() const override
     {
         return VkDescriptorImageInfo{imageInfo.sampler, imageInfo.view, imageInfo.layout};
     }
+
+    [[nodiscard]] constexpr VkDescriptorType GetDescriptorType() const override
+    {
+        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    }
+
+    void AdditionalBindingChecks(const DescriptorSetLayoutBinding &Binding) const override
+    {
+    }
+
+    virtual void Resize(const VkExtent3D Extent);
 
     static void EnqueueTransitionImageLayout(VkImage Image,
                                              ImageInfo &ImageInfo,

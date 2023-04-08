@@ -16,6 +16,6 @@ public:
 
 private:
 	static void DrawModelEditor(const Model &Model);
-    static void DrawShaderEditor(const Shader &Shader);
+    static void DrawMaterialEditor(const Material &Material);
 };
 }  // namespace Slipper::Editor

@@ -3,9 +3,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "Buffer.h"
 #include "Drawing/CommandPool.h"
 #include "GraphicsEngine.h"
+#include "Buffer/Buffer.h"
 
 namespace Slipper
 {

@@ -7,15 +7,15 @@
 #include "Core/ModelManager.h"
 #include "Core/ShaderManager.h"
 #include "Core/TextureManager.h"
+#include "Material.h"
+#include "MaterialManager.h"
 #include "Mesh/Mesh.h"
-#include "Mesh/UniformBuffer.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Presentation/Surface.h"
 #include "RenderPass.h"
 #include "RendererComponent.h"
 #include "Texture/Texture2D.h"
-#include "TransformComponent.h"
 #include "Window.h"
 
 namespace Slipper
@@ -24,7 +24,7 @@ GraphicsEngine *GraphicsEngine::m_graphicsInstance = nullptr;
 
 GraphicsEngine::GraphicsEngine()
 {
-    ASSERT(m_graphicsInstance, "Graphics Engine allready created!");
+    ASSERT(!m_graphicsInstance, "Graphics Engine allready created!");
     m_graphicsInstance = this;
 }
 
@@ -102,14 +102,17 @@ void GraphicsEngine::Shutdown()
 
 void GraphicsEngine::SetupDebugResources()
 {
-    // The default shader depends on these so initialize them first
+    // The default material depends on these so initialize them first
     TextureManager::Load2D(DEMO_TEXTURE_PATH, true);
     ModelManager::Load(DEMO_MODEL_PATH);
 
-    /* CreateCamera shader for this pipeline. */
-    ShaderManager::LoadShader({{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
-                               {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}})
-        ->BindShaderParameter("texSampler", TextureManager::Get2D("viking_room"));
+    /* CreateCamera material for this pipeline. */
+
+    MaterialManager::AddMaterial(
+        "Basic",
+        ShaderManager::LoadShader({{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
+                                   {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}}))
+        ->SetUniform("texSampler", *TextureManager::Get2D("viking_room"));
 }
 
 RenderPass *GraphicsEngine::CreateRenderPass(const std::string &Name,
@@ -165,7 +168,7 @@ void GraphicsEngine::SetupSimpleDraw() const
     Entity debug_model = SceneObject::Create("Debug Model");
     debug_model.AddComponent<Renderer>(viewportRenderingStage,
                                        ModelManager::GetModel("viking_room"),
-                                       ShaderManager::GetShader("Basic"));
+                                       MaterialManager::GetMaterial("Basic"));
 }
 
 void GraphicsEngine::NewFrame() const

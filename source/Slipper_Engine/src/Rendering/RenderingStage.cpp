@@ -1,12 +1,13 @@
 #include "RenderingStage.h"
 
 #include "CameraComponent.h"
+#include "Material.h"
 #include "Drawing/CommandPool.h"
-#include "Mesh/UniformBuffer.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Presentation/SurfaceSwapChain.h"
 #include "RenderPass.h"
+#include "Buffer/UniformBuffer.h"
 #include "Shader/Shader.h"
 #include "Texture/Texture2D.h"
 
@@ -84,13 +85,13 @@ void RenderingStage::EndRender()
 }
 
 void RenderingStage::SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
-                                NonOwningPtr<const Shader> Shader,
+                                NonOwningPtr<const Material> Material,
                                 NonOwningPtr<const Model> Model,
                                 const glm::mat4 &Transform)
 {
     SubmitSingleDrawCommand(RenderPass, [=, this](const VkCommandBuffer &CommandBuffer) {
 	    const auto resolution = GetSwapChain()->GetResolution();
-        Shader->Use(CommandBuffer, RenderPass, resolution);
+        Material->Use(CommandBuffer, RenderPass, resolution);
 
         const auto camera = GraphicsEngine::GetDefaultCamera();
 	    const auto &cam_parameters = camera.GetComponent<Camera>();
@@ -103,8 +104,8 @@ void RenderingStage::SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
         UniformModel model;
         model.model = Transform;
 
-        Shader->GetUniformBuffer("vp")->SubmitData(&vp);
-        Shader->GetUniformBuffer("m")->SubmitData(&model);
+        Material->GetUniformBuffer("vp")->SubmitData(&vp);
+        Material->GetUniformBuffer("m")->SubmitData(&model);
 
         Model->Draw(CommandBuffer);
     });

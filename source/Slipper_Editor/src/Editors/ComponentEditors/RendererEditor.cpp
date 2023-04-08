@@ -1,17 +1,17 @@
 #include "RendererEditor.h"
 
+#include "Material.h"
 #include "Model/Model.h"
-#include "Shader/Shader.h"
 
 namespace Slipper::Editor
 {
 void RenderEditor::DrawEditor(entt::type_info Type, Renderer &Component)
 {
     DrawModelEditor(*Component.model);
-    DrawShaderEditor(*Component.shader);
+    DrawMaterialEditor(*Component.material);
 }
 
-void RenderEditor::DrawShaderEditor(const Shader &Shader)
+void RenderEditor::DrawMaterialEditor(const Material &Material)
 {
     auto shader_binding = [&](DescriptorSetLayoutBinding &Binding) {
         ImGui::Text(std::format("{}:\n\t{}\n ",
@@ -19,8 +19,8 @@ void RenderEditor::DrawShaderEditor(const Shader &Shader)
                                 Binding.name.c_str())
                         .c_str());
     };
-    for (auto &binding : Shader.shaderLayout->namedLayoutBindings) {
-        shader_binding(*binding.second);
+    for (const auto& [binding, data] : Material.uniforms | std::views::values) {
+        shader_binding(binding);
     }
 }
 
