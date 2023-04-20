@@ -108,7 +108,7 @@ void Application::Run()
             if (!(Engine::FRAME_COUNT % DELTA_SMOOTH_FRAMES)) {
                 std::stringstream ss;
                 ss << name << " " << std::setw(10) << 1.0f / Time::DeltaTimeSmooth() << "fps  "
-                   << std::setw(2) << Time::DeltaTimeSmooth() << ' ' << std::setw(2) << "ms"
+                   << std::setw(2) << Time::DeltaTimeSmooth() * 1000 << ' ' << std::setw(2) << "ms"
                    << std::flush;
                 window->SetTitle(ss.str());
             }
