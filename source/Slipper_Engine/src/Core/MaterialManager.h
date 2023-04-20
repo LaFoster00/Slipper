@@ -25,7 +25,7 @@ class MaterialManager : public AppComponent
  private:
     struct UniformUpdateFunc
     {
-        uint64_t frame_updated;
+        uint32_t frames_updated;
         MaterialUniform uniform;
     };
 

@@ -38,30 +38,6 @@ Texture2D::~Texture2D()
 {
 }
 
-OwningPtr<Texture2D> Texture2D::LoadTexture(const std::string_view Filepath,
-                                                  const bool GenerateMipMaps)
-{
-    VkExtent3D tex_dimensions{0, 0, 1};
-    std::string absolute_path = Path::make_engine_relative_path_absolute(Filepath);
-    stbi_uc *pixels = nullptr;
-    {
-        int tex_width, tex_height, tex_channels;
-        pixels = stbi_load(
-            absolute_path.c_str(), &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
-
-        tex_dimensions.width = tex_width;
-        tex_dimensions.height = tex_height;
-    }
-
-    if (!pixels) {
-        throw std::runtime_error("Failed to load texture image!");
-    }
-
-    auto image = StbImage(
-        pixels, tex_dimensions, Engine::TARGET_VIEWPORT_TEXTURE_FORMAT, std::move(absolute_path));
-    return new Texture2D(image, GenerateMipMaps);
-}
-
 void Texture2D::CreateTexture2D(void *Data, const VkMemoryPropertyFlags MemoryFlags)
 {
     const VkDeviceSize texture_size = imageInfo.extent.width * imageInfo.extent.height * 4;

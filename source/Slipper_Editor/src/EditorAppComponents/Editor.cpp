@@ -16,6 +16,8 @@
 #include "TransformComponent.h"
 #include <ImGuizmo.cpp>
 
+#include "TextureManager.h"
+
 namespace Slipper::Editor
 {
 void Editor::Init()
@@ -29,6 +31,8 @@ void Editor::Init()
                                                            std::placeholders::_3));
     m_graphicsEngine = &GraphicsEngine::Get();
     GraphicsEngine::GetDefaultCamera().AddComponent<EditorCameraComponent>();
+
+    TextureManager::Load2D("./EngineContent/Images/BassVibes.png", false);
 }
 
 void Editor::Shutdown()

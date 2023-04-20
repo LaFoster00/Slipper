@@ -10,7 +10,7 @@ Material::Material(NonOwningPtr<Shader> Shader)
     shader = Shader;
 }
 
-bool Material::SetUniform(std::string Name, IShaderBindableData &Uniform)
+bool Material::SetUniform(const std::string &Name, IShaderBindableData &Uniform)
 {
     if (std::optional<Ref<DescriptorSetLayoutBinding>> binding = shader->GetNamedBinding(Name);
         binding.has_value()) {

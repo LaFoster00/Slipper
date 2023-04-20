@@ -29,8 +29,6 @@ class Texture2D : public Texture
               VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
               VkMemoryPropertyFlags MemoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    static OwningPtr<Texture2D> LoadTexture(std::string_view Filepath,
-                                                  bool GenerateMipMaps = true);
 
  private:
     void CreateTexture2D(void *Data,

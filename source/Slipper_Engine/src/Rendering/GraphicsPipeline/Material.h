@@ -23,7 +23,7 @@ class Material
  public:
     Material(NonOwningPtr<Shader> Shader);
 
-    bool SetUniform(std::string Name, IShaderBindableData &Uniform);
+    bool SetUniform(const std::string &Name, IShaderBindableData &Uniform);
 
     void Use(const VkCommandBuffer &CommandBuffer,
              NonOwningPtr<const RenderPass> RenderPass,

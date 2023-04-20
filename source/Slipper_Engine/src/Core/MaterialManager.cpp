@@ -37,7 +37,6 @@ void MaterialManager::AddUniformUpdate(const Material &Material,
                                          .try_emplace(&UniformUpdate.shaderBinding.get(),
                                                       UniformUpdateFunc{0, UniformUpdate})
                                          .first->second;
-    frame_updated = Engine::FRAME_COUNT;
     uniform = UniformUpdate;
 }
 
@@ -45,11 +44,12 @@ void MaterialManager::OnUpdate()
 {
     for (auto &[material, binding_update] : m_uniformUpdates) {
         for (auto map = binding_update.begin(); map != binding_update.end();) {
-            if (Engine::FRAME_COUNT - map->second.frame_updated >= Engine::MAX_FRAMES_IN_FLIGHT) {
+            if (map->second.frames_updated >= Engine::MAX_FRAMES_IN_FLIGHT) {
                 map = binding_update.erase(map);
             }
             else {
                 material->BindUniformForThisFrame(map->second.uniform);
+                map->second.frames_updated++;
                 ++map;
             }
         }

@@ -78,6 +78,16 @@ class Texture : DeviceDependentObject, public IShaderBindableData
 
     virtual void Resize(const VkExtent3D Extent);
 
+    VkImageView GetView() const
+    {
+        return imageInfo.view;
+    }
+
+    glm::vec3 GetSize()
+    {
+        return {imageInfo.extent.width, imageInfo.extent.height, imageInfo.extent.depth};
+    }
+
     static void EnqueueTransitionImageLayout(VkImage Image,
                                              ImageInfo &ImageInfo,
                                              VkCommandBuffer CommandBuffer,
@@ -119,6 +129,14 @@ class Texture : DeviceDependentObject, public IShaderBindableData
     operator VkImageView() const
     {
         return imageInfo.view;
+    }
+
+    // Returns the texture as target type through dynamic_cast
+    // Will return null if of other type
+    template<typename T>
+    NonOwningPtr<T> As()
+    {
+        return dynamic_cast<T *>(this);
     }
 
     [[nodiscard]] static VkImageView CreateImageView(
