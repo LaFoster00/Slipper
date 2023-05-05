@@ -1,15 +1,18 @@
 #pragma once
 
-namespace Slipper
-{
-extern VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-                                             const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
-                                             const VkAllocationCallbacks *pAllocator,
-                                             VkDebugUtilsMessengerEXT *pDebugMessenger);
+inline PFN_vkCreateDebugUtilsMessengerEXT PfnVkCreateDebugUtilsMessengerExt;
+inline PFN_vkDestroyDebugUtilsMessengerEXT PfnVkDestroyDebugUtilsMessengerExt;
 
-extern void DestroyDebugUtilsMessengerEXT(VkInstance instance,
-                                          VkDebugUtilsMessengerEXT debugMessenger,
-                                          const VkAllocationCallbacks *pAllocator);
+extern VKAPI_ATTR VkResult VKAPI_CALL
+vkCreateDebugUtilsMessengerEXT(VkInstance instance,
+                               const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+                               const VkAllocationCallbacks *pAllocator,
+                               VkDebugUtilsMessengerEXT *pMessenger);
+
+extern VKAPI_ATTR void VKAPI_CALL
+vkDestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                VkDebugUtilsMessengerEXT messenger,
+                                VkAllocationCallbacks const *pAllocator);
 
 extern VkResult CreateDebugReportCallbackEXT(VkInstance instance,
                                              const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
@@ -19,6 +22,8 @@ extern VkResult CreateDebugReportCallbackEXT(VkInstance instance,
 extern void DestroyDebugReportCallbackEXT(VkInstance instance,
                                           VkDebugReportCallbackEXT callback,
                                           const VkAllocationCallbacks *pAllocator);
+namespace Slipper
+{
 
 class VulkanInstance
 {
@@ -28,9 +33,9 @@ class VulkanInstance
     ~VulkanInstance()
     {
         if (Engine::EnableValidationLayers) {
-            DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+            instance.destroyDebugUtilsMessengerEXT(debugMessenger);
         }
-        vkDestroyInstance(instance, nullptr);
+        instance.destroy();
     }
 
     static VulkanInstance &Get()
@@ -38,29 +43,34 @@ class VulkanInstance
         return *m_instance;
     }
 
-    operator VkInstance()
+    operator vk::Instance &()
+    {
+        return instance;
+    }
+
+    operator VkInstance() const
     {
         return instance;
     }
 
  private:
-    static bool CheckValidationLayerSupport();
+    static bool CheckValidationLayerSupport(std::vector<char const *> const &Layers,
+                                            std::vector<vk::LayerProperties> const &Properties);
     static std::vector<const char *> GetRequiredExtensions();
 
-    void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &CreateInfo);
     void SetupDebugMessenger();
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL
-    DebugUtilsMessages(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                       VkDebugUtilsMessageTypeFlagsEXT messageType,
-                       const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                       void *pUserData);
+    DebugMessageFunc(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
+                     VkDebugUtilsMessageTypeFlagsEXT MessageTypes,
+                     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                     void *pUserData);
 
  public:
-    VkInstance instance;
-    VkDebugUtilsMessengerEXT debugMessenger = nullptr;
+    vk::Instance instance;
+    vk::DebugUtilsMessengerEXT debugMessenger;
 
  private:
-    static VulkanInstance *m_instance;
+    static inline VulkanInstance *m_instance = nullptr;
 };
 }  // namespace Slipper

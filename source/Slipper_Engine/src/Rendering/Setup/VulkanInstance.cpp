@@ -3,32 +3,20 @@
 #include <cstring>
 #include <iostream>
 
-namespace Slipper
+VKAPI_ATTR VkResult VKAPI_CALL
+vkCreateDebugUtilsMessengerEXT(VkInstance instance,
+                               const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+                               const VkAllocationCallbacks *pAllocator,
+                               VkDebugUtilsMessengerEXT *pMessenger)
 {
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-                                      const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
-                                      const VkAllocationCallbacks *pAllocator,
-                                      VkDebugUtilsMessengerEXT *pDebugMessenger)
-{
-    auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-        instance, "vkCreateDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-    }
-    else {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
+    return PfnVkCreateDebugUtilsMessengerExt(instance, pCreateInfo, pAllocator, pMessenger);
 }
 
-void DestroyDebugUtilsMessengerEXT(VkInstance instance,
-                                   VkDebugUtilsMessengerEXT debugMessenger,
-                                   const VkAllocationCallbacks *pAllocator)
+VKAPI_ATTR void VKAPI_CALL vkDestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                                           VkDebugUtilsMessengerEXT messenger,
+                                                           VkAllocationCallbacks const *pAllocator)
 {
-    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-        instance, "vkDestroyDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        func(instance, debugMessenger, pAllocator);
-    }
+    return PfnVkDestroyDebugUtilsMessengerExt(instance, messenger, pAllocator);
 }
 
 VkResult CreateDebugReportCallbackEXT(VkInstance instance,
@@ -57,63 +45,32 @@ void DestroyDebugReportCallbackEXT(VkInstance instance,
     }
 }
 
-VulkanInstance *VulkanInstance::m_instance = nullptr;
-
+namespace Slipper
+{
 VulkanInstance::VulkanInstance()
 {
+
     ASSERT(!m_instance, "Instance allready created!");
     m_instance = this;
 
-    ASSERT(Engine::EnableValidationLayers && CheckValidationLayerSupport(),
-           "Validation layers requested, but not available!")
+    const vk::ApplicationInfo app_info(
+        "Slipper", VK_MAKE_VERSION(1, 0, 0), "SlipperEngine", VK_API_VERSION_1_3);
 
-    VkApplicationInfo app_info{};
-    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    app_info.pApplicationName = "Slipper";
-    app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    app_info.pEngineName = "SlipperEngine";
-    app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    app_info.apiVersion = VK_API_VERSION_1_3;
-
-    VkInstanceCreateInfo create_info{};
-    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    create_info.pApplicationInfo = &app_info;
-
-    uint32_t glfw_extension_count = 0;
-
-    auto required_extensions = GetRequiredExtensions();
-    create_info.enabledExtensionCount = static_cast<uint32_t>(required_extensions.size());
-    create_info.ppEnabledExtensionNames = required_extensions.data();
-
-    VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
-    VkValidationFeaturesEXT validation_features_ext{};
+    std::vector<const char *> validation_layers;
+    vk::ValidationFeaturesEXT validation_features;
     if (Engine::EnableValidationLayers) {
-        create_info.enabledLayerCount = static_cast<uint32_t>(Engine::VALIDATION_LAYERS.size());
-        create_info.ppEnabledLayerNames = Engine::VALIDATION_LAYERS.data();
+        const std::vector instance_layer_properties = vk::enumerateInstanceLayerProperties();
+        ASSERT(
+            Engine::EnableValidationLayers &&
+                CheckValidationLayerSupport(Engine::VALIDATION_LAYERS, instance_layer_properties),
+            "Validation layers requested, but not available!")
+        validation_layers = Engine::VALIDATION_LAYERS;
 
-        PopulateDebugMessengerCreateInfo(debug_create_info);
-        create_info.pNext = &debug_create_info;
-
-        validation_features_ext.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-        validation_features_ext.enabledValidationFeatureCount = static_cast<uint32_t>(
-            Engine::PRINTF_ENABLES.size());
-        validation_features_ext.pEnabledValidationFeatures = Engine::PRINTF_ENABLES.data();
-        validation_features_ext.pNext = create_info.pNext;
-
-        create_info.pNext = &validation_features_ext;
-    }
-    else {
-        create_info.enabledLayerCount = 0;
+        validation_features.setEnabledValidationFeatures(Engine::PRINTF_ENABLES);
     }
 
-    VK_ASSERT(vkCreateInstance(&create_info, nullptr, &instance), "Failed to create VkInstance!")
-
-    SetupDebugMessenger();
-
-    uint32_t extension_count = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr);
-    std::vector<VkExtensionProperties> extensions(extension_count);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data());
+    auto extensions = GetRequiredExtensions();
+    std::vector extension_properties = vk::enumerateInstanceExtensionProperties(nullptr);
 
     std::cout << "\nRequested Extensions:\n";
     for (const char *extension_name : Engine::DEVICE_EXTENSIONS) {
@@ -121,45 +78,57 @@ VulkanInstance::VulkanInstance()
     }
 
     std::cout << "\nAvailable Extensions:\n";
-    for (const auto &[extension_name, spec_version] : extensions) {
+    for (const auto &[extension_name, spec_version] : extension_properties) {
         std::cout << '\t' << extension_name << '\n';
     }
+
+    const vk::InstanceCreateInfo create_info(
+        vk::InstanceCreateFlags(), &app_info, validation_layers, extensions, &validation_features);
+
+    VK_HPP_ASSERT(vk::createInstance(&create_info, nullptr, &instance),
+                  "Failed to create VkInstance!")
+
+    // Setup Debug Messenger
+    PfnVkCreateDebugUtilsMessengerExt = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+        instance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
+    if (!PfnVkCreateDebugUtilsMessengerExt) {
+        std::cout
+            << "GetInstanceProcAddr: Unable to find pfnVkCreateDebugUtilsMessengerEXT function."
+            << std::endl;
+        exit(1);
+    }
+
+    PfnVkDestroyDebugUtilsMessengerExt = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+        instance.getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
+    if (!PfnVkDestroyDebugUtilsMessengerExt) {
+        std::cout
+            << "GetInstanceProcAddr: Unable to find pfnVkDestroyDebugUtilsMessengerEXT function."
+            << std::endl;
+        exit(1);
+    }
+
+    SetupDebugMessenger();
 }
 
-bool VulkanInstance::CheckValidationLayerSupport()
+bool VulkanInstance::CheckValidationLayerSupport(
+    std::vector<char const *> const &Layers, std::vector<vk::LayerProperties> const &Properties)
 {
-    uint32_t layer_count;
-    vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
-
-    std::vector<VkLayerProperties> available_layers(layer_count);
-    vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
-
     std::cout << "Requested Layers:\n";
     for (const char *layer_name : Engine::VALIDATION_LAYERS) {
         std::cout << '\t' << layer_name << '\n';
     }
 
     std::cout << "\nAvailable Layers:\n";
-    for (const auto &layer : available_layers) {
-        std::cout << '\t' << layer.layerName << '\n';
+    for (const auto &layer : Layers) {
+        std::cout << '\t' << layer << '\n';
     }
 
-    for (const char *layer_name : Engine::VALIDATION_LAYERS) {
-        bool layer_found = false;
-
-        for (const auto &layer_properties : available_layers) {
-            if (strcmp(layer_name, layer_properties.layerName) == 0) {
-                layer_found = true;
-                break;
-            }
-        }
-
-        if (!layer_found) {
-            return false;
-        }
-    }
-
-    return true;
+    // return true if all layers are listed in the properties
+    return std::ranges::all_of(Layers, [&Properties](char const *name) {
+        return std::ranges::find_if(Properties, [&name](vk::LayerProperties const &property) {
+                   return strcmp(property.layerName, name) == 0;
+               }) != Properties.end();
+    });
 }
 
 std::vector<const char *> VulkanInstance::GetRequiredExtensions()
@@ -176,44 +145,76 @@ std::vector<const char *> VulkanInstance::GetRequiredExtensions()
     return extensions;
 }
 
-void VulkanInstance::PopulateDebugMessengerCreateInfo(
-    VkDebugUtilsMessengerCreateInfoEXT &CreateInfo)
-{
-    CreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    CreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-
-#ifdef SHADER_PRINTF_ENABLED
-    CreateInfo.messageSeverity = CreateInfo.messageSeverity |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
-#endif
-    CreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    CreateInfo.pfnUserCallback = DebugUtilsMessages;
-    CreateInfo.pUserData = nullptr;  // Optional
-}
-
 void VulkanInstance::SetupDebugMessenger()
 {
     if (!Engine::EnableValidationLayers)
         return;
 
-    VkDebugUtilsMessengerCreateInfoEXT utils_messenger_create_info{};
-    PopulateDebugMessengerCreateInfo(utils_messenger_create_info);
+    vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
+#ifdef SHADER_PRINTF_ENABLED
+    severityFlags |= vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo;
+#endif
 
-    CreateDebugUtilsMessengerEXT(instance, &utils_messenger_create_info, nullptr, &debugMessenger);
+    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
+
+    debugMessenger = instance.createDebugUtilsMessengerEXT(vk::DebugUtilsMessengerCreateInfoEXT(
+        {}, severityFlags, messageTypeFlags, &VulkanInstance::DebugMessageFunc));
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL
-VulkanInstance::DebugUtilsMessages(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                   VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                   const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                                   void *pUserData)
+VulkanInstance::DebugMessageFunc(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
+                                 VkDebugUtilsMessageTypeFlagsEXT MessageTypes,
+                                 const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                                 void *pUserData)
 {
 
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    std::string message;
 
-    return VK_FALSE;
+    message += vk::to_string(
+                   static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>(MessageSeverity)) +
+               ": " + vk::to_string(static_cast<vk::DebugUtilsMessageTypeFlagsEXT>(MessageTypes)) +
+               ":\n";
+    message += std::string("\t") + "messageIDName   = <" + pCallbackData->pMessageIdName + ">\n";
+    message += std::string("\t") +
+               "messageIdNumber = " + std::to_string(pCallbackData->messageIdNumber) + "\n";
+    message += std::string("\t") + "message         = <" + pCallbackData->pMessage + ">\n";
+    if (0 < pCallbackData->queueLabelCount) {
+        message += std::string("\t") + "Queue Labels:\n";
+        for (uint32_t i = 0; i < pCallbackData->queueLabelCount; i++) {
+            message += std::string("\t\t") + "labelName = <" +
+                       pCallbackData->pQueueLabels[i].pLabelName + ">\n";
+        }
+    }
+    if (0 < pCallbackData->cmdBufLabelCount) {
+        message += std::string("\t") + "CommandBuffer Labels:\n";
+        for (uint32_t i = 0; i < pCallbackData->cmdBufLabelCount; i++) {
+            message += std::string("\t\t") + "labelName = <" +
+                       pCallbackData->pCmdBufLabels[i].pLabelName + ">\n";
+        }
+    }
+    if (0 < pCallbackData->objectCount) {
+        for (uint32_t i = 0; i < pCallbackData->objectCount; i++) {
+            message += std::string("\t") + "Object " + std::to_string(i) + "\n";
+            message += std::string("\t\t") + "objectType   = " +
+                       vk::to_string(
+                           static_cast<vk::ObjectType>(pCallbackData->pObjects[i].objectType)) +
+                       "\n";
+            message += std::string("\t\t") + "objectHandle = " +
+                       std::to_string(pCallbackData->pObjects[i].objectHandle) + "\n";
+            if (pCallbackData->pObjects[i].pObjectName) {
+                message += std::string("\t\t") + "objectName   = <" +
+                           pCallbackData->pObjects[i].pObjectName + ">\n";
+            }
+        }
+    }
+
+    std::cout << message << std::endl;
+
+    return false;
 }
 }  // namespace Slipper
