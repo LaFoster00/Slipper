@@ -93,17 +93,28 @@ inline static std::map<VkDescriptorType, std::string_view> DescriptorTypeToStrin
     {VK_DESCRIPTOR_TYPE_MUTABLE_VALVE, "VK_DESCRIPTOR_TYPE_MUTABLE_VALVE"},
     {VK_DESCRIPTOR_TYPE_MAX_ENUM, "VK_DESCRIPTOR_TYPE_MAX_ENUM"}};
 
+#define VK_ASSERT(func, message, ...)                                                            \
+    if (auto result = func; result != VK_SUCCESS) {                                              \
+        std::cout << "\nA Vulkan exepction occured at line: VkException '"                       \
+                  << ResultToString.at(result) << "' '" << __LINE__ << "' in file '" << __FILE__ \
+                  << "':\n";                                                                     \
+        std::string formatedMessage = "\n\t";                                                    \
+        formatedMessage += std::format(message, __VA_ARGS__);                                    \
+        formatedMessage += '\n';                                                                 \
+        DEBUG_BREAK                                                                              \
+        throw std::runtime_error(formatedMessage);                                               \
+    }
 
-#define VK_ASSERT(func, message, ...)                                                          \
-    if (func != VK_SUCCESS) {                                                                  \
-        std::cout << "\nA Vulkan exepction occured at line: VkException '"                     \
-                  << ResultToString.at(func) << "' '" << __LINE__ << "' in file '" << __FILE__ \
-                  << "':\n";                                                                   \
-        std::string formatedMessage = "\n\t";                                                  \
-        formatedMessage += std::format(message, __VA_ARGS__);                                  \
-        formatedMessage += '\n';                                                               \
-        DEBUG_BREAK                                                                            \
-        throw std::runtime_error(formatedMessage);                                             \
+#define VK_HPP_ASSERT(func, message, ...)                                                        \
+    if (auto result = func; result != vk::Result::eSuccess) {                                    \
+        std::cout << "\nA Vulkan exepction occured at line: VkException '"                       \
+                  << vk::to_string(result) << "' '" << __LINE__ << "' in file '" << __FILE__ \
+                  << "':\n";                                                                     \
+        std::string formatedMessage = "\n\t";                                                    \
+        formatedMessage += std::format(message, __VA_ARGS__);                                    \
+        formatedMessage += '\n';                                                                 \
+        DEBUG_BREAK                                                                              \
+        throw std::runtime_error(formatedMessage);                                               \
     }
 
 #define LOG(message) std::cout << message << '\n';
