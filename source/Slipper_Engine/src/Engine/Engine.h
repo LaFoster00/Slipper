@@ -26,9 +26,9 @@ inline const std::vector<const char *> DEVICE_EXTENSIONS = {
 
 inline const std::vector<const char *> VALIDATION_LAYERS = {"VK_LAYER_KHRONOS_validation"};
 
-inline const std::vector<VkValidationFeatureEnableEXT> PRINTF_ENABLES = {
+inline const std::vector<vk::ValidationFeatureEnableEXT> PRINTF_ENABLES = {
 #ifdef SHADER_PRINTF_ENABLED
-    VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT
+    vk::ValidationFeatureEnableEXT::eDebugPrintf,
 #endif
 };
 
