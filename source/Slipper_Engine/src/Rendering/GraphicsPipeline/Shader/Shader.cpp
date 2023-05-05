@@ -134,7 +134,11 @@ void Shader::CreateDescriptorPool()
     std::vector<VkDescriptorPoolSize> pool_sizes;
     for (const auto set_layout : shaderLayout->setLayouts) {
         for (DescriptorSetLayoutBinding binding : set_layout.bindings) {
-            pool_sizes.push_back({binding.descriptorType, binding.descriptorCount});
+            /* Need to multiply by Engine::MAX_FRAMES_IN_FLIGHT since vulkan needs to know the
+             * total amount of descriptors as well as the total amount of sets these descriptors
+             * divide into */
+            pool_sizes.push_back(
+                {binding.descriptorType, binding.descriptorCount * Engine::MAX_FRAMES_IN_FLIGHT});
         }
     }
 
