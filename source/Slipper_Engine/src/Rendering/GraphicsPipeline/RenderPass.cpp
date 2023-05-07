@@ -8,22 +8,22 @@ namespace Slipper
 static char8_t ActiveRenderPasses = 0;
 
 RenderPass::RenderPass(std::string_view Name,
-                       VkFormat RenderingFormat,
-                       VkFormat DepthFormat,
+                       vk::Format RenderingFormat,
+                       vk::Format DepthFormat,
                        bool ForPresentation)
     : name(Name), m_activeSwapChain(nullptr)
 {
     // Not used for presenting cause multisampled textures can not be presented
     // Presentation through color attachment resolve
     VkAttachmentDescription color_attachment{};
-    color_attachment.format = RenderingFormat;
-    color_attachment.samples = GraphicsSettings::Get().MSAA_SAMPLES;
+    color_attachment.format = static_cast<VkFormat>(RenderingFormat);
+    color_attachment.samples = static_cast<VkSampleCountFlagBits>(GraphicsSettings::Get().MSAA_SAMPLES);
     color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+    if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
         color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
     else {
@@ -39,8 +39,8 @@ RenderPass::RenderPass(std::string_view Name,
 
     // Used for presentation
     VkAttachmentDescription color_attachment_resolve{};
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
-        color_attachment_resolve.format = RenderingFormat;
+    if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
+        color_attachment_resolve.format = static_cast<VkFormat>(RenderingFormat);
         color_attachment_resolve.samples = VK_SAMPLE_COUNT_1_BIT;
         color_attachment_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         color_attachment_resolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -54,14 +54,14 @@ RenderPass::RenderPass(std::string_view Name,
     }
 
     VkAttachmentReference color_attachment_resolve_ref{};
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+    if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
         color_attachment_resolve_ref.attachment = 2;
         color_attachment_resolve_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
 
     VkAttachmentDescription depth_attachment{};
-    depth_attachment.format = DepthFormat;
-    depth_attachment.samples = GraphicsSettings::Get().MSAA_SAMPLES;
+    depth_attachment.format = static_cast<VkFormat>(DepthFormat);
+    depth_attachment.samples =  static_cast<VkSampleCountFlagBits>(GraphicsSettings::Get().MSAA_SAMPLES);
     depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -78,7 +78,7 @@ RenderPass::RenderPass(std::string_view Name,
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &color_attachment_ref;
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+    if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
         subpass.pResolveAttachments = &color_attachment_resolve_ref;
     }
 
@@ -94,7 +94,7 @@ RenderPass::RenderPass(std::string_view Name,
                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
     std::vector attachments = {color_attachment, depth_attachment};
-    if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+    if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
         attachments.push_back(color_attachment_resolve);
     }
     VkRenderPassCreateInfo render_pass_info{};

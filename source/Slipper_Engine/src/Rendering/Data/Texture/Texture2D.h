@@ -10,7 +10,7 @@ struct StbImage
 {
     stbi_uc *pixels;
     VkExtent3D extent;
-    VkFormat format;
+    vk::Format format;
     std::string filepath;
 };
 
@@ -20,8 +20,8 @@ class Texture2D : public Texture
     ~Texture2D() override;
     Texture2D(StbImage Image, bool GenerateMipMaps);
     Texture2D(VkExtent2D Extent,
-              VkFormat ImageFormat,
-              std::optional<VkFormat> ViewFormat = {},
+              vk::Format ImageFormat,
+              std::optional<vk::Format> ViewFormat = {},
               bool GenerateMipMaps = true,
               VkImageTiling Tiling = VK_IMAGE_TILING_OPTIMAL,
               VkImageUsageFlags Usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |

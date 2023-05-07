@@ -14,8 +14,8 @@ Texture2D::Texture2D(const StbImage Image, const bool GenerateMipMaps)
 }
 
 Texture2D::Texture2D(const VkExtent2D Extent,
-                     const VkFormat ImageFormat,
-                     std::optional<VkFormat> ViewFormat,
+                     const vk::Format ImageFormat,
+                     std::optional<vk::Format> ViewFormat,
                      const bool GenerateMipMaps,
                      const VkImageTiling Tiling,
                      const VkImageUsageFlags Usage,
@@ -26,7 +26,7 @@ Texture2D::Texture2D(const VkExtent2D Extent,
               ImageFormat,
               ViewFormat,
               GenerateMipMaps,
-              VK_SAMPLE_COUNT_1_BIT,
+              vk::SampleCountFlagBits::e1,
               Tiling,
               Usage,
               ImageAspect)

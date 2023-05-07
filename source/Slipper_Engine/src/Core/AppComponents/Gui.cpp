@@ -73,7 +73,7 @@ void Gui::Init()
     info.DescriptorPool = m_resources->imGuiDescriptorPool;
     info.MinImageCount = Engine::MAX_FRAMES_IN_FLIGHT;
     info.ImageCount = Engine::MAX_FRAMES_IN_FLIGHT;
-    info.MSAASamples = GraphicsSettings::Get().MSAA_SAMPLES;
+    info.MSAASamples = static_cast<VkSampleCountFlagBits>(GraphicsSettings::Get().MSAA_SAMPLES);
 
     ImGui_ImplVulkan_Init(&info, m_renderPass->vkRenderPass);
 

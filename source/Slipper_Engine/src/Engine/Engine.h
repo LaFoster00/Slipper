@@ -7,15 +7,15 @@ class VulkanInstance;
 namespace Engine
 {
 inline constexpr bool LINEAR_WINDOW_COLOR = true;
-inline constexpr VkFormat TARGET_WINDOW_COLOR_FORMAT = VK_FORMAT_B8G8R8A8_UNORM;
-inline constexpr VkFormat TARGET_VIEWPORT_COLOR_FORMAT = LINEAR_WINDOW_COLOR ?
-                                                             VK_FORMAT_B8G8R8A8_SRGB :
-                                                             VK_FORMAT_B8G8R8A8_UNORM;
-inline constexpr VkFormat TARGET_VIEWPORT_TEXTURE_FORMAT = TARGET_VIEWPORT_COLOR_FORMAT ==
-                                                                   VK_FORMAT_B8G8R8A8_SRGB ?
-                                                               VK_FORMAT_R8G8B8A8_SRGB :
-                                                               VK_FORMAT_R8G8B8A8_UNORM;
-inline constexpr VkColorSpaceKHR TARGET_COLOR_SPACE = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+inline constexpr vk::Format TARGET_WINDOW_COLOR_FORMAT = vk::Format::eB8G8R8A8Unorm;
+inline constexpr vk::Format TARGET_VIEWPORT_COLOR_FORMAT = LINEAR_WINDOW_COLOR ?
+                                                               vk::Format::eB8G8R8A8Srgb :
+                                                               vk::Format::eB8G8R8A8Unorm;
+inline constexpr vk::Format TARGET_VIEWPORT_TEXTURE_FORMAT = TARGET_VIEWPORT_COLOR_FORMAT ==
+                                                                     vk::Format::eB8G8R8A8Srgb ?
+                                                                 vk::Format::eR8G8B8A8Srgb :
+                                                                 vk::Format::eR8G8B8A8Unorm;
+inline constexpr vk::ColorSpaceKHR TARGET_COLOR_SPACE = vk::ColorSpaceKHR::eSrgbNonlinear;
 inline constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 inline uint64_t FRAME_COUNT = 0;
 

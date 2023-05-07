@@ -35,7 +35,7 @@ void Application::Init(ApplicationInfo &ApplicationInfo)
     window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
     Device::PickPhysicalDevice(&window->GetSurface(), true);
-    GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableSampleCount();
+    GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableFramebufferSampleCount();
 
     // Setup Application Components
     ecsComponent = AddComponent(new Ecs());

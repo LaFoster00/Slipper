@@ -36,15 +36,15 @@ SurfaceSwapChain::~SurfaceSwapChain()
 VkPresentModeKHR SurfaceSwapChain::ChoosePresentMode() const
 {
     for (const auto &available_present_mode : swapChainSupport.presentModes) {
-        if (available_present_mode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            return available_present_mode;
+        if (available_present_mode == vk::PresentModeKHR::eMailbox) {
+            return static_cast<VkPresentModeKHR>(available_present_mode);
         }
     }
 
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkSurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
+vk::SurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
 {
     for (const auto &available_format : swapChainSupport.formats) {
         if (available_format.format == Engine::TARGET_WINDOW_COLOR_FORMAT &&
@@ -94,8 +94,8 @@ void SurfaceSwapChain::Impl_Create()
     create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     create_info.surface = surface;
     create_info.minImageCount = image_count;
-    create_info.imageFormat = imageRenderingFormat;
-    create_info.imageColorSpace = imageColorSpace;
+    create_info.imageFormat = static_cast<VkFormat>(imageRenderingFormat);
+    create_info.imageColorSpace = static_cast<VkColorSpaceKHR>(imageColorSpace);
     create_info.imageExtent = resolution;
     create_info.imageArrayLayers = 1;
     create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -114,7 +114,7 @@ void SurfaceSwapChain::Impl_Create()
         create_info.pQueueFamilyIndices = nullptr;  // Optional
     }
 
-    create_info.preTransform = swapChainSupport.capabilities.currentTransform;
+    create_info.preTransform = static_cast<VkSurfaceTransformFlagBitsKHR>(swapChainSupport.capabilities.currentTransform);
     create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     create_info.presentMode = present_mode;
     create_info.clipped = VK_TRUE;
@@ -127,7 +127,7 @@ void SurfaceSwapChain::Impl_Create()
     vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, nullptr);
     GetVkImages().resize(image_count);
     vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, GetVkImages().data());
-    imageRenderingFormat = create_info.imageFormat;
+    imageRenderingFormat = static_cast<vk::Format>(create_info.imageFormat);
     resolution = create_info.imageExtent;
 
     if (m_imageAvailableSemaphores.empty()) {

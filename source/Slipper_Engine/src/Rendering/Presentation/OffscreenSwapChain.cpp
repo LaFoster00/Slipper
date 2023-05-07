@@ -8,7 +8,7 @@
 namespace Slipper
 {
 OffscreenSwapChain::OffscreenSwapChain(const VkExtent2D &Extent,
-                                       VkFormat RenderingFormat,
+                                       vk::Format RenderingFormat,
                                        uint32_t NumImages,
                                        bool WithPresentationTextures)
     : SwapChain(Extent, RenderingFormat),
@@ -20,8 +20,7 @@ OffscreenSwapChain::OffscreenSwapChain(const VkExtent2D &Extent,
 
 OffscreenSwapChain::~OffscreenSwapChain()
 {
-	OffscreenSwapChain::Impl_Cleanup();
-
+    OffscreenSwapChain::Impl_Cleanup();
 }
 
 void OffscreenSwapChain::UpdatePresentationTextures(VkCommandBuffer CommandBuffer,
@@ -59,7 +58,7 @@ void OffscreenSwapChain::Impl_Create()
     image_create_info.extent = {resolution.width, resolution.height, 1};
     image_create_info.mipLevels = 1;
     image_create_info.arrayLayers = 1;
-    image_create_info.format = imageRenderingFormat;
+    image_create_info.format = static_cast<VkFormat>(imageRenderingFormat);
     image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     image_create_info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
@@ -85,8 +84,8 @@ void OffscreenSwapChain::Impl_Create()
         VkMemoryAllocateInfo alloc_info{};
         alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         alloc_info.allocationSize = mem_requirements.size;
-        alloc_info.memoryTypeIndex = device.FindMemoryType(mem_requirements.memoryTypeBits,
-                                                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        alloc_info.memoryTypeIndex = device.FindMemoryType(
+            mem_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
         VK_ASSERT(vkAllocateMemory(device, &alloc_info, nullptr, &vkImageMemory[i]),
                   "Failed to allocate image memory!")

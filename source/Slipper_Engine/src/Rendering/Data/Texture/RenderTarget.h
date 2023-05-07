@@ -9,6 +9,6 @@ public:
     // MSAA Settings set in Engine::Settings::MSAA_SAMPLES
     RenderTarget(
             VkExtent2D Extent,
-            VkFormat Format);
+            vk::Format Format);
 };
 }

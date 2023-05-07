@@ -14,8 +14,8 @@ class RenderPass : DeviceDependentObject
  public:
     RenderPass() = delete;
     RenderPass(std::string_view Name,
-               VkFormat RenderingFormat,
-               VkFormat DepthFormat,
+               vk::Format RenderingFormat,
+               vk::Format DepthFormat,
                bool ForPresentation = true);
     ~RenderPass();
     

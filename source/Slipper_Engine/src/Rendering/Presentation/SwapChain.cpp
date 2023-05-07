@@ -7,9 +7,7 @@
 
 namespace Slipper
 {
-VkFormat SwapChain::swapChainFormat = Engine::TARGET_WINDOW_COLOR_FORMAT;
-
-SwapChain::SwapChain(VkExtent2D Extent, VkFormat RenderingFormat)
+SwapChain::SwapChain(VkExtent2D Extent, vk::Format RenderingFormat)
     : imageRenderingFormat(RenderingFormat),
       imageColorSpace(VK_COLOR_SPACE_SRGB_NONLINEAR_KHR),
       depthFormat(Texture2D::FindDepthFormat()),
@@ -99,7 +97,7 @@ void SwapChain::CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass)
     vkFramebuffers.resize(m_vkImageViews.size());
     for (size_t i = 0; i < m_vkImageViews.size(); i++) {
         std::vector<VkImageView> attachments;
-        if (GraphicsSettings::Get().MSAA_SAMPLES != VK_SAMPLE_COUNT_1_BIT) {
+        if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
             attachments.push_back(renderTarget->imageInfo.view);
             attachments.push_back(depthBuffer->imageInfo.view);
             attachments.push_back(m_vkImageViews[i]);

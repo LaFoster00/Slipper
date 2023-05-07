@@ -116,8 +116,8 @@ void GraphicsEngine::SetupDebugResources()
 }
 
 RenderPass *GraphicsEngine::CreateRenderPass(const std::string &Name,
-                                             const VkFormat RenderingFormat,
-                                             const VkFormat DepthFormat,
+                                             const vk::Format RenderingFormat,
+                                             const vk::Format DepthFormat,
                                              const bool ForPresentation)
 {
     renderPasses[Name] = std::make_unique<RenderPass>(

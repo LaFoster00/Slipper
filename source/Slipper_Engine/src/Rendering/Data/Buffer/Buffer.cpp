@@ -26,7 +26,7 @@ Buffer::Buffer(const VkDeviceSize Size,
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = mem_requirements.size;
-    allocInfo.memoryTypeIndex = device.FindMemoryType(mem_requirements.memoryTypeBits, Properties);
+    allocInfo.memoryTypeIndex = device.FindMemoryType(mem_requirements.memoryTypeBits, vk::MemoryPropertyFlags(Properties));
 
     VK_ASSERT(vkAllocateMemory(device, &allocInfo, nullptr, &vkBufferMemory),
               "Failed to allocate vertex Buffer memory!")

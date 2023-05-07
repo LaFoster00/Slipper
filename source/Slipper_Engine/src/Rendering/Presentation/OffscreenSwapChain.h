@@ -7,7 +7,7 @@ class OffscreenSwapChain : public SwapChain
 {
  public:
     OffscreenSwapChain(const VkExtent2D &Extent,
-                       VkFormat RenderingFormat,
+                       vk::Format RenderingFormat,
                        uint32_t NumImages,
                        bool WithPresentationTextures);
 

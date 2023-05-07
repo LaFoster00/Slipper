@@ -43,6 +43,11 @@ class VulkanInstance
         return *m_instance;
     }
 
+    static vk::Instance &GetVk()
+    {
+        return m_instance->instance;
+    }
+
     operator vk::Instance &()
     {
         return instance;

@@ -3,18 +3,18 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "Buffer/Buffer.h"
 #include "Drawing/CommandPool.h"
 #include "GraphicsEngine.h"
-#include "Buffer/Buffer.h"
 
 namespace Slipper
 {
 Texture::Texture(const VkImageType Type,
                  const VkExtent3D Extent,
-                 const VkFormat ImageFormat,
-                 std::optional<VkFormat> ViewFormat,
+                 const vk::Format ImageFormat,
+                 std::optional<vk::Format> ViewFormat,
                  const bool GenerateMipMaps,
-                 const VkSampleCountFlagBits NumSamples,
+                 const vk::SampleCountFlagBits NumSamples,
                  const VkImageTiling Tiling,
                  const VkImageUsageFlags Usage,
                  const VkImageAspectFlags ImageAspect,
@@ -62,7 +62,7 @@ void Texture::Create()
     image_create_info.extent = imageInfo.extent;
     image_create_info.mipLevels = imageInfo.mipLevels;
     image_create_info.arrayLayers = imageInfo.arrayLayerCount;
-    image_create_info.format = imageInfo.imageFormat;
+    image_create_info.format = static_cast<VkFormat>(imageInfo.imageFormat);
     image_create_info.tiling = imageInfo.tiling;
     image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     image_create_info.usage = imageInfo.usage;
@@ -74,7 +74,7 @@ void Texture::Create()
     else {
         image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
-    image_create_info.samples = imageInfo.numSamples;
+    image_create_info.samples = static_cast<VkSampleCountFlagBits>(imageInfo.numSamples);
     image_create_info.flags = 0;  // Optional
     if (imageInfo.viewFormat != imageInfo.imageFormat)
         image_create_info.flags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
@@ -91,7 +91,7 @@ void Texture::Create()
     alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     alloc_info.allocationSize = mem_requirements.size;
     alloc_info.memoryTypeIndex = device.FindMemoryType(mem_requirements.memoryTypeBits,
-                                                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+                                                       vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     VK_ASSERT(vkAllocateMemory(device, &alloc_info, nullptr, &vkImageMemory),
               "Failed to allocate image memory!")
@@ -111,7 +111,8 @@ void Texture::EnqueueGenerateMipMaps(VkCommandBuffer CommandBuffer)
 {
     // Check if image format supports linear blitting
     VkFormatProperties formatProperties;
-    vkGetPhysicalDeviceFormatProperties(device, imageInfo.imageFormat, &formatProperties);
+    vkGetPhysicalDeviceFormatProperties(
+        device, static_cast<VkFormat>(imageInfo.imageFormat), &formatProperties);
 
     if (!(formatProperties.optimalTilingFeatures &
           VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
@@ -448,7 +449,7 @@ void Texture::CopyTexture(Texture Texture, VkImageLayout TargetLayout)
 
 VkImageView Texture::CreateImageView(VkImage Image,
                                      VkImageType Type,
-                                     VkFormat Format,
+                                     vk::Format Format,
                                      uint32_t MipLevels,
                                      VkImageAspectFlags ImageAspect,
                                      uint32_t ArrayLayerCount)
@@ -482,7 +483,7 @@ VkImageView Texture::CreateImageView(VkImage Image,
                 break;
         }
     }
-    view_info.format = Format;
+    view_info.format = static_cast<VkFormat>(Format);
     view_info.subresourceRange.aspectMask = ImageAspect;
     view_info.subresourceRange.baseMipLevel = 0;
     view_info.subresourceRange.levelCount = MipLevels;
@@ -495,13 +496,14 @@ VkImageView Texture::CreateImageView(VkImage Image,
     return image_view;
 }
 
-VkFormat Texture::FindSupportedFormat(const std::vector<VkFormat> &Candidates,
-                                      const VkImageTiling Tiling,
-                                      const VkFormatFeatureFlags Features)
+vk::Format Texture::FindSupportedFormat(const std::vector<vk::Format> &Candidates,
+                                        const VkImageTiling Tiling,
+                                        const VkFormatFeatureFlags Features)
 {
-    for (const VkFormat format : Candidates) {
+    for (const vk::Format format : Candidates) {
         VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties(Device::Get().physicalDevice, format, &props);
+        vkGetPhysicalDeviceFormatProperties(
+            Device::Get().physicalDevice, static_cast<VkFormat>(format), &props);
 
         if (Tiling == VK_IMAGE_TILING_LINEAR &&
             (props.linearTilingFeatures & Features) == Features) {
@@ -516,16 +518,16 @@ VkFormat Texture::FindSupportedFormat(const std::vector<VkFormat> &Candidates,
     throw std::runtime_error("Failed to find supported format!");
 }
 
-VkFormat Texture::FindDepthFormat()
+vk::Format Texture::FindDepthFormat()
 {
     return FindSupportedFormat(
-        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+        {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-bool Texture::HasStencilComponent(const VkFormat Format)
+bool Texture::HasStencilComponent(const vk::Format Format)
 {
-    return Format == VK_FORMAT_D32_SFLOAT_S8_UINT || Format == VK_FORMAT_D24_UNORM_S8_UINT;
+    return Format == vk::Format::eD32SfloatS8Uint || Format == vk::Format::eD24UnormS8Uint;
 }
 }  // namespace Slipper

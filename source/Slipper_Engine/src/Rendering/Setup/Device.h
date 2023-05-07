@@ -21,9 +21,9 @@ struct QueueFamilyIndices
 
 struct SwapChainSupportDetails
 {
-    VkSurfaceCapabilitiesKHR capabilities{};
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
+	vk::SurfaceCapabilitiesKHR capabilities;
+    std::vector<vk::SurfaceFormatKHR> formats;
+    std::vector<vk::PresentModeKHR> presentModes;
 };
 
 // Singleton since there will only be support for a single device
@@ -37,14 +37,29 @@ class Device
         return *m_instance;
     }
 
+    static vk::Device &GetVk()
+    {
+        return m_instance->logicalDevice;
+    }
+
     static void Destroy()
     {
         delete m_instance;
     }
 
+    operator vk::Device &()
+    {
+        return logicalDevice;
+    }
+
     operator VkDevice() const
     {
         return logicalDevice;
+    }
+
+    operator vk::PhysicalDevice &()
+    {
+        return physicalDevice;
     }
 
     operator VkPhysicalDevice() const
@@ -58,17 +73,17 @@ class Device
 
     [[nodiscard]] std::string DeviceInfoToString() const;
 
-    VkSurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const;
+    vk::SurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const;
     uint32_t SurfaceSwapChainImagesCount(const Surface *Surface) const;
     static uint32_t CapabilitiesSwapChainImageCount(const SwapChainSupportDetails &Support);
     SwapChainSupportDetails QuerySwapChainSupport(const Surface *Surface) const;
     VkExtent2D GetSurfaceResolution(const Surface *Surface) const;
-    VkSampleCountFlagBits GetMaxUsableSampleCount() const;
+    vk::SampleCountFlagBits GetMaxUsableFramebufferSampleCount() const;
 
-    uint32_t FindMemoryType(uint32_t TypeFilter, VkMemoryPropertyFlags Properties) const;
+    uint32_t FindMemoryType(uint32_t TypeFilter, vk::MemoryPropertyFlags Properties) const;
 
  private:
-    Device(VkPhysicalDevice PhysicalDevice);
+    Device(vk::PhysicalDevice PhysicalDevice);
     ~Device();
 
     bool IsDeviceSuitable(const Surface *Surface);
@@ -79,17 +94,17 @@ class Device
 
  public:
     /* Gets destroyed toghether with its instance. */
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice logicalDevice = VK_NULL_HANDLE;
+    vk::PhysicalDevice physicalDevice;
+    vk::Device logicalDevice;
 
-    VkPhysicalDeviceProperties deviceProperties;
-    VkPhysicalDeviceFeatures deviceFeatures;
+    vk::PhysicalDeviceProperties deviceProperties;
+    vk::PhysicalDeviceFeatures deviceFeatures;
 
     QueueFamilyIndices queueFamilyIndices;
 
-    VkQueue graphicsQueue = VK_NULL_HANDLE;
-    VkQueue presentQueue = VK_NULL_HANDLE;
-    VkQueue transferQueue = VK_NULL_HANDLE;
+    vk::Queue graphicsQueue;
+    vk::Queue presentQueue;
+    vk::Queue transferQueue;
 
  private:
     static Device *m_instance;

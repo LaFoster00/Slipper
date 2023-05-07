@@ -4,7 +4,7 @@
 
 namespace Slipper
 {
-DepthBuffer::DepthBuffer(const VkExtent2D Extent, const VkFormat Format)
+DepthBuffer::DepthBuffer(const VkExtent2D Extent, const vk::Format Format)
     : Texture(VK_IMAGE_TYPE_2D,
               VkExtent3D(Extent.width, Extent.height, 1),
               Format,

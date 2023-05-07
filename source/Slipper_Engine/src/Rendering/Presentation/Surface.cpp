@@ -8,8 +8,10 @@ namespace Slipper
 {
 Surface::Surface(const Window &Window) : window(Window)
 {
-    VK_ASSERT(glfwCreateWindowSurface(VulkanInstance::Get(), window, nullptr, &vkSurface),
+    VkSurfaceKHR surface_pointer = vkSurface;
+    VK_ASSERT(glfwCreateWindowSurface(VulkanInstance::Get(), window, nullptr, &surface_pointer),
               "Failed to create window suface!");
+    vkSurface = surface_pointer;
 }
 
 Surface::~Surface()

@@ -17,11 +17,11 @@ struct ImageInfo
     VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
     VkImageType type = VK_IMAGE_TYPE_2D;
     VkExtent3D extent = {0, 0, 0};
-    VkFormat viewFormat = VK_FORMAT_UNDEFINED;
-    VkFormat imageFormat = VK_FORMAT_UNDEFINED;
+    vk::Format viewFormat = vk::Format::eUndefined;
+    vk::Format imageFormat = vk::Format::eUndefined;
     VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
     VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    VkSampleCountFlagBits numSamples = VK_SAMPLE_COUNT_1_BIT;
+    vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1;
     VkImageAspectFlags imageAspect = VK_IMAGE_ASPECT_COLOR_BIT;
     uint32_t arrayLayerCount = 1;
     bool generateMipMaps = false;
@@ -33,10 +33,10 @@ class Texture : DeviceDependentObject, public IShaderBindableData
  public:
     Texture(VkImageType Type,
             VkExtent3D Extent,
-            VkFormat ImageFormat,
-            std::optional<VkFormat> ViewFormat = {},
+            vk::Format ImageFormat,
+            std::optional<vk::Format> ViewFormat = {},
             bool GenerateMipMaps = true,
-            VkSampleCountFlagBits NumSamples = VK_SAMPLE_COUNT_1_BIT,
+            vk::SampleCountFlagBits NumSamples = vk::SampleCountFlagBits::e1,
             VkImageTiling Tiling = VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlags Usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -133,8 +133,7 @@ class Texture : DeviceDependentObject, public IShaderBindableData
 
     // Returns the texture as target type through dynamic_cast
     // Will return null if of other type
-    template<typename T>
-    NonOwningPtr<T> As()
+    template<typename T> NonOwningPtr<T> As()
     {
         return dynamic_cast<T *>(this);
     }
@@ -142,17 +141,17 @@ class Texture : DeviceDependentObject, public IShaderBindableData
     [[nodiscard]] static VkImageView CreateImageView(
         VkImage Image,
         VkImageType Type,
-        VkFormat Format,
+        vk::Format Format,
         uint32_t MipLevels,
         VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
         uint32_t ArrayLayerCount = 1);
 
-    static VkFormat FindSupportedFormat(const std::vector<VkFormat> &Candidates,
-                                        VkImageTiling Tiling,
-                                        VkFormatFeatureFlags Features);
-    static VkFormat FindDepthFormat();
+    static vk::Format FindSupportedFormat(const std::vector<vk::Format> &Candidates,
+                                          VkImageTiling Tiling,
+                                          VkFormatFeatureFlags Features);
+    static vk::Format FindDepthFormat();
 
-    static bool HasStencilComponent(const VkFormat Format);
+    static bool HasStencilComponent(vk::Format Format);
 
  private:
     void Create();

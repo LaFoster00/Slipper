@@ -27,12 +27,12 @@ class SwapChain : public DeviceDependentObject
         return resolution;
     }
 
-    [[nodiscard]] const VkFormat &GetImageFormat() const
+    [[nodiscard]] const vk::Format &GetImageFormat() const
     {
         return imageRenderingFormat;
     }
 
-    [[nodiscard]] const VkFormat &GetDepthFormat() const
+    [[nodiscard]] const vk::Format &GetDepthFormat() const
     {
         return depthFormat;
     }
@@ -61,7 +61,7 @@ class SwapChain : public DeviceDependentObject
     }
 
  protected:
-    SwapChain(VkExtent2D Extent, VkFormat RenderingFormat);
+    SwapChain(VkExtent2D Extent, vk::Format RenderingFormat);
 
     void Create();
     virtual void Impl_Create() = 0;
@@ -78,16 +78,16 @@ class SwapChain : public DeviceDependentObject
     }
 
  public:
-    static VkFormat swapChainFormat;
+    static inline vk::Format swapChainFormat = Engine::TARGET_WINDOW_COLOR_FORMAT;
     SwapChainSupportDetails swapChainSupport;
 
     std::unique_ptr<RenderTarget> renderTarget;
     std::unique_ptr<DepthBuffer> depthBuffer;
 
  protected:
-    VkFormat imageRenderingFormat;
+    vk::Format imageRenderingFormat;
     VkColorSpaceKHR imageColorSpace;
-    VkFormat depthFormat;
+    vk::Format depthFormat;
     VkExtent2D resolution;
 
  private:

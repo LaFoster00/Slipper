@@ -16,7 +16,7 @@ class SurfaceSwapChain : public SwapChain
     void Impl_Create() override;
     VkExtent2D ChoseExtent(const Surface &Surface) const;
     VkPresentModeKHR ChoosePresentMode() const;
-    VkSurfaceFormatKHR ChooseSurfaceFormat() const;
+    vk::SurfaceFormatKHR ChooseSurfaceFormat() const;
     void Impl_Cleanup() override;
     VkSwapchainKHR Impl_GetSwapChain() const override;
 
@@ -29,7 +29,7 @@ public:
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
 
  protected:
-    VkColorSpaceKHR imageColorSpace;
+    vk::ColorSpaceKHR imageColorSpace;
     uint32_t m_currentImageIndex = 0;
 };
 }  // namespace Slipper

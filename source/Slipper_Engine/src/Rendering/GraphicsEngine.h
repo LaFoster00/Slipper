@@ -36,8 +36,8 @@ class GraphicsEngine : DeviceDependentObject
     void SetupSimpleDraw() const;
 
     RenderPass *CreateRenderPass(const std::string &Name,
-                                 VkFormat RenderingFormat,
-                                 VkFormat DepthFormat,
+                                 vk::Format RenderingFormat,
+                                 vk::Format DepthFormat,
                                  bool ForPresentation);
     void DestroyRenderPass(RenderPass *RenderPass);
 

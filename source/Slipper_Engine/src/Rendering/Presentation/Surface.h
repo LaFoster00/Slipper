@@ -17,6 +17,16 @@ class Surface
         return vkSurface;
     }
 
+    operator vk::SurfaceKHR&()
+    {
+        return vkSurface;
+    }
+
+    operator const vk::SurfaceKHR &() const
+    {
+        return vkSurface;
+    }
+
     [[nodiscard]] const VkExtent2D &GetResolution() const
     {
         return swapChain->GetResolution();
@@ -29,7 +39,7 @@ class Surface
     void CleanupSwapChain(bool DestroySwapChain);
 
  public:
-    VkSurfaceKHR vkSurface;
+    vk::SurfaceKHR vkSurface;
     const Window &window;
 
     OwningPtr<SurfaceSwapChain> swapChain;

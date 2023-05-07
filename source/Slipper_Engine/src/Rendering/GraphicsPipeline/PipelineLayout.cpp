@@ -85,7 +85,7 @@ VkPipelineMultisampleStateCreateInfo PipelineLayout::SetupMultisampleState()
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = GraphicsSettings::Get().MSAA_SAMPLES;
+    multisampling.rasterizationSamples = static_cast<VkSampleCountFlagBits>(GraphicsSettings::Get().MSAA_SAMPLES);
     multisampling.minSampleShading = 1.0f;           // Optional
     multisampling.pSampleMask = nullptr;             // Optional
     multisampling.alphaToCoverageEnable = VK_FALSE;  // Optional
