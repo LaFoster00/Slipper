@@ -2,56 +2,46 @@
 
 namespace Slipper
 {
-CommandPool::CommandPool(const VkQueue Queue,
+CommandPool::CommandPool(const vk::Queue Queue,
                          const uint32_t QueueFamilyIndex,
                          const int32_t BufferCount)
     : m_queue(Queue)
 {
-    VkCommandPoolCreateInfo pool_info{};
-    pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    pool_info.queueFamilyIndex = QueueFamilyIndex;
-
-    VK_ASSERT(vkCreateCommandPool(device.logicalDevice, &pool_info, nullptr, &vkCommandPool),
-              "Failed to create command pool");
-
+	const vk::CommandPoolCreateInfo pool_info(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, QueueFamilyIndex);
+    VK_HPP_ASSERT(device.logicalDevice.createCommandPool(&pool_info, nullptr, &vkCommandPool), "Failed to create command pool");
     CreateCommandBuffers(BufferCount);
 }
 
 CommandPool::~CommandPool()
 {
-    vkDestroyCommandPool(device.logicalDevice, vkCommandPool, nullptr);
+    device.logicalDevice.destroyCommandPool(vkCommandPool);
 }
 
-std::vector<VkCommandBuffer> &CommandPool::CreateCommandBuffers(
+std::vector<vk::CommandBuffer> &CommandPool::CreateCommandBuffers(
     const int32_t BufferCount, int32_t *NewCommandBufferStartIndex)
 {
     if (BufferCount > 0) {
-        VkCommandBufferAllocateInfo alloc_info{};
-        alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        alloc_info.commandPool = vkCommandPool;
-        alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        alloc_info.commandBufferCount = BufferCount;
-
         const auto start_index = static_cast<int32_t>(vkCommandBuffers.size());
         if (NewCommandBufferStartIndex) {
             *NewCommandBufferStartIndex = start_index;
         }
         vkCommandBuffers.resize(vkCommandBuffers.size() + BufferCount);
 
+
+        const vk::CommandBufferAllocateInfo alloc_info(
+            vkCommandPool, vk::CommandBufferLevel::ePrimary, BufferCount);
         // Get pointer into the array at the location of the new command buffers
         const auto offset_data_pointer = &vkCommandBuffers[start_index];
 
-        VK_ASSERT(vkAllocateCommandBuffers(device.logicalDevice, &alloc_info, offset_data_pointer),
-                  "Failed to create command buffers!")
+        VK_HPP_ASSERT(
+            device.logicalDevice.allocateCommandBuffers(&alloc_info, offset_data_pointer), "Failed to create command buffers");
     }
     return vkCommandBuffers;
 }
 
-void CommandPool::DestroyCommandBuffers(const std::vector<VkCommandBuffer> &CommandBuffers)
+void CommandPool::DestroyCommandBuffers(const std::vector<vk::CommandBuffer> &CommandBuffers)
 {
-    vkFreeCommandBuffers(
-        device, vkCommandPool, static_cast<int32_t>(CommandBuffers.size()), CommandBuffers.data());
+    device.logicalDevice.freeCommandBuffers(vkCommandPool, CommandBuffers);
 
     for (auto command_buffer : CommandBuffers) {
         if (auto buffer_loc = std::ranges::find(vkCommandBuffers, command_buffer);
@@ -61,12 +51,12 @@ void CommandPool::DestroyCommandBuffers(const std::vector<VkCommandBuffer> &Comm
     }
 }
 
-void CommandPool::BeginCommandBuffer(const VkCommandBuffer CommandBuffer,
+void CommandPool::BeginCommandBuffer(const vk::CommandBuffer CommandBuffer,
                                      const bool ResetCommandBuffer,
                                      const bool SingleUseBuffer,
-                                     const VkCommandBufferUsageFlags Flags)
+                                     const vk::CommandBufferUsageFlags Flags)
 {
-    VkCommandBuffer buffer = nullptr;
+    vk::CommandBuffer buffer = nullptr;
     if (SingleUseBuffer && std::ranges::find(m_singleUseVkCommandBuffers, CommandBuffer) !=
                                m_singleUseVkCommandBuffers.end()) {
         buffer = CommandBuffer;
@@ -78,16 +68,11 @@ void CommandPool::BeginCommandBuffer(const VkCommandBuffer CommandBuffer,
     if (buffer) {
 
         if (ResetCommandBuffer) {
-            vkResetCommandBuffer(buffer, 0);
+            buffer.reset();
         }
 
-        VkCommandBufferBeginInfo begin_info{};
-        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        begin_info.flags = Flags;               // Optional
-        begin_info.pInheritanceInfo = nullptr;  // Optional
-
-        VK_ASSERT(vkBeginCommandBuffer(buffer, &begin_info),
-                  "Failed to begin recording command buffer!");
+        const vk::CommandBufferBeginInfo begin_info(Flags);
+        VK_HPP_ASSERT(buffer.begin(&begin_info), "Failed to begin recording command buffer!");
 
         return;
     }
@@ -95,7 +80,7 @@ void CommandPool::BeginCommandBuffer(const VkCommandBuffer CommandBuffer,
     ASSERT(1, "The command buffer is not part of the command pool.");
 }
 
-void CommandPool::EndCommandBuffer(const VkCommandBuffer CommandBuffer) const
+void CommandPool::EndCommandBuffer(const vk::CommandBuffer CommandBuffer) const
 {
     VK_ASSERT(vkEndCommandBuffer(CommandBuffer), "Failed to record to command buffer!");
 }
@@ -103,36 +88,28 @@ void CommandPool::EndCommandBuffer(const VkCommandBuffer CommandBuffer) const
 void CommandPool::ClearSingleUseCommands()
 {
     if (!m_singleUseVkCommandBuffers.empty()) {
-        vkFreeCommandBuffers(device,
-                             vkCommandPool,
-                             static_cast<int32_t>(m_singleUseVkCommandBuffers.size()),
-                             m_singleUseVkCommandBuffers.data());
+        device.logicalDevice.freeCommandBuffers(vkCommandPool, m_singleUseVkCommandBuffers);
         m_singleUseVkCommandBuffers.clear();
     }
 }
 
-VkCommandBuffer CommandPool::CreateSingleUseCommandBuffer()
+vk::CommandBuffer CommandPool::CreateSingleUseCommandBuffer()
 {
-    VkCommandBufferAllocateInfo alloc_info{};
-    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    alloc_info.commandPool = vkCommandPool;
-    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandBufferCount = 1;
-
     const auto start_index = static_cast<int32_t>(m_singleUseVkCommandBuffers.size());
-
     m_singleUseVkCommandBuffers.resize(m_singleUseVkCommandBuffers.size() + 1);
-    const auto offset_data_pointer = &m_singleUseVkCommandBuffers.data()[start_index];
 
-    VK_ASSERT(vkAllocateCommandBuffers(device.logicalDevice, &alloc_info, offset_data_pointer),
-              "Failed to create single use command buffer!")
+    const vk::CommandBufferAllocateInfo alloc_info(
+        vkCommandPool, vk::CommandBufferLevel::ePrimary, 1);
+    const auto offset_data_pointer = &m_singleUseVkCommandBuffers[start_index];
+    VK_HPP_ASSERT(device.logicalDevice.allocateCommandBuffers(&alloc_info, offset_data_pointer),
+                  "Failed to create single use command buffer")
 
     return m_singleUseVkCommandBuffers.back();
 }
 
-void CommandPool::DestroySingleUseCommandBuffer(const VkCommandBuffer CommandBuffer)
+void CommandPool::DestroySingleUseCommandBuffer(const vk::CommandBuffer CommandBuffer)
 {
-    vkFreeCommandBuffers(device, vkCommandPool, 1, &CommandBuffer);
+    Device::GetVk().freeCommandBuffers(vkCommandPool, CommandBuffer);
 
     if (const auto buffer_loc = std::ranges::find(m_singleUseVkCommandBuffers, CommandBuffer);
         buffer_loc != m_singleUseVkCommandBuffers.end()) {
