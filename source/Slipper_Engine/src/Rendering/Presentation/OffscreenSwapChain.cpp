@@ -20,7 +20,7 @@ OffscreenSwapChain::OffscreenSwapChain(const VkExtent2D &Extent,
 
 OffscreenSwapChain::~OffscreenSwapChain()
 {
-    OffscreenSwapChain::Impl_Cleanup();
+    OffscreenSwapChain::Impl_Cleanup(false);
 }
 
 void OffscreenSwapChain::UpdatePresentationTextures(VkCommandBuffer CommandBuffer,
@@ -52,45 +52,36 @@ void OffscreenSwapChain::Impl_Create()
     GetVkImages().resize(numImages);
     vkImageMemory.resize(numImages);
 
-    VkImageCreateInfo image_create_info{};
-    image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_create_info.imageType = VK_IMAGE_TYPE_2D;
-    image_create_info.extent = {resolution.width, resolution.height, 1};
-    image_create_info.mipLevels = 1;
-    image_create_info.arrayLayers = 1;
-    image_create_info.format = static_cast<VkFormat>(imageRenderingFormat);
-    image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_create_info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-                              VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    if (queue_families.size() > 1) {
-        image_create_info.sharingMode = VK_SHARING_MODE_CONCURRENT;
-        image_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_families.size());
-        image_create_info.pQueueFamilyIndices = queue_families.data();
-    }
-    else {
-        image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    }
-    image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    image_create_info.flags = 0;  // Optional
+    vk::ImageCreateInfo image_create_info(
+        {},
+        vk::ImageType::e2D,
+        imageRenderingFormat,
+        vk::Extent3D(resolution, 1),
+        1,
+        1,
+        vk::SampleCountFlagBits::e1,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+        queue_families.size() > 1 ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive,
+        queue_families,
+        vk::ImageLayout::eUndefined);
 
     for (uint32_t i = 0; i < numImages; i++) {
-        VK_ASSERT(vkCreateImage(device, &image_create_info, nullptr, &GetVkImages()[i]),
-                  "Failed to create image!")
+        VK_HPP_ASSERT(
+            device.logicalDevice.createImage(&image_create_info, nullptr, &GetVkImages()[i]),
+            "Failed to create image");
 
-        VkMemoryRequirements mem_requirements;
-        vkGetImageMemoryRequirements(device, GetVkImages()[i], &mem_requirements);
+        const vk::MemoryRequirements mem_requirements =
+            device.logicalDevice.getImageMemoryRequirements(GetVkImages()[i]);
 
-        VkMemoryAllocateInfo alloc_info{};
-        alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        alloc_info.allocationSize = mem_requirements.size;
-        alloc_info.memoryTypeIndex = device.FindMemoryType(
-            mem_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
+        vk::MemoryAllocateInfo alloc_info(
+            mem_requirements.size,
+            device.FindMemoryType(mem_requirements.memoryTypeBits,
+                                  vk::MemoryPropertyFlagBits::eDeviceLocal));
 
-        VK_ASSERT(vkAllocateMemory(device, &alloc_info, nullptr, &vkImageMemory[i]),
-                  "Failed to allocate image memory!")
-
-        vkBindImageMemory(device, GetVkImages()[i], vkImageMemory[i], 0);
+        VK_HPP_ASSERT(device.logicalDevice.allocateMemory(&alloc_info, nullptr, &vkImageMemory[i]),
+                      "Failed to allocate image memory")
+        device.logicalDevice.bindImageMemory(GetVkImages()[i], vkImageMemory[i], 0);
     }
 
     if (withPresentationTextures) {
@@ -104,16 +95,19 @@ void OffscreenSwapChain::Impl_Create()
     }
 }
 
-void OffscreenSwapChain::Impl_Cleanup()
+void OffscreenSwapChain::Impl_Cleanup(bool CalledFromBaseDestructor)
 {
+    if (CalledFromBaseDestructor)
+        return;
+
     presentationTextures.clear();
 
     for (const auto vk_image : GetVkImages()) {
-        vkDestroyImage(device, vk_image, nullptr);
+        device.logicalDevice.destroyImage(vk_image);
     }
 
     for (const auto vk_image_memory : vkImageMemory) {
-        vkFreeMemory(device, vk_image_memory, nullptr);
+        device.logicalDevice.freeMemory(vk_image_memory);
     }
 }
 

@@ -7,9 +7,9 @@
 
 namespace Slipper
 {
-SwapChain::SwapChain(VkExtent2D Extent, vk::Format RenderingFormat)
+SwapChain::SwapChain(vk::Extent2D Extent, vk::Format RenderingFormat)
     : imageRenderingFormat(RenderingFormat),
-      imageColorSpace(VK_COLOR_SPACE_SRGB_NONLINEAR_KHR),
+      imageColorSpace(vk::ColorSpaceKHR::eSrgbNonlinear),
       depthFormat(Texture2D::FindDepthFormat()),
       resolution(Extent)
 {
@@ -24,7 +24,7 @@ SwapChain::~SwapChain()
 
 void SwapChain::Cleanup(bool KeepRenderPasses, bool CalledFromDestructor)
 {
-    for (auto &[render_pass, framebuffer] : m_vkFramebuffers) {
+    for (const auto &render_pass : m_vkFramebuffers | std::views::keys) {
         DestroyFramebuffers(render_pass);
     }
 
@@ -32,22 +32,23 @@ void SwapChain::Cleanup(bool KeepRenderPasses, bool CalledFromDestructor)
         m_vkFramebuffers.clear();
 
     for (size_t i = 0; i < m_vkImageViews.size(); i++) {
-        vkDestroyImageView(device, m_vkImageViews[i], nullptr);
+        device.logicalDevice.destroyImageView(m_vkImageViews[i]);
     }
 
-    if (!CalledFromDestructor)
-        Impl_Cleanup();
+    Impl_Cleanup(CalledFromDestructor);
 }
 
 void SwapChain::Recreate(uint32_t Width, uint32_t Height)
 {
-    vkDeviceWaitIdle(Device::Get());
-    resolution = {Width, Height};
+    device.logicalDevice.waitIdle();
+    resolution.width = Width;
+    resolution.height = Height;
+
     Cleanup(true);
     Create();
 }
 
-VkImage SwapChain::GetCurrentSwapChainImage() const
+vk::Image SwapChain::GetCurrentSwapChainImage() const
 {
     return m_vkImages[GetCurrentSwapChainImageIndex()];
 }
@@ -71,8 +72,8 @@ void SwapChain::Create()
         depthBuffer->Resize(VkExtent3D(resolution.width, resolution.height, 1));
     }
 
-    for (const auto render_pass : m_vkFramebuffers) {
-        CreateFramebuffers(render_pass.first);
+    for (const auto render_pass : m_vkFramebuffers | std::views::keys) {
+        CreateFramebuffers(render_pass);
     }
 }
 
@@ -93,10 +94,10 @@ void SwapChain::CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass)
         DestroyFramebuffers(RenderPass);
     }
 
-    auto &vkFramebuffers = m_vkFramebuffers[RenderPass];
-    vkFramebuffers.resize(m_vkImageViews.size());
+    auto &vk_framebuffers = m_vkFramebuffers[RenderPass];
+    vk_framebuffers.resize(m_vkImageViews.size());
     for (size_t i = 0; i < m_vkImageViews.size(); i++) {
-        std::vector<VkImageView> attachments;
+        std::vector<vk::ImageView> attachments;
         if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
             attachments.push_back(renderTarget->imageInfo.view);
             attachments.push_back(depthBuffer->imageInfo.view);
@@ -106,27 +107,22 @@ void SwapChain::CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass)
             attachments.push_back(m_vkImageViews[i]);
             attachments.push_back(depthBuffer->imageInfo.view);
         }
-        VkExtent2D extent = GetResolution();
+        const vk::Extent2D extent = GetResolution();
 
-        VkFramebufferCreateInfo framebuffer_info{};
-        framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebuffer_info.renderPass = RenderPass->vkRenderPass;
-        framebuffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
-        framebuffer_info.pAttachments = attachments.data();
-        framebuffer_info.width = extent.width;
-        framebuffer_info.height = extent.height;
-        framebuffer_info.layers = 1;
+        vk::FramebufferCreateInfo framebuffer_info(
+            {}, RenderPass->vkRenderPass, attachments, extent.width, extent.height, 1);
 
-        VK_ASSERT(vkCreateFramebuffer(device, &framebuffer_info, nullptr, &vkFramebuffers[i]),
-                  "Failed to create framebuffer!")
+        VK_HPP_ASSERT(device.logicalDevice.createFramebuffer(
+                          &framebuffer_info, nullptr, &vk_framebuffers[i]),
+                      "Failed to create framebuffer!")
     }
 }
 
 void SwapChain::DestroyFramebuffers(NonOwningPtr<RenderPass> RenderPass)
 {
     if (m_vkFramebuffers.contains(RenderPass)) {
-        for (auto &framebuffer : m_vkFramebuffers.at(RenderPass)) {
-            vkDestroyFramebuffer(Device::Get(), framebuffer, nullptr);
+        for (const auto &framebuffer : m_vkFramebuffers.at(RenderPass)) {
+            device.logicalDevice.destroyFramebuffer(framebuffer);
         }
         m_vkFramebuffers.at(RenderPass).clear();
     }

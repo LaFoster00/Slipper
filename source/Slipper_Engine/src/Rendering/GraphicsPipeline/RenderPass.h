@@ -32,6 +32,11 @@ class RenderPass : DeviceDependentObject
         return vkRenderPass;
     }
 
+    operator vk::RenderPass() const
+    {
+        return vkRenderPass;
+    }
+
  public:
     std::string name;
     VkRenderPass vkRenderPass;

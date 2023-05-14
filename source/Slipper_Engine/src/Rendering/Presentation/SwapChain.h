@@ -22,7 +22,7 @@ class SwapChain : public DeviceDependentObject
         return Impl_GetSwapChain();
     }
 
-    [[nodiscard]] const VkExtent2D &GetResolution() const
+    [[nodiscard]] const vk::Extent2D &GetResolution() const
     {
         return resolution;
     }
@@ -41,38 +41,38 @@ class SwapChain : public DeviceDependentObject
     void CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass);
     void DestroyFramebuffers(NonOwningPtr<RenderPass> RenderPass);
 
-    virtual VkImage GetCurrentSwapChainImage() const;
+    virtual vk::Image GetCurrentSwapChainImage() const;
     virtual uint32_t GetCurrentSwapChainImageIndex() const = 0;
 
-    std::vector<VkImageView> &GetVkImageViews()
+    std::vector<vk::ImageView> &GetVkImageViews()
     {
         return m_vkImageViews;
     }
 
-    const std::unordered_map<NonOwningPtr<RenderPass>, std::vector<VkFramebuffer>>
+    const std::unordered_map<NonOwningPtr<RenderPass>, std::vector<vk::Framebuffer>>
         &GetVkFramebuffers() const
     {
         return m_vkFramebuffers;
     }
 
-	VkFramebuffer GetVkFramebuffer(NonOwningPtr<RenderPass> RenderPass, uint32_t Frame)
+    VkFramebuffer GetVkFramebuffer(NonOwningPtr<RenderPass> RenderPass, uint32_t Frame)
     {
         return m_vkFramebuffers[RenderPass][Frame];
     }
 
  protected:
-    SwapChain(VkExtent2D Extent, vk::Format RenderingFormat);
+    SwapChain(vk::Extent2D Extent, vk::Format RenderingFormat);
 
     void Create();
     virtual void Impl_Create() = 0;
     void Cleanup(bool KeepRenderPasses, bool CalledFromDestructor = false);
-    virtual void Impl_Cleanup() = 0;
+    virtual void Impl_Cleanup(bool CalledFromBaseDestructor) = 0;
 
     virtual VkSwapchainKHR Impl_GetSwapChain() const = 0;
 
     void CreateImageViews();
 
-    std::vector<VkImage> &GetVkImages()
+    std::vector<vk::Image> &GetVkImages()
     {
         return m_vkImages;
     }
@@ -86,13 +86,13 @@ class SwapChain : public DeviceDependentObject
 
  protected:
     vk::Format imageRenderingFormat;
-    VkColorSpaceKHR imageColorSpace;
+    vk::ColorSpaceKHR imageColorSpace;
     vk::Format depthFormat;
-    VkExtent2D resolution;
+    vk::Extent2D resolution;
 
  private:
-    std::vector<VkImage> m_vkImages;
-    std::vector<VkImageView> m_vkImageViews;
-    std::unordered_map<NonOwningPtr<RenderPass>, std::vector<VkFramebuffer>> m_vkFramebuffers;
+    std::vector<vk::Image> m_vkImages;
+    std::vector<vk::ImageView> m_vkImageViews;
+    std::unordered_map<NonOwningPtr<RenderPass>, std::vector<vk::Framebuffer>> m_vkFramebuffers;
 };
 }  // namespace Slipper

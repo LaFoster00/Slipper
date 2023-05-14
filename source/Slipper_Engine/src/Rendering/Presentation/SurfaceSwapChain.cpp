@@ -22,7 +22,7 @@ SurfaceSwapChain::SurfaceSwapChain(Surface &Surface)
 
 SurfaceSwapChain::~SurfaceSwapChain()
 {
-    SurfaceSwapChain::Impl_Cleanup();
+    SurfaceSwapChain::Impl_Cleanup(false);
 
     for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
         vkDestroySemaphore(device, image_available_semaphore, nullptr);
@@ -58,8 +58,11 @@ vk::SurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
     return swapChainSupport.formats[0];
 }
 
-void SurfaceSwapChain::Impl_Cleanup()
+void SurfaceSwapChain::Impl_Cleanup(bool CalledFromBaseDestructor)
 {
+    if (CalledFromBaseDestructor)
+        return;
+
     vkDestroySwapchainKHR(device, vkSwapChain, nullptr);
     vkSwapChain = VK_NULL_HANDLE;
 }
@@ -114,7 +117,8 @@ void SurfaceSwapChain::Impl_Create()
         create_info.pQueueFamilyIndices = nullptr;  // Optional
     }
 
-    create_info.preTransform = static_cast<VkSurfaceTransformFlagBitsKHR>(swapChainSupport.capabilities.currentTransform);
+    create_info.preTransform = static_cast<VkSurfaceTransformFlagBitsKHR>(
+        swapChainSupport.capabilities.currentTransform);
     create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     create_info.presentMode = present_mode;
     create_info.clipped = VK_TRUE;

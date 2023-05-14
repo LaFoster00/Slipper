@@ -16,19 +16,17 @@ class OffscreenSwapChain : public SwapChain
 
     void UpdatePresentationTextures(VkCommandBuffer CommandBuffer, uint32_t ImageIndex) const;
 
-protected:
+ protected:
     void Impl_Create() override;
-    void Impl_Cleanup() override;
+    void Impl_Cleanup(bool CalledFromBaseDestructor) override;
     VkSwapchainKHR Impl_GetSwapChain() const override;
 
-public:
-    
-
+ public:
     bool withPresentationTextures;
     uint32_t numImages;
     std::vector<OwningPtr<Texture2D>> presentationTextures;
 
  protected:
-    std::vector<VkDeviceMemory> vkImageMemory;
+    std::vector<vk::DeviceMemory> vkImageMemory;
 };
 }  // namespace Slipper

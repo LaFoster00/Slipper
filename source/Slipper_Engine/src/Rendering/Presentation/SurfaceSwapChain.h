@@ -17,7 +17,7 @@ class SurfaceSwapChain : public SwapChain
     VkExtent2D ChoseExtent(const Surface &Surface) const;
     VkPresentModeKHR ChoosePresentMode() const;
     vk::SurfaceFormatKHR ChooseSurfaceFormat() const;
-    void Impl_Cleanup() override;
+    void Impl_Cleanup(bool CalledFromBaseDestructor) override;
     VkSwapchainKHR Impl_GetSwapChain() const override;
 
 public:
