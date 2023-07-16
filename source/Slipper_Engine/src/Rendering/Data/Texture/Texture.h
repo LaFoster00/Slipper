@@ -12,17 +12,18 @@ class Buffer;
 
 struct ImageInfo
 {
-    VkSampler sampler = VK_NULL_HANDLE;
-    VkImageView view = VK_NULL_HANDLE;
-    VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    VkImageType type = VK_IMAGE_TYPE_2D;
-    VkExtent3D extent = {0, 0, 0};
+    vk::Sampler sampler = VK_NULL_HANDLE;
+    std::vector<vk::ImageView> views;
+    vk::ImageLayout layout = vk::ImageLayout::eUndefined;
+    vk::ImageType type = vk::ImageType::e2D;
+    vk::Extent3D extent = {0, 0, 0};
     vk::Format viewFormat = vk::Format::eUndefined;
     vk::Format imageFormat = vk::Format::eUndefined;
-    VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-    VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    vk::ImageTiling tiling = vk::ImageTiling::eOptimal;
+    vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment |
+                                vk::ImageUsageFlagBits::eSampled;
     vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1;
-    VkImageAspectFlags imageAspect = VK_IMAGE_ASPECT_COLOR_BIT;
+    vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor;
     uint32_t arrayLayerCount = 1;
     bool generateMipMaps = false;
     uint32_t mipLevels = 1;
@@ -31,15 +32,16 @@ struct ImageInfo
 class Texture : DeviceDependentObject, public IShaderBindableData
 {
  public:
-    Texture(VkImageType Type,
+    Texture(vk::ImageType Type,
             VkExtent3D Extent,
             vk::Format ImageFormat,
             std::optional<vk::Format> ViewFormat = {},
             bool GenerateMipMaps = true,
             vk::SampleCountFlagBits NumSamples = vk::SampleCountFlagBits::e1,
-            VkImageTiling Tiling = VK_IMAGE_TILING_OPTIMAL,
-            VkImageUsageFlags Usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
+            vk::ImageTiling Tiling = vk::ImageTiling::eOptimal,
+            vk::ImageUsageFlags Usage = vk::ImageUsageFlagBits::eTransferDst |
+                                        vk::ImageUsageFlagBits::eSampled,
+            vk::ImageAspectFlags ImageAspect = vk::ImageAspectFlagBits::eColor,
             uint32_t ArrayLayers = 1);
 
     Texture(const Texture &Other) = delete;
@@ -52,24 +54,25 @@ class Texture : DeviceDependentObject, public IShaderBindableData
     {
         Other.vkImage = VK_NULL_HANDLE;
         Other.vkImageMemory = VK_NULL_HANDLE;
-        Other.imageInfo.view = VK_NULL_HANDLE;
+        Other.imageInfo.views.clear();
     }
 
     virtual ~Texture();
 
-    [[nodiscard]] std::optional<VkDescriptorBufferInfo> GetDescriptorBufferInfo() const override
+    [[nodiscard]] std::optional<vk::DescriptorBufferInfo> GetDescriptorBufferInfo() const override
     {
         return {};
     }
 
-    [[nodiscard]] std::optional<VkDescriptorImageInfo> GetDescriptorImageInfo() const override
+    [[nodiscard]] std::optional<vk::DescriptorImageInfo> GetDescriptorImageInfo() const override
     {
-        return VkDescriptorImageInfo{imageInfo.sampler, imageInfo.view, imageInfo.layout};
+        return vk::DescriptorImageInfo{
+            imageInfo.sampler, imageInfo.views.front(), imageInfo.layout};
     }
 
-    [[nodiscard]] constexpr VkDescriptorType GetDescriptorType() const override
+    [[nodiscard]] constexpr vk::DescriptorType GetDescriptorType() const override
     {
-        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        return vk::DescriptorType::eCombinedImageSampler;
     }
 
     void AdditionalBindingChecks(const DescriptorSetLayoutBinding &Binding) const override
@@ -78,9 +81,9 @@ class Texture : DeviceDependentObject, public IShaderBindableData
 
     virtual void Resize(const VkExtent3D Extent);
 
-    VkImageView GetView() const
+    const std::vector<vk::ImageView> &GetViews() const
     {
-        return imageInfo.view;
+        return imageInfo.views;
     }
 
     glm::vec3 GetSize()
@@ -111,24 +114,19 @@ class Texture : DeviceDependentObject, public IShaderBindableData
                             VkImageLayout TargetLayout);
     void CopyTexture(Texture Texture, VkImageLayout TargetLayout);
 
-    const ImageInfo GetImageInfo() const
+    const ImageInfo &GetImageInfo() const
     {
         return imageInfo;
     }
 
-    const VkImageLayout GetCurrentLayout() const
+	vk::ImageLayout GetCurrentLayout() const
     {
         return imageInfo.layout;
     }
 
-    operator VkImage() const
+    operator vk::Image() const
     {
         return vkImage;
-    }
-
-    operator VkImageView() const
-    {
-        return imageInfo.view;
     }
 
     // Returns the texture as target type through dynamic_cast
@@ -145,6 +143,9 @@ class Texture : DeviceDependentObject, public IShaderBindableData
         uint32_t MipLevels,
         VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
         uint32_t ArrayLayerCount = 1);
+
+    [[nodiscard]] VkImageView CreateDefaultImageView() const;
+    [[nodiscard]] VkImageView CreateImageView(vk::Format ViewFormat) const;
 
     static vk::Format FindSupportedFormat(const std::vector<vk::Format> &Candidates,
                                           VkImageTiling Tiling,

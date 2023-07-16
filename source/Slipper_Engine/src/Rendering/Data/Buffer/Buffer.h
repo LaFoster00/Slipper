@@ -51,6 +51,11 @@ class Buffer : DeviceDependentObject, public IShaderBindableData
         return vkBufferMemory;
     }
 
+    operator vk::Buffer() const
+    {
+        return vkBuffer;
+    }
+
     [[nodiscard]] std::optional<VkDescriptorImageInfo> GetDescriptorImageInfo() const override
     {
         return {};

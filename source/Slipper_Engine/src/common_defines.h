@@ -106,7 +106,7 @@ inline static std::map<VkDescriptorType, std::string_view> DescriptorTypeToStrin
     }
 
 #define VK_HPP_ASSERT(func, message, ...)                                                        \
-    if (auto result = func; result != vk::Result::eSuccess) {                                    \
+    if (vk::Result result = func; result != vk::Result::eSuccess) {                                    \
         std::cout << "\nA Vulkan exepction occured at line: VkException '"                       \
                   << vk::to_string(result) << "' '" << __LINE__ << "' in file '" << __FILE__ \
                   << "':\n";                                                                     \
