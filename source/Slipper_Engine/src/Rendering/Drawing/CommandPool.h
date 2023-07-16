@@ -110,6 +110,11 @@ struct SingleUseCommandBuffer
         return buffer.value();
     }
 
+    [[nodiscard]] operator vk::CommandBuffer() const
+    {
+        return buffer.value();
+    }
+
  private:
     CommandPool &m_commandPool;
     bool m_submitted = false;

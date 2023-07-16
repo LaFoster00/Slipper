@@ -33,7 +33,7 @@ class Texture : DeviceDependentObject, public IShaderBindableData
 {
  public:
     Texture(vk::ImageType Type,
-            VkExtent3D Extent,
+            vk::Extent3D Extent,
             vk::Format ImageFormat,
             std::optional<vk::Format> ViewFormat = {},
             bool GenerateMipMaps = true,
@@ -79,7 +79,7 @@ class Texture : DeviceDependentObject, public IShaderBindableData
     {
     }
 
-    virtual void Resize(const VkExtent3D Extent);
+    virtual void Resize(const vk::Extent3D Extent);
 
     const std::vector<vk::ImageView> &GetViews() const
     {
@@ -91,28 +91,28 @@ class Texture : DeviceDependentObject, public IShaderBindableData
         return {imageInfo.extent.width, imageInfo.extent.height, imageInfo.extent.depth};
     }
 
-    static void EnqueueTransitionImageLayout(VkImage Image,
+    static void EnqueueTransitionImageLayout(vk::Image Image,
                                              ImageInfo &ImageInfo,
-                                             VkCommandBuffer CommandBuffer,
-                                             VkImageLayout NewLayout);
-    static SingleUseCommandBuffer CreateTransitionImageLayout(VkImage Image,
+                                             vk::CommandBuffer CommandBuffer,
+                                             vk::ImageLayout NewLayout);
+    static SingleUseCommandBuffer CreateTransitionImageLayout(vk::Image Image,
                                                               ImageInfo &ImageInfo,
-                                                              VkImageLayout NewLayout);
+                                                              vk::ImageLayout NewLayout);
 
     void CopyBuffer(const Buffer &Buffer, bool TransitionToShaderUse = true);
-    void EnqueueCopyImage(VkCommandBuffer CommandBuffer,
-                          VkImage SrcImage,
-                          VkImageLayout SrcLayout,
-                          VkExtent3D SrcExtent,
-                          VkImageLayout TargetLayout);
-    void CopyImage(VkImage SrcImage,
-                   VkImageLayout SrcLayout,
-                   VkExtent3D SrcExtent,
-                   VkImageLayout TargetLayout);
-    void EnqueueCopyTexture(VkCommandBuffer CommandBuffer,
+    void EnqueueCopyImage(vk::CommandBuffer CommandBuffer,
+                          vk::Image SrcImage,
+                          vk::ImageLayout SrcLayout,
+                          vk::Extent3D SrcExtent,
+                          vk::ImageLayout TargetLayout);
+    void CopyImage(vk::Image SrcImage,
+                   vk::ImageLayout SrcLayout,
+                   vk::Extent3D SrcExtent,
+                   vk::ImageLayout TargetLayout);
+    void EnqueueCopyTexture(vk::CommandBuffer CommandBuffer,
                             Texture &Texture,
-                            VkImageLayout TargetLayout);
-    void CopyTexture(Texture Texture, VkImageLayout TargetLayout);
+                            vk::ImageLayout TargetLayout);
+    void CopyTexture(Texture Texture, vk::ImageLayout TargetLayout);
 
     const ImageInfo &GetImageInfo() const
     {
@@ -124,7 +124,7 @@ class Texture : DeviceDependentObject, public IShaderBindableData
         return imageInfo.layout;
     }
 
-    operator vk::Image() const
+	operator vk::Image() const
     {
         return vkImage;
     }
@@ -136,31 +136,31 @@ class Texture : DeviceDependentObject, public IShaderBindableData
         return dynamic_cast<T *>(this);
     }
 
-    [[nodiscard]] static VkImageView CreateImageView(
-        VkImage Image,
-        VkImageType Type,
+    [[nodiscard]] static vk::ImageView CreateImageView(
+        vk::Image Image,
+        vk::ImageType Type,
         vk::Format Format,
         uint32_t MipLevels,
-        VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
+        vk::ImageAspectFlags ImageAspect = vk::ImageAspectFlagBits::eColor,
         uint32_t ArrayLayerCount = 1);
 
-    [[nodiscard]] VkImageView CreateDefaultImageView() const;
-    [[nodiscard]] VkImageView CreateImageView(vk::Format ViewFormat) const;
+    [[nodiscard]] vk::ImageView CreateDefaultImageView() const;
+    [[nodiscard]] vk::ImageView CreateImageView(vk::Format ViewFormat) const;
 
     static vk::Format FindSupportedFormat(const std::vector<vk::Format> &Candidates,
-                                          VkImageTiling Tiling,
-                                          VkFormatFeatureFlags Features);
+                                          vk::ImageTiling Tiling,
+                                          vk::FormatFeatureFlags Features);
     static vk::Format FindDepthFormat();
 
     static bool HasStencilComponent(vk::Format Format);
 
  private:
     void Create();
-    void EnqueueGenerateMipMaps(VkCommandBuffer CommandBuffer);
+    void EnqueueGenerateMipMaps(vk::CommandBuffer CommandBuffer);
 
  public:
-    VkImage vkImage;
-    VkDeviceMemory vkImageMemory;
+    vk::Image vkImage;
+    vk::DeviceMemory vkImageMemory;
     ImageInfo imageInfo;
     Sampler sampler;
 };

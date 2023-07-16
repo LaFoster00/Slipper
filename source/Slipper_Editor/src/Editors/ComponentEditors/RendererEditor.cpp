@@ -90,7 +90,7 @@ void RenderEditor::DrawImageEditor(const NonOwningPtr<Texture> Tex,
         imgui_textures.emplace(
             Tex,
             ImGui_ImplVulkan_AddTexture(
-                Tex->sampler, Tex->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+                Tex->sampler, Tex->CreateImageView(vk::Format::eR8G8B8A8Unorm), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
     }
     const uint32_t image_width = std::min(static_cast<int>(ImGui::GetWindowWidth()), 256);
     const float aspect = Tex->GetSize().y / Tex->GetSize().x;
