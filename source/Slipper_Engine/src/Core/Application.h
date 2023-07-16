@@ -5,8 +5,8 @@ int main(int argc, char *argv[]);
 
 namespace Slipper
 {
-	class MaterialManager;
-	class Application;
+class MaterialManager;
+class Application;
 class RenderingStage;
 class Event;
 class Gui;
@@ -71,7 +71,7 @@ class Application
 
     void Close();
     void CloseWindow(const Window *Window);
-    
+
     static Application &Get()
     {
         return *instance;
