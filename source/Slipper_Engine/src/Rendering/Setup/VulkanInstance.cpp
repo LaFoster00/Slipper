@@ -53,8 +53,11 @@ VulkanInstance::VulkanInstance()
     ASSERT(!m_instance, "Instance allready created!");
     m_instance = this;
 
-    const vk::ApplicationInfo app_info(
-        "Slipper", VK_MAKE_VERSION(1, 0, 0), "SlipperEngine", VK_API_VERSION_1_3);
+    constexpr vk::ApplicationInfo app_info("Slipper",
+                                           VK_MAKE_VERSION(1, 0, 0),
+                                           "SlipperEngine",
+                                           VK_MAKE_VERSION(1, 0, 0),
+                                           VK_API_VERSION_1_3);
 
     std::vector<const char *> validation_layers;
     vk::ValidationFeaturesEXT validation_features;

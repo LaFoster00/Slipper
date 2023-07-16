@@ -35,7 +35,8 @@ void SwapChain::Cleanup(bool KeepRenderPasses, bool CalledFromDestructor)
         device.logicalDevice.destroyImageView(m_vkImageViews[i]);
     }
 
-    Impl_Cleanup(CalledFromDestructor);
+    if (!CalledFromDestructor)
+        Impl_Cleanup();
 }
 
 void SwapChain::Recreate(uint32_t Width, uint32_t Height)

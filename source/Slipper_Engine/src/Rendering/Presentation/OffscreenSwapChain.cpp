@@ -20,7 +20,7 @@ OffscreenSwapChain::OffscreenSwapChain(const VkExtent2D &Extent,
 
 OffscreenSwapChain::~OffscreenSwapChain()
 {
-    OffscreenSwapChain::Impl_Cleanup(false);
+    OffscreenSwapChain::Impl_Cleanup();
 }
 
 void OffscreenSwapChain::UpdatePresentationTextures(VkCommandBuffer CommandBuffer,
@@ -95,11 +95,8 @@ void OffscreenSwapChain::Impl_Create()
     }
 }
 
-void OffscreenSwapChain::Impl_Cleanup(bool CalledFromBaseDestructor)
+void OffscreenSwapChain::Impl_Cleanup()
 {
-    if (CalledFromBaseDestructor)
-        return;
-
     presentationTextures.clear();
 
     for (const auto vk_image : GetVkImages()) {

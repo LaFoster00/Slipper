@@ -18,7 +18,7 @@ class OffscreenSwapChain : public SwapChain
 
  protected:
     void Impl_Create() override;
-    void Impl_Cleanup(bool CalledFromBaseDestructor) override;
+    void Impl_Cleanup() override;
     VkSwapchainKHR Impl_GetSwapChain() const override;
 
  public:

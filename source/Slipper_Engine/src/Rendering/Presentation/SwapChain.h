@@ -66,7 +66,7 @@ class SwapChain : public DeviceDependentObject
     void Create();
     virtual void Impl_Create() = 0;
     void Cleanup(bool KeepRenderPasses, bool CalledFromDestructor = false);
-    virtual void Impl_Cleanup(bool CalledFromBaseDestructor) = 0;
+    virtual void Impl_Cleanup() = 0;
 
     virtual VkSwapchainKHR Impl_GetSwapChain() const = 0;
 

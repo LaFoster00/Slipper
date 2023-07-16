@@ -6,5 +6,5 @@ class SlipperEngineTest : public Slipper::Application
  public:
     using Application::Application;
 
-    void Init() override;
+	void Init(Slipper::ApplicationInfo &ApplicationInfo) override;
 };

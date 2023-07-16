@@ -22,7 +22,7 @@ SurfaceSwapChain::SurfaceSwapChain(Surface &Surface)
 
 SurfaceSwapChain::~SurfaceSwapChain()
 {
-    SurfaceSwapChain::Impl_Cleanup(false);
+    SurfaceSwapChain::Impl_Cleanup();
 
     for (const auto image_available_semaphore : m_imageAvailableSemaphores) {
         vkDestroySemaphore(device, image_available_semaphore, nullptr);
@@ -58,11 +58,8 @@ vk::SurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
     return swapChainSupport.formats[0];
 }
 
-void SurfaceSwapChain::Impl_Cleanup(bool CalledFromBaseDestructor)
+void SurfaceSwapChain::Impl_Cleanup()
 {
-    if (CalledFromBaseDestructor)
-        return;
-
     vkDestroySwapchainKHR(device, vkSwapChain, nullptr);
     vkSwapChain = VK_NULL_HANDLE;
 }
@@ -129,8 +126,7 @@ void SurfaceSwapChain::Impl_Create()
 
     image_count = 0;
     vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, nullptr);
-    GetVkImages().resize(image_count);
-    vkGetSwapchainImagesKHR(device, vkSwapChain, &image_count, GetVkImages().data());
+    GetVkImages() = device.logicalDevice.getSwapchainImagesKHR(vkSwapChain);
     imageRenderingFormat = static_cast<vk::Format>(create_info.imageFormat);
     resolution = create_info.imageExtent;
 

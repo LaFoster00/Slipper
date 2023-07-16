@@ -8,10 +8,10 @@ int main(int argc, char *argv[])
 {
     try {
         Slipper::ApplicationInfo app_info{"Slipper Engine "};
-        auto app = new SlipperEngineTest(app_info);
-        app->Init();
-        TestGui *TestGui = new ::TestGui();
-        app->AddComponent(TestGui);
+        const auto app = new SlipperEngineTest();
+        app->Init(app_info);
+        const auto test_gui = new ::TestGui();
+        app->AddComponent(test_gui);
         app->Run();
         delete app;
     }
@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-void SlipperEngineTest::Init()
+void SlipperEngineTest::Init(Slipper::ApplicationInfo &ApplicationInfo)
 {
-    Application::Init();
+    Application::Init(ApplicationInfo);
     Slipper::GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
 }
