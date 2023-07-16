@@ -118,39 +118,6 @@ target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC "${EXTERNAL_LIBS_DIR}/s
 #magin_enum
 target_include_directories(${SLIPPER_ENGINE_NAME} PUBLIC "${EXTERNAL_LIBS_DIR}/magic_enum/include")
 
-
-##### Test Application #####
-message("Building Engine Executable")
-# Fetch all source files
-file(GLOB_RECURSE SLIPPER_ENGINE_TEST_SOURCE_FILES test/*.h test/*.cpp)
-
-add_executable(SlipperEngine_Test ${SLIPPER_ENGINE_TEST_SOURCE_FILES})
-add_dependencies(SlipperEngine_Test ${SLIPPER_ENGINE_NAME})
-
-#target_precompile_headers(SlipperEngine_Test REUSE_FROM SlipperEngine)
-
-set_property(TARGET SlipperEngine_Test PROPERTY CXX_STANDARD 20)
-
-GroupSources(test Source)
-target_include_directories(SlipperEngine_Test PUBLIC test)
-target_include_directories(SlipperEngine_Test PRIVATE ${SLIPPER_ENGINE_INCLUDE_DIRECTORIES})
-
-set(COMMON_EDITOR_LIBS
-    ${SLIPPER_ENGINE_NAME}    
-)
-
-#Libs
-if(LINUX)
-    target_link_libraries(SlipperEngine_Test ${COMMON_EDITOR_LIBS} ${LIBSTDCXX_LIBRARIES} dl pthread)
-else()
-    message("Linking for windows")    
-    if (CMAKE_GENERATOR MATCHES "Visual Studio")
-        target_link_libraries(SlipperEngine_Test ${COMMON_EDITOR_LIBS} User32.lib)
-    else()
-        target_link_libraries(SlipperEngine_Test ${COMMON_EDITOR_LIBS} User32.lib msvcrt.lib)
-    endif()
-endif()
-
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
