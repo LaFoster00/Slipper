@@ -52,7 +52,7 @@ void Device::InitLogicalDevice()
     {
         std::vector<vk::ExtensionProperties> available_extensions =
             physicalDevice.enumerateDeviceExtensionProperties();
-        std::cout << "\Available Device Extensions:\n";
+        std::cout << "Available Device Extensions:\n";
         for (auto &[extension_name, spec_version] : available_extensions) {
             std::cout << '\t' << extension_name << '\n';
         }
