@@ -17,45 +17,17 @@ void RenderEditor::DrawMaterialEditor(Material &Material)
 {
     for (const auto &[binding, data] : Material.uniforms | std::views::values) {
         ImGui::Text(std::format("{}:\n\t{}\n ",
-                                DescriptorTypeToString.at(binding.get().descriptorType),
+                                vk::to_string(binding.get().descriptorType),
                                 binding.get().name.c_str())
                         .c_str());
         switch (binding.get().descriptorType) {
-            case VK_DESCRIPTOR_TYPE_SAMPLER:
+            case vk::DescriptorType::eSampler:
                 break;
-            case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-            case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+            case vk::DescriptorType::eCombinedImageSampler:
+            case vk::DescriptorType::eSampledImage:
                 DrawImageEditor(static_cast<Texture *>(data.get()), binding, Material);
                 break;
-            case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-                break;
-            case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
-                break;
-            case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-                break;
-            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-                break;
-            case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-                break;
-            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
-                break;
-            case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
-                break;
-            case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-                break;
-            case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK:
-                break;
-            case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
-                break;
-            case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV:
-                break;
-            case VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM:
-                break;
-            case VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM:
-                break;
-            case VK_DESCRIPTOR_TYPE_MUTABLE_EXT:
-                break;
-            case VK_DESCRIPTOR_TYPE_MAX_ENUM:
+            case vk::DescriptorType::eUniformBuffer:
                 break;
             default:;
         }
@@ -89,8 +61,9 @@ void RenderEditor::DrawImageEditor(const NonOwningPtr<Texture> Tex,
     if (!imgui_textures.contains(Tex)) {
         imgui_textures.emplace(
             Tex,
-            ImGui_ImplVulkan_AddTexture(
-                Tex->sampler, Tex->CreateImageView(vk::Format::eR8G8B8A8Unorm), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+            ImGui_ImplVulkan_AddTexture(Tex->sampler,
+                                        Tex->CreateImageView(vk::Format::eR8G8B8A8Unorm),
+                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
     }
     const uint32_t image_width = std::min(static_cast<int>(ImGui::GetWindowWidth()), 256);
     const float aspect = Tex->GetSize().y / Tex->GetSize().x;

@@ -12,7 +12,7 @@ NonOwningPtr<Texture2D> TextureManager::Load2D(std::string_view Filepath, bool G
 {
     const auto texture_name = File::get_file_name_from_path(Filepath);
     if (m_namedTextures.contains(texture_name)) {
-        if (m_namedTextures.at(texture_name)->GetImageInfo().type != VK_IMAGE_TYPE_2D) {
+        if (m_namedTextures.at(texture_name)->GetImageInfo().type != vk::ImageType::e2D) {
             LOG_FORMAT(
                 "Texture '{}' allready exists with another type. Rename the texture or load "
                 "another one.",
@@ -51,7 +51,7 @@ NonOwningPtr<Texture2D> TextureManager::Load2D(std::string_view Filepath, bool G
 NonOwningPtr<Texture2D> TextureManager::Get2D(const std::string &Name)
 {
     if (m_namedTextures.contains(Name)) {
-        if (m_namedTextures.at(Name)->GetImageInfo().type != VK_IMAGE_TYPE_2D) {
+        if (m_namedTextures.at(Name)->GetImageInfo().type != vk::ImageType::e2D) {
             LOG_FORMAT("Texture '{}' is of other type than Texture2D. Returned nullptr", Name)
             return nullptr;
         }

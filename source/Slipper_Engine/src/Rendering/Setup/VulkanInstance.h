@@ -58,10 +58,11 @@ class VulkanInstance
         return instance;
     }
 
+    static std::vector<const char *> GetRequiredExtensions();
+
  private:
     static bool CheckValidationLayerSupport(std::vector<char const *> const &Layers,
                                             std::vector<vk::LayerProperties> const &Properties);
-    static std::vector<const char *> GetRequiredExtensions();
 
     void SetupDebugMessenger();
 

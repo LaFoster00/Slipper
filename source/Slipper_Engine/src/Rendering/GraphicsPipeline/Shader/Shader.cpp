@@ -131,7 +131,7 @@ void Shader::LoadShader(const std::vector<std::tuple<std::string_view, ShaderTyp
 
 void Shader::CreateDescriptorPool()
 {
-    std::vector<VkDescriptorPoolSize> pool_sizes;
+    std::vector<vk::DescriptorPoolSize> pool_sizes;
     for (const auto set_layout : shaderLayout->setLayouts) {
         for (DescriptorSetLayoutBinding binding : set_layout.bindings) {
             /* Need to multiply by Engine::MAX_FRAMES_IN_FLIGHT since vulkan needs to know the
@@ -142,14 +142,14 @@ void Shader::CreateDescriptorPool()
         }
     }
 
-    VkDescriptorPoolCreateInfo pool_info{};
-    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
-    pool_info.pPoolSizes = pool_sizes.data();
-    pool_info.maxSets = shaderLayout->setLayouts.size() * Engine::MAX_FRAMES_IN_FLIGHT;
+    vk::DescriptorPoolCreateInfo pool_info(vk::DescriptorPoolCreateFlags{},
+                                           shaderLayout->setLayouts.size() *
+                                               Engine::MAX_FRAMES_IN_FLIGHT,
+                                           pool_sizes);
 
-    VK_ASSERT(vkCreateDescriptorPool(device, &pool_info, nullptr, &m_vkDescriptorPool),
-              "Failed to create descriptor pool!")
+    VK_HPP_ASSERT(
+        device.logicalDevice.createDescriptorPool(&pool_info, nullptr, &m_vkDescriptorPool),
+        "Failed to create descriptor pool!")
 }
 
 GraphicsPipeline &Shader::CreateGraphicsPipeline(
@@ -211,7 +211,7 @@ VkPipelineShaderStageCreateInfo Shader::CreateShaderStage(const ShaderType &Shad
 void Shader::CreateUniformBuffers()
 {
     for (const auto layout_binding : shaderLayout->namedLayoutBindings | std::views::values) {
-        if (layout_binding->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
+        if (layout_binding->descriptorType == vk::DescriptorType::eUniformBuffer) {
             auto &buffers = uniformBindingBuffers[GetHash(layout_binding)];
             for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
                 auto &new_buffer = buffers.emplace_back(new UniformBuffer(layout_binding->size));
@@ -224,8 +224,8 @@ void Shader::CreateUniformBuffers()
 void Shader::CreateDescriptorSetLayouts()
 {
     for (auto set_layout : shaderLayout->setLayouts) {
-        VkDescriptorSetLayout &new_layout = m_vkDescriptorSetLayouts[set_layout.setNumber];
-        vkCreateDescriptorSetLayout(Device::Get(), &set_layout.createInfo, nullptr, &new_layout);
+        m_vkDescriptorSetLayouts[set_layout.setNumber] =
+            device.logicalDevice.createDescriptorSetLayout(set_layout.createInfo);
     }
 }
 
@@ -270,47 +270,39 @@ void Shader::BindShaderUniform_Interface(const DescriptorSetLayoutBinding &Bindi
                                          const IShaderBindableData &Object,
                                          std::optional<uint32_t> Index) const
 {
-    VkWriteDescriptorSet descriptor_write{};
-    descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor_write.dstBinding = Binding.binding;
-    descriptor_write.dstArrayElement = 0;
-    descriptor_write.descriptorType = Object.GetDescriptorType();
-    descriptor_write.descriptorCount = Binding.descriptorCount;
+    vk::WriteDescriptorSet descriptor_write(
+        {} /*Set Later*/, Binding.binding, 0, Object.GetDescriptorType(), {}, {}, {});
 
     const auto buffer_info = Object.GetDescriptorBufferInfo();
     if (buffer_info.has_value()) {
-        descriptor_write.pBufferInfo = &buffer_info.value();
+        descriptor_write.setBufferInfo(buffer_info.value());
     }
 
     const auto image_info = Object.GetDescriptorImageInfo();
     if (image_info.has_value()) {
-        descriptor_write.pImageInfo = &image_info.value();
+        descriptor_write.setImageInfo(image_info.value());
     }
 
     UpdateDescriptorSets(descriptor_write, Binding, Index);
 }
 
-void Shader::UpdateDescriptorSets(VkWriteDescriptorSet DescriptorWrite,
+void Shader::UpdateDescriptorSets(vk::WriteDescriptorSet DescriptorWrite,
                                   const DescriptorSetLayoutBinding &Binding,
                                   std::optional<uint32_t> Index) const
 {
     if (Index.has_value()) {
-        DescriptorWrite.dstSet = m_vkDescriptorSets.at(Binding.set)[Index.value()];
-        vkUpdateDescriptorSets(device, 1, &DescriptorWrite, 0, nullptr);
+        DescriptorWrite.setDstSet(m_vkDescriptorSets.at(Binding.set)[Index.value()]);
+        device.logicalDevice.updateDescriptorSets(DescriptorWrite, {});
     }
     else {
         // Update all descriptor sets at once
-        std::vector<VkWriteDescriptorSet> descriptor_writes;
+        std::vector<vk::WriteDescriptorSet> descriptor_writes;
         descriptor_writes.reserve(Engine::MAX_FRAMES_IN_FLIGHT);
         for (uint32_t frame = 0; frame < Engine::MAX_FRAMES_IN_FLIGHT; ++frame) {
             DescriptorWrite.dstSet = m_vkDescriptorSets.at(Binding.set)[frame];
             descriptor_writes.push_back(DescriptorWrite);
         }
-        vkUpdateDescriptorSets(device,
-                               static_cast<uint32_t>(descriptor_writes.size()),
-                               descriptor_writes.data(),
-                               0,
-                               nullptr);
+        device.logicalDevice.updateDescriptorSets(descriptor_writes, {});
     }
 }
 }  // namespace Slipper

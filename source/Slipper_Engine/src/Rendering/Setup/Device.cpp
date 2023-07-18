@@ -35,12 +35,37 @@ void Device::InitLogicalDevice()
     vk::PhysicalDeviceFeatures device_features;
     device_features.setSamplerAnisotropy(VK_TRUE);
 
+    vk::PhysicalDeviceSynchronization2Features synchronization2_features;
+    synchronization2_features.setSynchronization2(VK_TRUE);
+
     std::vector<const char *> enabled_layers;
     if (Engine::EnableValidationLayers)
         enabled_layers = Engine::VALIDATION_LAYERS;
 
-    vk::DeviceCreateInfo create_info(
-        {}, queue_create_infos, enabled_layers, Engine::DEVICE_EXTENSIONS, &device_features);
+    auto extensions = GetRequiredExtensions();
+    std::cout << "\nRequested Device Extensions:\n";
+    for (const char *extension_name : extensions) {
+        std::cout << '\t' << extension_name << '\n';
+    }
+    std::cout << '\n';
+
+    {
+        std::vector<vk::ExtensionProperties> available_extensions =
+            physicalDevice.enumerateDeviceExtensionProperties();
+        std::cout << "\Available Device Extensions:\n";
+        for (auto &[extension_name, spec_version] : available_extensions) {
+            std::cout << '\t' << extension_name << '\n';
+        }
+
+        std::cout << '\n\n';
+    }
+
+    vk::DeviceCreateInfo create_info({},
+                                     queue_create_infos,
+                                     enabled_layers,
+                                     extensions,
+                                     &device_features,
+                                     &synchronization2_features);
 
     VK_HPP_ASSERT(physicalDevice.createDevice(&create_info, nullptr, &logicalDevice),
                   "Failed to create logical device")
@@ -100,9 +125,36 @@ std::string Device::DeviceInfoToString() const
     info += "\n\t Driver Version: ";
     info += std::to_string(deviceProperties.driverVersion);
 
-    info += "\n\n";
+    info += "\n";
 
     return info;
+}
+
+std::vector<const char *> Device::GetRequiredExtensions()
+{
+    std::unordered_set<const char *> extensions(Engine::DEVICE_EXTENSIONS.begin(),
+                                                Engine::DEVICE_EXTENSIONS.end());
+
+    uint32_t glfw_extension_count = 0;
+    const char **glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+    extensions.insert(glfw_extensions, glfw_extensions + glfw_extension_count);
+
+    // This removes all the instance extensions that might have found their way into this (looking
+    // at you glfw)
+    for (auto extension = extensions.begin(); extension != extensions.end();) {
+        bool same = false;
+        for (const auto &[extension_name, spec] : vk::enumerateInstanceExtensionProperties()) {
+            if (strcmp(*extension, extension_name) == 0) {
+                extension = extensions.erase(extension);
+                same = true;
+                break;
+            }
+        }
+        if (!same)
+            ++extension;
+    }
+
+    return std::vector(extensions.begin(), extensions.end());
 }
 
 vk::SurfaceCapabilitiesKHR Device::GetPhysicalDeviceSurfaceCapabilities(
@@ -226,19 +278,21 @@ bool Device::CheckExtensionSupport() const
     std::vector<vk::ExtensionProperties> available_extensions =
         physicalDevice.enumerateDeviceExtensionProperties();
 
-    std::set<std::string> required_extensions(Engine::DEVICE_EXTENSIONS.begin(),
-                                              Engine::DEVICE_EXTENSIONS.end());
+    std::set<std::string> extensions(Engine::DEVICE_EXTENSIONS.begin(),
+                                     Engine::DEVICE_EXTENSIONS.end());
+    auto required_extensions = GetRequiredExtensions();
+    extensions.insert(required_extensions.begin(), required_extensions.end());
 
     for (const auto &[extension_name, spec_version] : available_extensions) {
-        required_extensions.erase(extension_name);
+        extensions.erase(extension_name);
     }
 
-    return required_extensions.empty();
+    return extensions.empty();
 }
 
 bool Device::CheckFeatureSupport() const
 {
-	const vk::PhysicalDeviceFeatures supported_features = physicalDevice.getFeatures();
+    const vk::PhysicalDeviceFeatures supported_features = physicalDevice.getFeatures();
 
     return supported_features.samplerAnisotropy && supported_features.geometryShader;
 }
@@ -250,8 +304,8 @@ const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface
 
     QueueFamilyIndices indices;
 
-
-    const std::vector<vk::QueueFamilyProperties> queue_families = physicalDevice.getQueueFamilyProperties();
+    const std::vector<vk::QueueFamilyProperties> queue_families =
+        physicalDevice.getQueueFamilyProperties();
 
     int graphics_queue_family_index = 0;
     for (const auto &queue_family : queue_families) {

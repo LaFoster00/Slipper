@@ -21,6 +21,8 @@ inline uint64_t FRAME_COUNT = 0;
 
 inline bool EnableValidationLayers = true;
 
+inline const std::vector<const char *> INSTANCE_EXTENSIONS = {};
+
 inline const std::vector<const char *> DEVICE_EXTENSIONS = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME};
 

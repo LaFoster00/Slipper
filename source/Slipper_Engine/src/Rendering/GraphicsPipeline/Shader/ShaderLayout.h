@@ -22,10 +22,10 @@ struct DescriptorSetLayoutBinding
     // Dont change layout of this since it will be referenced when converting to vulkan object with
     // VkDescriptorSetLayoutBinding()
     uint32_t binding;
-    VkDescriptorType descriptorType;
+    vk::DescriptorType descriptorType;
     uint32_t descriptorCount;
-    VkShaderStageFlags stageFlags;
-    const VkSampler *pImmutableSamplers;
+    vk::ShaderStageFlags stageFlags;
+    const vk::Sampler *pImmutableSamplers;
     // End of Vulkan Object
 
     // User Information
@@ -43,14 +43,14 @@ struct DescriptorSetLayoutBinding
     uint32_t size;            // Measured in bytes
     uint32_t paddedSize;      // Measured in bytes
 
-    VkDescriptorSetLayoutBinding &GetVkBinding()
+    vk::DescriptorSetLayoutBinding &GetVkBinding()
     {
-        return *reinterpret_cast<VkDescriptorSetLayoutBinding *>(&binding);
+        return *reinterpret_cast<vk::DescriptorSetLayoutBinding *>(&binding);
     }
 
-    const VkDescriptorSetLayoutBinding &GetVkBinding() const
+    const vk::DescriptorSetLayoutBinding &GetVkBinding() const
     {
-        return *reinterpret_cast<const VkDescriptorSetLayoutBinding *>(&binding);
+        return *reinterpret_cast<const vk::DescriptorSetLayoutBinding *>(&binding);
     }
 
     using HashT = size_t;
@@ -69,7 +69,7 @@ template<> struct hash<Slipper::DescriptorSetLayoutBinding>
                      binding.binding,
                      binding.descriptorType,
                      binding.descriptorCount,
-                     binding.stageFlags,
+                     static_cast<VkFlags>(binding.stageFlags),
                      binding.name,
                      binding.set,
                      binding.resourceType);
@@ -94,10 +94,10 @@ namespace Slipper
 struct DescriptorSetLayoutData
 {
     uint32_t setNumber;
-    VkDescriptorSetLayoutCreateInfo createInfo;
+    vk::DescriptorSetLayoutCreateInfo createInfo;
     std::vector<DescriptorSetLayoutBinding> bindings;
     // Required for the create info. Otherwise it will reference an invalid array
-    std::vector<VkDescriptorSetLayoutBinding> vkBindings;
+    std::vector<vk::DescriptorSetLayoutBinding> vkBindings;
 
     DescriptorSetLayoutData() = default;
 

@@ -63,6 +63,7 @@ VulkanInstance::VulkanInstance()
     vk::ValidationFeaturesEXT validation_features;
     if (Engine::EnableValidationLayers) {
         const std::vector instance_layer_properties = vk::enumerateInstanceLayerProperties();
+
         ASSERT(
             Engine::EnableValidationLayers &&
                 CheckValidationLayerSupport(Engine::VALIDATION_LAYERS, instance_layer_properties),
@@ -72,17 +73,21 @@ VulkanInstance::VulkanInstance()
         validation_features.setEnabledValidationFeatures(Engine::PRINTF_ENABLES);
     }
 
+    // Extensions
     auto extensions = GetRequiredExtensions();
-    std::vector extension_properties = vk::enumerateInstanceExtensionProperties(nullptr);
-
-    std::cout << "\nRequested Extensions:\n";
-    for (const char *extension_name : Engine::DEVICE_EXTENSIONS) {
+    extensions.insert(
+        extensions.end(), Engine::INSTANCE_EXTENSIONS.begin(), Engine::INSTANCE_EXTENSIONS.end());
+    std::cout << "\nRequested Instance Extensions:\n";
+    for (const char *extension_name : extensions) {
         std::cout << '\t' << extension_name << '\n';
     }
 
-    std::cout << "\nAvailable Extensions:\n";
+    std::vector extension_properties = vk::enumerateInstanceExtensionProperties(nullptr);
+
+    std::cout << "\nAvailable Instance Extensions:\n";
     for (const auto &[extension_name, spec_version] : extension_properties) {
-        std::cout << '\t' << extension_name << '\n';
+
+        std::cout << std::format("\t{} V{}", extension_name.data(), spec_version) << '\n';
     }
 
     const vk::InstanceCreateInfo create_info(
@@ -138,7 +143,6 @@ std::vector<const char *> VulkanInstance::GetRequiredExtensions()
 {
     uint32_t glfw_extension_count = 0;
     const char **glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-
     std::vector<const char *> extensions(glfw_extensions, glfw_extensions + glfw_extension_count);
 
     if (Engine::EnableValidationLayers) {

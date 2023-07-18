@@ -25,13 +25,12 @@ std::vector<DescriptorSetLayoutData> ShaderReflection::GetMergedDescriptorSetsLa
     for (IntermediateDSLD &intermediate_dsld : intermediate_dslds) {
         if (!unique_dslds.contains(intermediate_dsld.setNumber)) {
             auto &new_dsld = unique_dslds[intermediate_dsld.setNumber];
-            new_dsld.createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             new_dsld.setNumber = intermediate_dsld.setNumber;
-            new_dsld.createInfo.flags = 0;
+            new_dsld.createInfo.flags = vk::DescriptorSetLayoutCreateFlags{};
             new_dsld.createInfo.pNext = nullptr;
         }
         auto &unique_dsld = unique_dslds.at(intermediate_dsld.setNumber);
-        
+
         // Go through each binding and check if it is already defined and if so add its shader
         // stage to the valid use cases
         for (auto &intermediate_binding : intermediate_dsld.bindings) {
@@ -54,20 +53,18 @@ std::vector<DescriptorSetLayoutData> ShaderReflection::GetMergedDescriptorSetsLa
                 }
             }
 
-            if (!contains_binding)
-            {
+            if (!contains_binding) {
                 unique_dsld.bindings.push_back(intermediate_binding);
             }
         }
     }
 
     std::vector<DescriptorSetLayoutData> dslds;
-    for (auto &unique_dsld : unique_dslds | std::ranges::views::values)
-    {
+    for (auto &unique_dsld : unique_dslds | std::ranges::views::values) {
         unique_dsld.UpdateCreateInfo();
         dslds.push_back(unique_dsld);
     }
-    
+
     return dslds;
 }
 std::vector<IntermediateDSLD> ShaderReflection::GetDescriptorSetsLayoutData(

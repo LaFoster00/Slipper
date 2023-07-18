@@ -23,17 +23,18 @@ class Texture2D : public Texture
               vk::Format ImageFormat,
               std::optional<vk::Format> ViewFormat = {},
               bool GenerateMipMaps = true,
-              VkImageTiling Tiling = VK_IMAGE_TILING_OPTIMAL,
-              VkImageUsageFlags Usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                                        VK_IMAGE_USAGE_SAMPLED_BIT,
-              VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT,
-              VkMemoryPropertyFlags MemoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+              vk::ImageTiling Tiling = vk::ImageTiling::eOptimal,
+              vk::ImageUsageFlags Usage = vk::ImageUsageFlagBits::eTransferDst |
+                                          vk::ImageUsageFlagBits::eSampled,
+              vk::ImageAspectFlags ImageAspect = vk::ImageAspectFlagBits::eColor,
+              vk::MemoryPropertyFlags MemoryFlags = vk::MemoryPropertyFlagBits::eHostVisible |
+                                                    vk::MemoryPropertyFlagBits::eHostCoherent);
 
  private:
-    void CreateTexture2D(void *Data,
-                         VkMemoryPropertyFlags MemoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    void CreateTexture2D(
+        void *Data,
+        vk::MemoryPropertyFlags MemoryFlags = vk::MemoryPropertyFlagBits::eHostVisible |
+                                              vk::MemoryPropertyFlagBits::eHostCoherent);
     Texture2D() = delete;
 
  public:

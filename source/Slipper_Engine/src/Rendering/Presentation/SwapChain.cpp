@@ -83,7 +83,7 @@ void SwapChain::CreateImageViews()
     m_vkImageViews.resize(m_vkImages.size());
     for (size_t i = 0; i < m_vkImages.size(); i++) {
         m_vkImageViews[i] = Texture::CreateImageView(
-            m_vkImages[i], VK_IMAGE_TYPE_2D, imageRenderingFormat, 1);
+            m_vkImages[i], vk::ImageType::e2D, imageRenderingFormat, 1);
     }
 }
 
@@ -100,13 +100,13 @@ void SwapChain::CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass)
     for (size_t i = 0; i < m_vkImageViews.size(); i++) {
         std::vector<vk::ImageView> attachments;
         if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
-            attachments.push_back(renderTarget->imageInfo.view);
-            attachments.push_back(depthBuffer->imageInfo.view);
+            attachments.push_back(renderTarget->imageInfo.views[0]);
+            attachments.push_back(depthBuffer->imageInfo.views[0]);
             attachments.push_back(m_vkImageViews[i]);
         }
         else {
             attachments.push_back(m_vkImageViews[i]);
-            attachments.push_back(depthBuffer->imageInfo.view);
+            attachments.push_back(depthBuffer->imageInfo.views[0]);
         }
         const vk::Extent2D extent = GetResolution();
 

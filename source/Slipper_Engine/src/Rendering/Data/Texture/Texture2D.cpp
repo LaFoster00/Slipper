@@ -1,12 +1,12 @@
 #include "Texture2D.h"
 
-#include "Path.h"
 #include "Buffer/Buffer.h"
+#include "Path.h"
 
 namespace Slipper
 {
 Texture2D::Texture2D(const StbImage Image, const bool GenerateMipMaps)
-    : Texture(VK_IMAGE_TYPE_2D, Image.extent, Image.format, {}, GenerateMipMaps),
+    : Texture(vk::ImageType::e2D, Image.extent, Image.format, {}, GenerateMipMaps),
       filepath(Image.filepath)
 {
     CreateTexture2D(Image.pixels);
@@ -17,11 +17,11 @@ Texture2D::Texture2D(const VkExtent2D Extent,
                      const vk::Format ImageFormat,
                      std::optional<vk::Format> ViewFormat,
                      const bool GenerateMipMaps,
-                     const VkImageTiling Tiling,
-                     const VkImageUsageFlags Usage,
-                     const VkImageAspectFlags ImageAspect,
-                     const VkMemoryPropertyFlags MemoryFlags)
-    : Texture(VK_IMAGE_TYPE_2D,
+                     const vk::ImageTiling Tiling,
+                     const vk::ImageUsageFlags Usage,
+                     const vk::ImageAspectFlags ImageAspect,
+                     const vk::MemoryPropertyFlags MemoryFlags)
+    : Texture(vk::ImageType::e2D,
               VkExtent3D(Extent.width, Extent.height, 1),
               ImageFormat,
               ViewFormat,
@@ -38,11 +38,13 @@ Texture2D::~Texture2D()
 {
 }
 
-void Texture2D::CreateTexture2D(void *Data, const VkMemoryPropertyFlags MemoryFlags)
+void Texture2D::CreateTexture2D(void *Data, const vk::MemoryPropertyFlags MemoryFlags)
 {
     const VkDeviceSize texture_size = imageInfo.extent.width * imageInfo.extent.height * 4;
 
-    const Buffer staging_buffer(texture_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, MemoryFlags);
+    const Buffer staging_buffer(texture_size,
+                                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                static_cast<VkMemoryPropertyFlags>(MemoryFlags));
 
     if (Data) {
         Buffer::SetBufferData(Data, staging_buffer);

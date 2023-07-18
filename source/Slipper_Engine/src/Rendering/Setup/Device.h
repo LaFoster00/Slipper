@@ -73,6 +73,8 @@ class Device
 
     [[nodiscard]] std::string DeviceInfoToString() const;
 
+    [[nodiscard]] static std::vector<const char *> GetRequiredExtensions();
+
     vk::SurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const;
     uint32_t SurfaceSwapChainImagesCount(const Surface *Surface) const;
     static uint32_t CapabilitiesSwapChainImageCount(const SwapChainSupportDetails &Support);

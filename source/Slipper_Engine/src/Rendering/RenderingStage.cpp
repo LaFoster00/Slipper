@@ -76,9 +76,9 @@ void RenderingStage::EndRender()
             const auto [width, height] = GetSwapChain()->GetResolution();
             GetPresentationTexture()->EnqueueCopyImage(draw_command_buffer,
                                                        GetSwapChain()->GetCurrentSwapChainImage(),
-                                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                                       vk::ImageLayout::eTransferSrcOptimal,
                                                        {width, height, 1},
-                                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                                                       vk::ImageLayout::eShaderReadOnlyOptimal);
         }
     }
     commandPool->EndCommandBuffer(draw_command_buffer);

@@ -33,9 +33,9 @@ void OffscreenSwapChain::UpdatePresentationTextures(VkCommandBuffer CommandBuffe
     presentationTextures[GetCurrentSwapChainImageIndex()]->EnqueueCopyImage(
         CommandBuffer,
         GetCurrentSwapChainImage(),
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        vk::ImageLayout::eTransferSrcOptimal,
         {viewport_resolution.width, viewport_resolution.height, 1},
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
 uint32_t OffscreenSwapChain::GetCurrentSwapChainImageIndex() const

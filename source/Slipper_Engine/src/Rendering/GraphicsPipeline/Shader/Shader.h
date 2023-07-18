@@ -134,7 +134,7 @@ class Shader : public DeviceDependentObject
         ASSERT(Binding.descriptorType == Object.GetDescriptorType(),
                "Descriptor '{}' is not of type {}",
                Binding.name,
-               DescriptorTypeToString.at(Object.GetDescriptorType()));
+               vk::to_string(Object.GetDescriptorType()));
 
         Object.AdditionalBindingChecks(Binding);
         BindShaderUniform_Interface(Binding, Object, Index);
@@ -166,7 +166,7 @@ class Shader : public DeviceDependentObject
     void BindShaderUniform_Interface(const DescriptorSetLayoutBinding &Binding,
                                        const IShaderBindableData &Object,
                                        std::optional<uint32_t> Index = {}) const;
-    void UpdateDescriptorSets(VkWriteDescriptorSet DescriptorWrite,
+    void UpdateDescriptorSets(vk::WriteDescriptorSet DescriptorWrite,
                               const DescriptorSetLayoutBinding &Binding,
                               std::optional<uint32_t> Index) const;
 
@@ -187,11 +187,11 @@ class Shader : public DeviceDependentObject
         uniformBindingBuffers;
 
  private:
-    VkDescriptorPool m_vkDescriptorPool = VK_NULL_HANDLE;
-    std::map<uint32_t, std::vector<VkDescriptorSet>>
+    vk::DescriptorPool m_vkDescriptorPool = VK_NULL_HANDLE;
+    std::map<uint32_t, std::vector<vk::DescriptorSet>>
         m_vkDescriptorSets;  // One set for every frame
     std::unordered_map<ShaderType, ShaderStage> m_shaderStages;
-    std::map<uint32_t, VkDescriptorSetLayout> m_vkDescriptorSetLayouts;  // One layout for set
+    std::map<uint32_t, vk::DescriptorSetLayout> m_vkDescriptorSetLayouts;  // One layout for set
     std::unordered_map<NonOwningPtr<const RenderPass>, OwningPtr<GraphicsPipeline>>
         m_graphicsPipelines;
 };

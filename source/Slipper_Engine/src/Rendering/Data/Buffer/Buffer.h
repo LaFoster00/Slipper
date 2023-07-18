@@ -56,19 +56,19 @@ class Buffer : DeviceDependentObject, public IShaderBindableData
         return vkBuffer;
     }
 
-    [[nodiscard]] std::optional<VkDescriptorImageInfo> GetDescriptorImageInfo() const override
+    [[nodiscard]] std::optional<vk::DescriptorImageInfo> GetDescriptorImageInfo() const override
     {
         return {};
     }
 
-    [[nodiscard]] std::optional<VkDescriptorBufferInfo> GetDescriptorBufferInfo() const override
+    [[nodiscard]] std::optional<vk::DescriptorBufferInfo> GetDescriptorBufferInfo() const override
     {
-        return VkDescriptorBufferInfo{vkBuffer, 0, vkBufferSize};
+        return vk::DescriptorBufferInfo(vkBuffer, 0, vkBufferSize);
     }
 
-    [[nodiscard]] constexpr VkDescriptorType GetDescriptorType() const override
+    [[nodiscard]] constexpr vk::DescriptorType GetDescriptorType() const override
     {
-        return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        return vk::DescriptorType::eUniformBuffer;
     }
 
     void AdditionalBindingChecks(const DescriptorSetLayoutBinding &Binding) const override

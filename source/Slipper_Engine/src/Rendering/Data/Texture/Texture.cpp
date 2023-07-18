@@ -57,28 +57,19 @@ void Texture::Create()
                                                 device.queueFamilyIndices.transferFamily.value()};
     std::vector queue_families(unique_queue_families.begin(), unique_queue_families.end());
 
-    vk::SharingMode sharingMode;
-    if (queue_families.size() > 1) {
-        sharingMode = vk::SharingMode::eConcurrent;
-        image_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_families.size());
-        image_create_info.pQueueFamilyIndices = queue_families.data();
-    }
-    else {
-        sharingMode = vk::SharingMode::eExclusive;
-    }
-
-    const vk::ImageCreateInfo image_create_info(vk::ImageCreateFlagBits::eMutableFormat,
-                                                imageInfo.type,
-                                                imageInfo.imageFormat,
-                                                imageInfo.extent,
-                                                imageInfo.mipLevels,
-                                                imageInfo.arrayLayerCount,
-                                                imageInfo.numSamples,
-                                                imageInfo.tiling,
-                                                imageInfo.usage,
-                                                sharingMode,
-                                                queue_families,
-                                                imageInfo.layout);
+    const vk::ImageCreateInfo image_create_info(
+        vk::ImageCreateFlagBits::eMutableFormat,
+        imageInfo.type,
+        imageInfo.imageFormat,
+        imageInfo.extent,
+        imageInfo.mipLevels,
+        imageInfo.arrayLayerCount,
+        imageInfo.numSamples,
+        imageInfo.tiling,
+        imageInfo.usage,
+        queue_families.size() > 1 ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive,
+        queue_families,
+        imageInfo.layout);
 
     VK_HPP_ASSERT(device.logicalDevice.createImage(&image_create_info, nullptr, &vkImage),
                   "Failed to create image!")
@@ -345,7 +336,7 @@ void Texture::CopyBuffer(const Buffer &Buffer, const bool TransitionToShaderUse)
     if (!imageInfo.generateMipMaps) {
         if (TransitionToShaderUse) {
             EnqueueTransitionImageLayout(
-                vkImage, imageInfo, command_buffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                vkImage, imageInfo, command_buffer, vk::ImageLayout::eShaderReadOnlyOptimal);
         }
     }
     else {
@@ -362,34 +353,21 @@ void Texture::EnqueueCopyImage(vk::CommandBuffer CommandBuffer,
                                vk::ImageLayout TargetLayout)
 {
     EnqueueTransitionImageLayout(
-        vkImage, imageInfo, CommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        vkImage, imageInfo, CommandBuffer, vk::ImageLayout::eTransferDstOptimal);
 
-    VkImageBlit blit{};
-    blit.srcOffsets[0] = {0, 0, 0};
-    blit.srcOffsets[1] = {static_cast<int32_t>(SrcExtent.width),
-                          static_cast<int32_t>(SrcExtent.height),
-                          static_cast<int32_t>(SrcExtent.depth)};
-    blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    blit.srcSubresource.mipLevel = 0;
-    blit.srcSubresource.baseArrayLayer = 0;
-    blit.srcSubresource.layerCount = 1;
-    blit.dstOffsets[0] = {0, 0, 0};
-    blit.dstOffsets[1] = {static_cast<int32_t>(imageInfo.extent.width),
-                          static_cast<int32_t>(imageInfo.extent.height),
-                          static_cast<int32_t>(imageInfo.extent.depth)};
-    blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    blit.dstSubresource.mipLevel = 0;
-    blit.dstSubresource.baseArrayLayer = 0;
-    blit.dstSubresource.layerCount = 1;
-
-    vkCmdBlitImage(CommandBuffer,
-                   SrcImage,
-                   SrcLayout,
-                   vkImage,
-                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                   1,
-                   &blit,
-                   VK_FILTER_LINEAR);
+    vk::ImageBlit2 blit(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
+                        {vk::Offset3D(0, 0, 0),
+                         vk::Offset3D(static_cast<int32_t>(SrcExtent.width),
+                                      static_cast<int32_t>(SrcExtent.height),
+                                      static_cast<int32_t>(SrcExtent.depth))},
+                        vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
+                        {vk::Offset3D(0, 0, 0),
+                         vk::Offset3D(static_cast<int32_t>(imageInfo.extent.width),
+                                      static_cast<int32_t>(imageInfo.extent.height),
+                                      static_cast<int32_t>(imageInfo.extent.depth))});
+    const vk::BlitImageInfo2 blit_info(
+        SrcImage, SrcLayout, vkImage, imageInfo.layout, blit, vk::Filter::eNearest);
+    CommandBuffer.blitImage2(blit_info);
 
     EnqueueTransitionImageLayout(vkImage, imageInfo, CommandBuffer, TargetLayout);
 }
@@ -411,7 +389,7 @@ void Texture::EnqueueCopyTexture(vk::CommandBuffer CommandBuffer,
 {
     const auto previous_other_texture_layout = Texture.GetCurrentLayout();
     Texture.EnqueueTransitionImageLayout(
-        vkImage, imageInfo, CommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        vkImage, imageInfo, CommandBuffer, vk::ImageLayout::eTransferSrcOptimal);
     EnqueueCopyImage(CommandBuffer,
                      Texture.vkImage,
                      Texture.GetCurrentLayout(),
@@ -423,8 +401,7 @@ void Texture::EnqueueCopyTexture(vk::CommandBuffer CommandBuffer,
 
 void Texture::CopyTexture(Texture Texture, vk::ImageLayout TargetLayout)
 {
-    SingleUseCommandBuffer command_buffer = SingleUseCommandBuffer(
-        *GraphicsEngine::Get().memoryCommandPool);
+    auto command_buffer = SingleUseCommandBuffer(*GraphicsEngine::Get().memoryCommandPool);
     EnqueueCopyTexture(command_buffer, Texture, TargetLayout);
     command_buffer.Submit();
 }
@@ -436,45 +413,44 @@ vk::ImageView Texture::CreateImageView(vk::Image Image,
                                        vk::ImageAspectFlags ImageAspect,
                                        uint32_t ArrayLayerCount)
 {
-    VkImageViewCreateInfo view_info{};
-    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    view_info.image = Image;
+    vk::ImageViewCreateInfo view_info(
+        vk::ImageViewCreateFlags{},
+        Image,
+        vk::ImageViewType::e2D,  // Overwritten below
+        Format,
+        vk::ComponentMapping(),
+        vk::ImageSubresourceRange(ImageAspect, 0, MipLevels, 0, ArrayLayerCount));
+
     if (ArrayLayerCount < 2) {
         switch (Type) {
-            case VK_IMAGE_TYPE_1D:
-                view_info.viewType = VK_IMAGE_VIEW_TYPE_1D;
+            case vk::ImageType::e1D:
+                view_info.viewType = vk::ImageViewType::e1D;
                 break;
-            case VK_IMAGE_TYPE_2D:
-                view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            case vk::ImageType::e2D:
+                view_info.viewType = vk::ImageViewType::e2D;
                 break;
-            case VK_IMAGE_TYPE_3D:
-                view_info.viewType = VK_IMAGE_VIEW_TYPE_3D;
+            case vk::ImageType::e3D:
+                view_info.viewType = vk::ImageViewType::e3D;
                 break;
         }
     }
     else {
         switch (Type) {
-            case VK_IMAGE_TYPE_1D:
-                view_info.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+            case vk::ImageType::e1D:
+                view_info.viewType = vk::ImageViewType::e1DArray;
                 break;
-            case VK_IMAGE_TYPE_2D:
-                view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            case vk::ImageType::e2D:
+                view_info.viewType = vk::ImageViewType::e2DArray;
                 break;
-            case VK_IMAGE_TYPE_3D:
-                view_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            case vk::ImageType::e3D:
+                view_info.viewType = vk::ImageViewType::eCubeArray;
                 break;
         }
     }
-    view_info.format = static_cast<VkFormat>(Format);
-    view_info.subresourceRange.aspectMask = ImageAspect;
-    view_info.subresourceRange.baseMipLevel = 0;
-    view_info.subresourceRange.levelCount = MipLevels;
-    view_info.subresourceRange.baseArrayLayer = 0;
-    view_info.subresourceRange.layerCount = ArrayLayerCount;
 
-    VkImageView image_view;
-    VK_ASSERT(vkCreateImageView(Device::Get(), &view_info, nullptr, &image_view),
-              "Failed to create texture image view!");
+    vk::ImageView image_view;
+    VK_HPP_ASSERT(Device::Get().logicalDevice.createImageView(&view_info, nullptr, &image_view),
+                  "Failed to create texture image view!");
     return image_view;
 }
 
@@ -503,15 +479,12 @@ vk::Format Texture::FindSupportedFormat(const std::vector<vk::Format> &Candidate
                                         const vk::FormatFeatureFlags Features)
 {
     for (const vk::Format format : Candidates) {
-        VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties(
-            Device::Get().physicalDevice, static_cast<VkFormat>(format), &props);
-
-        if (Tiling == VK_IMAGE_TILING_LINEAR &&
+        if (auto props = Device::Get().physicalDevice.getFormatProperties(format);
+            Tiling == vk::ImageTiling::eLinear &&
             (props.linearTilingFeatures & Features) == Features) {
             return format;
         }
-        else if (Tiling == VK_IMAGE_TILING_OPTIMAL &&
+        else if (Tiling == vk::ImageTiling::eOptimal &&
                  (props.optimalTilingFeatures & Features) == Features) {
             return format;
         }
@@ -524,8 +497,8 @@ vk::Format Texture::FindDepthFormat()
 {
     return FindSupportedFormat(
         {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+        vk::ImageTiling::eOptimal,
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment);
 }
 
 bool Texture::HasStencilComponent(const vk::Format Format)
