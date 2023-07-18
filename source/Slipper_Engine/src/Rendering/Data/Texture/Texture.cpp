@@ -195,6 +195,7 @@ Texture::~Texture()
     for (const auto vk_image_view : imageInfo.views) {
         device.logicalDevice.destroyImageView(vk_image_view, nullptr);
     }
+    imageInfo.views.clear();
     device.logicalDevice.destroyImage(vkImage, nullptr);
     device.logicalDevice.freeMemory(vkImageMemory, nullptr);
 }
@@ -206,6 +207,7 @@ void Texture::Resize(const vk::Extent3D Extent)
     for (const auto vk_image_view : imageInfo.views) {
         device.logicalDevice.destroyImageView(vk_image_view, nullptr);
     }
+    imageInfo.views.clear();
     device.logicalDevice.destroyImage(vkImage, nullptr);
     device.logicalDevice.freeMemory(vkImageMemory, nullptr);
 
