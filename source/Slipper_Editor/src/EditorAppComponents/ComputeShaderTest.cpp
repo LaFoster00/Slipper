@@ -1,5 +1,6 @@
 #include "ComputeShaderTest.h"
 
+#include "ComputeShader.h"
 #include "Buffer/Buffer.h"
 #include "ShaderManager.h"
 
@@ -24,7 +25,7 @@ void ComputeShaderTest::Init()
             static_cast<VkMemoryPropertyFlags>(vk::MemoryPropertyFlagBits::eDeviceLocal)));
     }
 
-    m_computeShader = ShaderManager::LoadShader(
+    m_computeShader = ShaderManager::LoadComputeShader(
         {"./EditorContent/Shaders/Spir-V/ParticleTest.comp.spv"});
 
     // Initialize particles

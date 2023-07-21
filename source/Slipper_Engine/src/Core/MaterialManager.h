@@ -18,7 +18,8 @@ class MaterialManager : public AppComponent
     {
     }
 
-    static NonOwningPtr<Material> AddMaterial(std::string Name, NonOwningPtr<Shader> Shader);
+    static NonOwningPtr<Material> AddMaterial(std::string Name,
+                                              NonOwningPtr<GraphicsShader> Shader);
     static NonOwningPtr<Material> GetMaterial(std::string Name);
     static std::optional<NonOwningPtr<Material>> TryGetMaterial(std::string Name);
 

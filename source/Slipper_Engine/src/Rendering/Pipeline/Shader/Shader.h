@@ -1,19 +1,16 @@
 #pragma once
 
-#include "GraphicsEngine.h"
 #include "IShaderBindableData.h"
 #include "ShaderLayout.h"
+#include "Buffer/UniformBuffer.h"
 
 namespace Slipper
 {
-	class ComputePipeline;
-	class UniformBuffer;
-class IShaderBindableData;
-class ShaderLayout;
+struct DescriptorSetLayoutBindingMinimal;
+struct DescriptorSetLayoutBinding;
+class Texture; 
+class ShaderManager;
 class ShaderReflection;
-class RenderPass;
-class GraphicsPipeline;
-
 extern const char *ShaderTypeNames[];
 
 // DO NOT CHANGE NUMBERS WITHOUT CHANGING SHADERTYPENAMES ARRAY!!!
@@ -91,6 +88,7 @@ concept IsConvertibleToTexture = std::is_convertible_v<T *, Texture *>;
 class Shader : public DeviceDependentObject
 {
     friend ShaderReflection;
+    friend ShaderManager;
 
  public:
     struct ShaderStage
@@ -99,20 +97,7 @@ class Shader : public DeviceDependentObject
         VkPipelineShaderStageCreateInfo pipelineStageCrateInfo;
     };
 
-    Shader() = delete;
-    Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStages,
-           std::optional<std::vector<RenderPass *>> RenderPasses = {});
-    ~Shader();
-
-    GraphicsPipeline &RegisterRenderPass(NonOwningPtr<const RenderPass> RenderPass);
-
-    /* Binds the shaders pipeline and its descriptor sets
-     * Current frame is optional and will be fetched from the currentFrame of the GraphicsEngine if
-     * empty.
-     */
-    void Use(const VkCommandBuffer &CommandBuffer,
-             NonOwningPtr<const RenderPass> RenderPass,
-             VkExtent2D Extent) const;
+    virtual ~Shader();
 
     std::optional<Ref<DescriptorSetLayoutBinding>> BindShaderUniform(
         const std::string_view Name,
@@ -170,9 +155,7 @@ class Shader : public DeviceDependentObject
         return {};
     }
 
- private:
-    void LoadShader(const std::vector<std::tuple<std::string_view, ShaderType>> &Shaders);
-
+ protected:
     void CreateDescriptorPool();
     void CreateDescriptorSetLayouts();
     void AllocateDescriptorSets();
@@ -184,12 +167,6 @@ class Shader : public DeviceDependentObject
                               const DescriptorSetLayoutBindingMinimal &Binding,
                               std::optional<uint32_t> Index) const;
 
-    GraphicsPipeline &CreateGraphicsPipeline(
-        NonOwningPtr<const RenderPass> RenderPass,
-        const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts);
-
-    ComputePipeline &CreateComputePipeline();
-
     static VkShaderModule CreateShaderModule(const std::vector<char> &Code);
     static VkPipelineShaderStageCreateInfo CreateShaderStage(const ShaderType &ShaderType,
                                                              const VkShaderModule &ShaderModule);
@@ -198,20 +175,16 @@ class Shader : public DeviceDependentObject
 
  public:
     std::string name;
-	OwningPtr<ShaderLayout> shaderLayout;
+    OwningPtr<ShaderLayout> shaderLayout;
     std::map<DescriptorSetLayoutBinding::HashT, std::vector<OwningPtr<UniformBuffer>>>
         uniformBindingBuffers;
 
- private:
+ protected:
     vk::DescriptorPool m_vkDescriptorPool = VK_NULL_HANDLE;
     std::map<uint32_t, std::vector<vk::DescriptorSet>>
         m_vkDescriptorSets;  // One set for every frame
-    std::unordered_map<ShaderType, ShaderStage> m_shaderStages;
-    std::map<uint32_t, vk::DescriptorSetLayout> m_vkDescriptorSetLayouts;  // One layout for set
-    std::unordered_map<NonOwningPtr<const RenderPass>, OwningPtr<GraphicsPipeline>>
-        m_graphicsPipelines;
 
-    OwningPtr<ComputePipeline> m_computePipeline;
+    std::map<uint32_t, vk::DescriptorSetLayout> m_vkDescriptorSetLayouts;  // One layout for set
 };
 
 // extern template void Shader::BindShaderUniform(const std::string Name, const UniformBuffer

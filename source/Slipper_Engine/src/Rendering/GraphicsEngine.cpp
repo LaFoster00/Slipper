@@ -110,7 +110,7 @@ void GraphicsEngine::SetupDebugResources()
 
     MaterialManager::AddMaterial(
         "Basic",
-        ShaderManager::LoadShader({{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
+        ShaderManager::LoadGraphicsShader({{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
                                    {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}}))
         ->SetUniform("texSampler", *TextureManager::Get2D("viking_room"));
 }
@@ -159,7 +159,7 @@ void GraphicsEngine::AddWindow(Window &Window)
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface) const
 {
-    ShaderManager::GetShader("Basic")->RegisterRenderPass(viewportRenderPass);
+    ShaderManager::TryGetGraphicsShader("Basic")->RegisterRenderPass(viewportRenderPass);
     SetupSimpleDraw();
 }
 

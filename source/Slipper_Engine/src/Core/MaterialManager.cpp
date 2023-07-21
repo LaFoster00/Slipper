@@ -4,7 +4,7 @@
 
 namespace Slipper
 {
-NonOwningPtr<Material> MaterialManager::AddMaterial(std::string Name, NonOwningPtr<Shader> Shader)
+NonOwningPtr<Material> MaterialManager::AddMaterial(std::string Name, NonOwningPtr<GraphicsShader> Shader)
 {
     if (m_materials.contains(Name)) {
         LOG_FORMAT(

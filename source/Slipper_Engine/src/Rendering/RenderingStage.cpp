@@ -2,13 +2,14 @@
 
 #include "Buffer/UniformBuffer.h"
 #include "CameraComponent.h"
-#include "Drawing/CommandPool.h"
+#include "GraphicsEngine.h"
 #include "Material.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Presentation/SurfaceSwapChain.h"
+#include "Presentation/SwapChain.h"
 #include "RenderPass.h"
-#include "Shader/Shader.h"
+#include "Shader.h"
 #include "Texture/Texture2D.h"
 
 namespace Slipper

@@ -83,6 +83,11 @@ template<typename T> struct NonOwningPtr
         return NonOwningPtr<U>(m_ptr);
     }
 
+    template<typename U> constexpr NonOwningPtr<U> TryCast()
+    {
+        return dynamic_cast<U *>(m_ptr);
+    }
+
  private:
     T *m_ptr;
 };

@@ -1,11 +1,12 @@
 #include "Material.h"
 
+#include "GraphicsEngine.h"
+#include "GraphicsShader.h"
 #include "MaterialManager.h"
-#include "Shader/Shader.h"
 
 namespace Slipper
 {
-Material::Material(NonOwningPtr<Shader> Shader)
+Material::Material(NonOwningPtr<GraphicsShader> Shader)
 {
     shader = Shader;
 }
