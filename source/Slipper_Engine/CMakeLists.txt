@@ -70,7 +70,8 @@ set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     src/Platform
     src/Rendering
     src/Rendering/Data
-    src/Rendering/GraphicsPipeline
+    src/Rendering/Pipeline
+    src/Rendering/Pipeline/Shader
     src/SceneObjects
     src/Tutorial
     src/Window

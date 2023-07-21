@@ -1,6 +1,6 @@
 #include "Framebuffer.h"
 
-#include "GraphicsPipeline/RenderPass.h"
+#include "RenderPass.h"
 
 namespace Slipper
 {

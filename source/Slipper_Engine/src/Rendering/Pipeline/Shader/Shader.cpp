@@ -1,16 +1,15 @@
 #include "Shader.h"
 
 #include "Buffer/UniformBuffer.h"
+#include "ComputePipeline.h"
 #include "File.h"
 #include "GraphicsPipeline.h"
 #include "IShaderBindableData.h"
-#include "Presentation/SwapChain.h"
 #include "RenderPass.h"
 
 namespace Slipper
 {
 const char *ShaderTypeNames[]{"UNDEFINED", "Vertex", "Fragment", "Compute"};
-
 
 Shader::Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStages,
                const std::optional<std::vector<RenderPass *>> RenderPasses)
@@ -121,7 +120,7 @@ void Shader::LoadShader(const std::vector<std::tuple<std::string_view, ShaderTyp
         new_shader_stage.pipelineStageCrateInfo = CreateShaderStage(shader_type,
                                                                     new_shader_stage.shaderModule);
         m_shaderStages.insert(std::make_pair(shader_type, new_shader_stage));
-    	/* LOG_FORMAT("Create {} shader '{}' from {}",
+        /* LOG_FORMAT("Create {} shader '{}' from {}",
                    ShaderTypeNames[static_cast<uint32_t>(shader_type)],
                    name,
                    filepath)*/
@@ -167,6 +166,14 @@ GraphicsPipeline &Shader::CreateGraphicsPipeline(
                 .emplace(RenderPass,
                          new GraphicsPipeline(createInfos, RenderPass, DescriptorSetLayouts))
                 .first->second;
+}
+
+ComputePipeline &Shader::CreateComputePipeline()
+{
+    m_computePipeline = new ComputePipeline(
+        (*m_shaderStages.begin()).second.pipelineStageCrateInfo,
+        m_vkDescriptorSetLayouts.begin()->second);
+    return *m_computePipeline;
 }
 
 VkShaderModule Shader::CreateShaderModule(const std::vector<char> &Code)

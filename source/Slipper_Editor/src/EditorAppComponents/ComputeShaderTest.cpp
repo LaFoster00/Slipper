@@ -1,7 +1,6 @@
 #include "ComputeShaderTest.h"
 
 #include "Buffer/Buffer.h"
-#include "Buffer/UniformBuffer.h"
 #include "ShaderManager.h"
 
 namespace Slipper::Editor

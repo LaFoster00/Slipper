@@ -6,7 +6,8 @@
 
 namespace Slipper
 {
-class UniformBuffer;
+	class ComputePipeline;
+	class UniformBuffer;
 class IShaderBindableData;
 class ShaderLayout;
 class ShaderReflection;
@@ -187,6 +188,8 @@ class Shader : public DeviceDependentObject
         NonOwningPtr<const RenderPass> RenderPass,
         const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts);
 
+    ComputePipeline &CreateComputePipeline();
+
     static VkShaderModule CreateShaderModule(const std::vector<char> &Code);
     static VkPipelineShaderStageCreateInfo CreateShaderStage(const ShaderType &ShaderType,
                                                              const VkShaderModule &ShaderModule);
@@ -207,6 +210,8 @@ class Shader : public DeviceDependentObject
     std::map<uint32_t, vk::DescriptorSetLayout> m_vkDescriptorSetLayouts;  // One layout for set
     std::unordered_map<NonOwningPtr<const RenderPass>, OwningPtr<GraphicsPipeline>>
         m_graphicsPipelines;
+
+    OwningPtr<ComputePipeline> m_computePipeline;
 };
 
 // extern template void Shader::BindShaderUniform(const std::string Name, const UniformBuffer

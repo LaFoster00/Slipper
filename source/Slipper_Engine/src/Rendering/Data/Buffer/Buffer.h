@@ -1,6 +1,6 @@
 #pragma once
 #include "IShaderBindableData.h"
-#include "Shader/ShaderLayout.h"
+#include "ShaderLayout.h"
 
 namespace Slipper
 {
