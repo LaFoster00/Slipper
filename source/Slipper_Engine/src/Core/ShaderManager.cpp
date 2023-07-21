@@ -34,7 +34,18 @@ NonOwningPtr<Shader> ShaderManager::LoadShader(const std::vector<std::string_vie
             shader_stages.emplace_back(filepath, ShaderType::COMPUTE);
     }
     const auto &new_shader = m_shaders.emplace_back(new Shader(shader_stages));
-    LOG_FORMAT("Loaded shader '{}'", shader_name);
+    if (shader_stages.size() == 1) {
+        LOG_FORMAT("Loaded {} shader '{}'",
+                   ShaderTypeNames[static_cast<int>(std::get<1>(shader_stages[0]))],
+                   shader_name);
+    }
+    else {
+        LOG_FORMAT("Loaded shader '{}' with shader stages: ", shader_name);
+        for (auto &[name, type] : shader_stages) {
+            LOG_FORMAT("\t{}", ShaderTypeNames[static_cast<int>(type)])
+        }
+    }
+
     return m_namedShaders.emplace(hash, NonOwningPtr<Shader>(new_shader)).first->second;
 }
 

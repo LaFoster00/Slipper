@@ -1,6 +1,7 @@
 #include "ComputeShaderTest.h"
 
 #include "Buffer/Buffer.h"
+#include "Buffer/UniformBuffer.h"
 #include "ShaderManager.h"
 
 namespace Slipper::Editor
@@ -24,7 +25,8 @@ void ComputeShaderTest::Init()
             static_cast<VkMemoryPropertyFlags>(vk::MemoryPropertyFlagBits::eDeviceLocal)));
     }
 
-    m_computeShader = ShaderManager::LoadShader({"./EditorContent/Shaders/Spir-V/ParticleTest.comp.spv"});
+    m_computeShader = ShaderManager::LoadShader(
+        {"./EditorContent/Shaders/Spir-V/ParticleTest.comp.spv"});
 
     // Initialize particles
     std::default_random_engine rndEngine((unsigned)time(nullptr));
@@ -51,6 +53,12 @@ void ComputeShaderTest::Init()
 
     for (const auto &storage_buffer : m_storageBuffers) {
         storage_buffer->CopyBuffer(particle_staging_buffer);
+    }
+
+    for (uint32_t i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
+        m_computeShader->BindShaderUniform("pIn", *m_storageBuffers[i], i);
+        m_computeShader->BindShaderUniform(
+            "pOut", *m_storageBuffers[Engine::MAX_FRAMES_IN_FLIGHT - 1 - i], i);
     }
 }
 

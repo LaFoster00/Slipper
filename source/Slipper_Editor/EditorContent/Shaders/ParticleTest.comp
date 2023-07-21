@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_scalar_block_layout : enable
 
 struct Particle {
 	vec2 position;
@@ -6,7 +7,7 @@ struct Particle {
     vec4 color;
 };
 
-layout (binding = 0) uniform ParameterUBO {
+layout (std140, binding = 0) uniform ParameterUBO {
     float deltaTime;
 } ubo;
 

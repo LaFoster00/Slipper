@@ -3,6 +3,7 @@
 
 namespace Slipper
 {
+	class UniformBuffer;
 	class Shader;
 	class Buffer;
 }
@@ -17,6 +18,11 @@ private:
 	    glm::vec2 position;
 	    glm::vec2 velocity;
 	    glm::vec4 color;
+    };
+
+    struct alignas(16) DeltaTime
+    {
+        float deltaTime;
     };
 
  public:

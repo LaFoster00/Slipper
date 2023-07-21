@@ -24,6 +24,19 @@ class UniformBuffer : public Buffer
         return m_descriptorInfo.get();
     }
 
+    [[nodiscard]] constexpr vk::DescriptorType GetDescriptorType() const override
+    {
+        return vk::DescriptorType::eUniformBuffer;
+    }
+
+    void AdditionalBindingChecks(const DescriptorSetLayoutBinding &Binding) const override
+    {
+        ASSERT(Binding.size == vkBufferSize,
+               "Buffer size mismatch: Shader Binding -> {} | Supplied Buffer -> {}",
+               Binding.size,
+               vkBufferSize);
+    }
+
 private:
     std::unique_ptr<VkDescriptorBufferInfo> m_descriptorInfo;
 };

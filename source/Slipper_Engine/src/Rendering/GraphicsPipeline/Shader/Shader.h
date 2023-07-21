@@ -140,6 +140,19 @@ class Shader : public DeviceDependentObject
         BindShaderUniform_Interface(Binding, Object, Index);
     }
 
+    void BindShaderUniform(const DescriptorSetLayoutBindingMinimal &Binding,
+                           const IShaderBindableData &Object,
+                           std::optional<uint32_t> Index = {}) const
+    {
+        ASSERT(Binding.descriptorType == Object.GetDescriptorType(),
+               "Descriptor '{}' is not of type {}",
+               Binding.binding,
+               vk::to_string(Object.GetDescriptorType()));
+
+        Object.AdditionalBindingChecks(Binding);
+        BindShaderUniform_Interface(Binding, Object, Index);
+    }
+
     [[nodiscard]] UniformBuffer *GetUniformBuffer(const std::string Name,
                                                   const std::optional<uint32_t> Index = {}) const;
 
@@ -163,11 +176,11 @@ class Shader : public DeviceDependentObject
     void CreateDescriptorSetLayouts();
     void AllocateDescriptorSets();
 
-    void BindShaderUniform_Interface(const DescriptorSetLayoutBinding &Binding,
+    void BindShaderUniform_Interface(const DescriptorSetLayoutBindingMinimal &Binding,
                                      const IShaderBindableData &Object,
                                      std::optional<uint32_t> Index = {}) const;
     void UpdateDescriptorSets(vk::WriteDescriptorSet DescriptorWrite,
-                              const DescriptorSetLayoutBinding &Binding,
+                              const DescriptorSetLayoutBindingMinimal &Binding,
                               std::optional<uint32_t> Index) const;
 
     GraphicsPipeline &CreateGraphicsPipeline(

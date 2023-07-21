@@ -11,6 +11,7 @@ namespace Slipper
 {
 const char *ShaderTypeNames[]{"UNDEFINED", "Vertex", "Fragment", "Compute"};
 
+
 Shader::Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStages,
                const std::optional<std::vector<RenderPass *>> RenderPasses)
 {
@@ -120,10 +121,10 @@ void Shader::LoadShader(const std::vector<std::tuple<std::string_view, ShaderTyp
         new_shader_stage.pipelineStageCrateInfo = CreateShaderStage(shader_type,
                                                                     new_shader_stage.shaderModule);
         m_shaderStages.insert(std::make_pair(shader_type, new_shader_stage));
-        LOG_FORMAT("Create {} shader '{}' from {}",
+    	/* LOG_FORMAT("Create {} shader '{}' from {}",
                    ShaderTypeNames[static_cast<uint32_t>(shader_type)],
                    name,
-                   filepath)
+                   filepath)*/
     }
 
     shaderLayout = new ShaderLayout(shader_codes);
@@ -266,7 +267,7 @@ void Shader::AllocateDescriptorSets()
     }
 }
 
-void Shader::BindShaderUniform_Interface(const DescriptorSetLayoutBinding &Binding,
+void Shader::BindShaderUniform_Interface(const DescriptorSetLayoutBindingMinimal &Binding,
                                          const IShaderBindableData &Object,
                                          std::optional<uint32_t> Index) const
 {
@@ -287,7 +288,7 @@ void Shader::BindShaderUniform_Interface(const DescriptorSetLayoutBinding &Bindi
 }
 
 void Shader::UpdateDescriptorSets(vk::WriteDescriptorSet DescriptorWrite,
-                                  const DescriptorSetLayoutBinding &Binding,
+                                  const DescriptorSetLayoutBindingMinimal &Binding,
                                   std::optional<uint32_t> Index) const
 {
     if (Index.has_value()) {

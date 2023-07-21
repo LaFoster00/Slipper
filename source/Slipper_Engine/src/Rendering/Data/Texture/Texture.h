@@ -79,6 +79,10 @@ class Texture : DeviceDependentObject, public IShaderBindableData
     {
     }
 
+    void AdditionalBindingChecks(const DescriptorSetLayoutBindingMinimal &Binding) const override
+    {
+    }
+
     virtual void Resize(const vk::Extent3D Extent);
 
     const std::vector<vk::ImageView> &GetViews() const

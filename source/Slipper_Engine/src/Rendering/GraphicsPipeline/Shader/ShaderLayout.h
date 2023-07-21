@@ -16,6 +16,21 @@ enum ShaderResourceType
     SPV_REFLECT_RESOURCE_FLAG_UAV = 0x00000008,
 };
 
+struct DescriptorSetLayoutBindingMinimal
+{
+    // VkDescriptorSetLayoutBinding
+    // Dont change layout of this since it will be referenced when converting to vulkan object
+    // with VkDescriptorSetLayoutBinding()
+    uint32_t binding;
+    vk::DescriptorType descriptorType;
+    uint32_t descriptorCount;
+    vk::ShaderStageFlags stageFlags;
+    const vk::Sampler *pImmutableSamplers;
+    // End of Vulkan Object
+
+    uint32_t set;
+};
+
 struct DescriptorSetLayoutBinding
 {
     // VkDescriptorSetLayoutBinding
@@ -51,6 +66,17 @@ struct DescriptorSetLayoutBinding
     const vk::DescriptorSetLayoutBinding &GetVkBinding() const
     {
         return *reinterpret_cast<const vk::DescriptorSetLayoutBinding *>(&binding);
+    }
+
+	operator DescriptorSetLayoutBindingMinimal() const 
+    {
+        return GetMinimalBinding();
+    }
+
+	DescriptorSetLayoutBindingMinimal GetMinimalBinding() const
+    {
+        return DescriptorSetLayoutBindingMinimal{
+            binding, descriptorType, descriptorCount, stageFlags, pImmutableSamplers, set};
     }
 
     using HashT = size_t;
@@ -103,10 +129,10 @@ struct DescriptorSetLayoutData
 
     // Only move otherwise create info wont be valid
     DescriptorSetLayoutData(const DescriptorSetLayoutData &&Other) noexcept
-	    : setNumber(Other.setNumber),
-	      createInfo(Other.createInfo),
-	      bindings(Other.bindings),
-	      vkBindings(Other.vkBindings)
+        : setNumber(Other.setNumber),
+          createInfo(Other.createInfo),
+          bindings(Other.bindings),
+          vkBindings(Other.vkBindings)
     {
         createInfo.pBindings = vkBindings.data();
     }
@@ -123,10 +149,9 @@ struct DescriptorSetLayoutData
     {
         vkBindings.clear();
         vkBindings.reserve(bindings.size());
-	    for (auto &binding : bindings)
-	    {
+        for (auto &binding : bindings) {
             vkBindings.push_back(binding.GetVkBinding());
-	    }
+        }
         createInfo.pBindings = vkBindings.data();
         createInfo.bindingCount = vkBindings.size();
     }

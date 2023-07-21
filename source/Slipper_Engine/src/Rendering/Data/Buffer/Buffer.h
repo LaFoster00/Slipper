@@ -12,7 +12,7 @@ class Buffer : DeviceDependentObject, public IShaderBindableData
  public:
     Buffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
 
-    virtual ~Buffer() noexcept;
+    ~Buffer() noexcept override;
 
     Buffer(Buffer &&Source) noexcept;
 
@@ -68,15 +68,21 @@ class Buffer : DeviceDependentObject, public IShaderBindableData
 
     [[nodiscard]] constexpr vk::DescriptorType GetDescriptorType() const override
     {
-        return vk::DescriptorType::eUniformBuffer;
+        return vk::DescriptorType::eStorageBuffer;
     }
 
     void AdditionalBindingChecks(const DescriptorSetLayoutBinding &Binding) const override
     {
-        ASSERT(Binding.size == vkBufferSize,
+        ASSERT(Binding.size <= vkBufferSize,
                "Buffer size mismatch: Shader Binding -> {} | Supplied Buffer -> {}",
                Binding.size,
                vkBufferSize);
+    }
+
+    void AdditionalBindingChecks(const DescriptorSetLayoutBindingMinimal &Binding) const override
+    {
+        LOG("Binding and object directly to a shader is dangerous and doesnt provide any extra "
+            "safety checks. Please avoid.")
     }
 
  protected:
