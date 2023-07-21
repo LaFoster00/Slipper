@@ -44,27 +44,11 @@ class GraphicsEngine : DeviceDependentObject
     void AddWindow(Window &Window);
     NonOwningPtr<RenderingStage> AddRenderingStage(
         std::string Name,
-        auto SwapChain,
+        NonOwningPtr<SwapChain> SwapChain,
         VkQueue CommandQueue,
         uint32_t CommandQueueFamilyIndex,
         bool NativeSwapChain,
-        int32_t CommandBufferCount = Engine::MAX_FRAMES_IN_FLIGHT)
-    {
-        if (renderingStages.contains(Name)) {
-            LOG_FORMAT("Rendering stage '{}' does already exist. Returned nullptr", Name);
-            return nullptr;
-        }
-
-        return renderingStages
-            .emplace(Name,
-                     new RenderingStage(Name,
-                                        SwapChain,
-                                        CommandQueue,
-                                        CommandQueueFamilyIndex,
-                                        NativeSwapChain,
-                                        CommandBufferCount))
-            .first->second.get();
-    }
+        int32_t CommandBufferCount = Engine::MAX_FRAMES_IN_FLIGHT);
 
     void NewFrame() const;
     void BeginRenderingStage(std::string_view Name);
@@ -101,6 +85,7 @@ class GraphicsEngine : DeviceDependentObject
     std::vector<NonOwningPtr<Window>> windows;
 
     NonOwningPtr<RenderPass> viewportRenderPass = nullptr;
+    OwningPtr<OffscreenSwapChain> viewportSwapChain;
     NonOwningPtr<RenderingStage> viewportRenderingStage;
 
     NonOwningPtr<RenderPass> windowRenderPass = nullptr;

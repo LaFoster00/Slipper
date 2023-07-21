@@ -78,12 +78,12 @@ template<typename T> struct NonOwningPtr
         return bool(m_ptr);
     }
 
-    template<ConvertibleFromPtr<T> U> constexpr NonOwningPtr<U> Cast()
+    template<ConvertibleFromPtr<T> U> constexpr NonOwningPtr<U> Cast() const
     {
         return NonOwningPtr<U>(m_ptr);
     }
 
-    template<typename U> constexpr NonOwningPtr<U> TryCast()
+    template<typename U> constexpr NonOwningPtr<U> TryCast() const
     {
         return dynamic_cast<U *>(m_ptr);
     }

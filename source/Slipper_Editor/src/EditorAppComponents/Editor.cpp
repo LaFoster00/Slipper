@@ -84,7 +84,7 @@ NonOwningPtr<Editor::ViewportData> Editor::FetchViewportImages(NonOwningPtr<Rend
         return viewport_data;
 
     const auto swap_chain =
-        m_graphicsEngine->viewportRenderingStage->GetSwapChain<OffscreenSwapChain>();
+        m_graphicsEngine->viewportRenderingStage->TryGetSwapChain<OffscreenSwapChain>();
     viewport_data->images.resize(swap_chain->numImages);
     for (uint32_t i{0}; i < swap_chain->numImages; i++) {
         viewport_data->images[i] = swap_chain->presentationTextures[i]->imageInfo.views[0];

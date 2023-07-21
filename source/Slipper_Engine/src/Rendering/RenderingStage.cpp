@@ -15,7 +15,7 @@
 namespace Slipper
 {
 RenderingStage::RenderingStage(std::string Name,
-                               SwapChainVariants SwapChain,
+                               NonOwningPtr<SwapChain> SwapChain,
                                VkQueue CommandQueue,
                                uint32_t CommandQueueFamilyIndex,
                                const bool NativeSwapChain,
@@ -30,10 +30,10 @@ RenderingStage::~RenderingStage()
     renderPasses.clear();
 }
 
-VkCommandBuffer RenderingStage::BeginRender()
+VkCommandBuffer RenderingStage::BeginRender() const
 {
     if (m_nativeSwapChain) {
-        const auto result = GetSwapChain<SurfaceSwapChain>()->AcquireNextImageKhr();
+        const auto result = TryGetSwapChain<SurfaceSwapChain>()->AcquireNextImageKhr();
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             // This should be handled by even OnWindowResize
@@ -151,57 +151,42 @@ void RenderingStage::ChangeResolution(uint32_t Width, uint32_t Height)
 
 bool RenderingStage::HasPresentationTextures() const
 {
-    if (std::holds_alternative<OwningPtr<OffscreenSwapChain>>(swapChain)) {
-        const auto &offscreenSwapChain = std::get<OwningPtr<OffscreenSwapChain>>(swapChain);
-        return offscreenSwapChain->withPresentationTextures;
+    if (IsSwapChain<OffscreenSwapChain>()) {
+        return TryGetSwapChain<OffscreenSwapChain>()->withPresentationTextures;
     }
     return false;
 }
 
 NonOwningPtr<Texture2D> RenderingStage::GetPresentationTexture() const
 {
-    if (std::holds_alternative<OwningPtr<OffscreenSwapChain>>(swapChain)) {
-        const auto &offscreenSwapChain = std::get<OwningPtr<OffscreenSwapChain>>(swapChain);
-        return offscreenSwapChain->presentationTextures[GetCurrentImageIndex()];
+    if (IsSwapChain<OffscreenSwapChain>()) {
+        return TryGetSwapChain<OffscreenSwapChain>()->presentationTextures[GetCurrentImageIndex()];
     }
     return nullptr;
 }
 
-NonOwningPtr<SwapChain> RenderingStage::GetSwapChain()
+NonOwningPtr<SwapChain> RenderingStage::GetSwapChain() const
 {
-    return std::visit(
-        [](auto const &Sc) -> SwapChain * { return static_cast<SwapChain *>(Sc.get()); },
-        swapChain);
+    return swapChain;
 }
 
 uint32_t RenderingStage::GetCurrentImageIndex() const
 {
     if (m_nativeSwapChain)
-        return GetSwapChain<SurfaceSwapChain>()->GetCurrentSwapChainImageIndex();
+        return TryGetSwapChain<SurfaceSwapChain>()->GetCurrentSwapChainImageIndex();
     else
         return GraphicsEngine::Get().GetCurrentFrame();
 }
 
-template<>
-NonOwningPtr<OffscreenSwapChain> RenderingStage::GetSwapChain<OffscreenSwapChain>() const
-{
-    return std::get<OwningPtr<OffscreenSwapChain>>(swapChain);
-}
-
-template<> NonOwningPtr<SurfaceSwapChain> RenderingStage::GetSwapChain<SurfaceSwapChain>() const
-{
-    return std::get<NonOwningPtr<SurfaceSwapChain>>(swapChain);
-}
-
 VkSemaphore RenderingStage::GetCurrentImageAvailableSemaphore() const
 {
-    return GetSwapChain<SurfaceSwapChain>()
+    return TryGetSwapChain<SurfaceSwapChain>()
         ->m_imageAvailableSemaphores[GraphicsEngine::Get().GetCurrentFrame()];
 }
 
 VkSemaphore RenderingStage::GetCurrentRenderFinishSemaphore() const
 {
-    return GetSwapChain<SurfaceSwapChain>()
+    return TryGetSwapChain<SurfaceSwapChain>()
         ->m_renderFinishedSemaphores[GraphicsEngine::Get().GetCurrentFrame()];
 }
 }  // namespace Slipper

@@ -2,9 +2,9 @@
 
 namespace Slipper
 {
-	class Material;
-	class Model;
-	class OffscreenSwapChain;
+class Material;
+class Model;
+class OffscreenSwapChain;
 class Mesh;
 class Shader;
 class Texture2D;
@@ -12,9 +12,6 @@ class SurfaceSwapChain;
 class SwapChain;
 class RenderPass;
 class CommandPool;
-
-using SwapChainVariants =
-    std::variant<NonOwningPtr<SurfaceSwapChain>, OwningPtr<OffscreenSwapChain>>;
 
 class RenderingStage : public DeviceDependentObject
 {
@@ -26,14 +23,14 @@ class RenderingStage : public DeviceDependentObject
     //      device.queueFamilyIndices.graphicsFamily.value(),
     //      Engine::MAX_FRAMES_IN_FLIGHT)
     RenderingStage(std::string Name,
-                   SwapChainVariants SwapChain,
+                   NonOwningPtr<SwapChain> SwapChain,
                    VkQueue CommandQueue,
                    uint32_t CommandQueueFamilyIndex,
                    bool NativeSwapChain,
                    int32_t CommandBufferCount = Engine::MAX_FRAMES_IN_FLIGHT);
     ~RenderingStage();
 
-    VkCommandBuffer BeginRender();
+    VkCommandBuffer BeginRender() const;
     void EndRender();
 
     void SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
@@ -51,13 +48,16 @@ class RenderingStage : public DeviceDependentObject
     void ChangeResolution(uint32_t Width, uint32_t Height);
     bool HasPresentationTextures() const;
     NonOwningPtr<Texture2D> GetPresentationTexture() const;
-    NonOwningPtr<SwapChain> GetSwapChain();
-    template<typename T> NonOwningPtr<T> GetSwapChain() const
+    NonOwningPtr<SwapChain> GetSwapChain() const;
+    template<typename T> bool IsSwapChain() const
     {
-        ASSERT(true, "This point should not be reached!");
+        return swapChain.TryCast<T>() != nullptr;
     }
-    template<> NonOwningPtr<OffscreenSwapChain> GetSwapChain() const;
-    template<> NonOwningPtr<SurfaceSwapChain> GetSwapChain() const;
+
+    template<typename T> NonOwningPtr<T> TryGetSwapChain() const
+    {
+        return swapChain.TryCast<T>();
+    }
 
     uint32_t GetCurrentImageIndex() const;
 
@@ -76,7 +76,7 @@ class RenderingStage : public DeviceDependentObject
 
  public:
     std::string name;
-    SwapChainVariants swapChain;
+    NonOwningPtr<SwapChain> swapChain;
     std::unordered_set<NonOwningPtr<RenderPass>> renderPasses;
 
     // Draw Commands

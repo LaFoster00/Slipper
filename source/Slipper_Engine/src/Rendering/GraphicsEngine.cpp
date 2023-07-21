@@ -32,6 +32,8 @@ GraphicsEngine::~GraphicsEngine()
 {
     renderingStages.clear();
 
+    viewportSwapChain.reset();
+
     renderPassNames.clear();
     renderPasses.clear();
 
@@ -73,14 +75,15 @@ void GraphicsEngine::Init()
     m_graphicsInstance->viewportRenderPass = m_graphicsInstance->CreateRenderPass(
         "Viewport", Engine::TARGET_VIEWPORT_COLOR_FORMAT, Texture2D::FindDepthFormat(), false);
 
-    const auto viewport_swap_chain = new OffscreenSwapChain(Application::Get().window->GetSize(),
-                                                            Engine::TARGET_VIEWPORT_COLOR_FORMAT,
-                                                            Engine::MAX_FRAMES_IN_FLIGHT,
-                                                            true);
+    m_graphicsInstance->viewportSwapChain = new OffscreenSwapChain(
+        Application::Get().window->GetSize(),
+        Engine::TARGET_VIEWPORT_COLOR_FORMAT,
+        Engine::MAX_FRAMES_IN_FLIGHT,
+        true);
 
     m_graphicsInstance->viewportRenderingStage = m_graphicsInstance->AddRenderingStage(
         "Viewport",
-        viewport_swap_chain,
+        m_graphicsInstance->viewportSwapChain,
         device.graphicsQueue,
         device.queueFamilyIndices.graphicsFamily.value(),
         false);
@@ -111,7 +114,7 @@ void GraphicsEngine::SetupDebugResources()
     MaterialManager::AddMaterial(
         "Basic",
         ShaderManager::LoadGraphicsShader({{"./EngineContent/Shaders/Spir-V/Basic.vert.spv"},
-                                   {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}}))
+                                           {"./EngineContent/Shaders/Spir-V/Basic.frag.spv"}}))
         ->SetUniform("texSampler", *TextureManager::Get2D("viking_room"));
 }
 
@@ -155,6 +158,30 @@ void GraphicsEngine::AddWindow(Window &Window)
                                              true);
 
     windowRenderingStage->RegisterForRenderPass(windowRenderPass);
+}
+
+NonOwningPtr<RenderingStage> GraphicsEngine::AddRenderingStage(std::string Name,
+                                                               NonOwningPtr<SwapChain> SwapChain,
+                                                               VkQueue CommandQueue,
+                                                               uint32_t CommandQueueFamilyIndex,
+                                                               bool NativeSwapChain,
+                                                               int32_t CommandBufferCount)
+{
+
+    if (renderingStages.contains(Name)) {
+        LOG_FORMAT("Rendering stage '{}' does already exist. Returned nullptr", Name);
+        return nullptr;
+    }
+
+    return renderingStages
+        .emplace(Name,
+                 new RenderingStage(Name,
+                                    SwapChain,
+                                    CommandQueue,
+                                    CommandQueueFamilyIndex,
+                                    NativeSwapChain,
+                                    CommandBufferCount))
+        .first->second.get();
 }
 
 void GraphicsEngine::SetupDebugRender(Surface &Surface) const
