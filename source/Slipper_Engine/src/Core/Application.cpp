@@ -95,7 +95,7 @@ void Application::Run()
             return;
 
         if (windowResize.resized) {
-            WindowResize();
+            // Do whatever you have to do
         }
         for (auto &[Stage, Info] : viewportsResize) {
             if (Info.resized) {
@@ -201,14 +201,6 @@ void Application::AddAdditionalRenderStageUpdateFront(
 {
     auto &updates = renderingStagesUpdate[Stage];
     updates.emplace(updates.begin(), UpdateFunction);
-}
-
-void Application::WindowResize()
-{
-    vkDeviceWaitIdle(Device::Get());
-    windowResize.resized = false;
-    GraphicsEngine::OnWindowResized(
-        std::any_cast<Window *>(windowResize.context), windowResize.width, windowResize.height);
 }
 
 void Application::ViewportResize(NonOwningPtr<RenderingStage> Stage)

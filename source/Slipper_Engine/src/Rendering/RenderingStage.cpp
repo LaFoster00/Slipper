@@ -1,13 +1,13 @@
 #include "RenderingStage.h"
 
+#include "Buffer/UniformBuffer.h"
 #include "CameraComponent.h"
-#include "Material.h"
 #include "Drawing/CommandPool.h"
+#include "Material.h"
 #include "Model/Model.h"
 #include "Presentation/OffscreenSwapChain.h"
 #include "Presentation/SurfaceSwapChain.h"
 #include "RenderPass.h"
-#include "Buffer/UniformBuffer.h"
 #include "Shader/Shader.h"
 #include "Texture/Texture2D.h"
 
@@ -90,11 +90,11 @@ void RenderingStage::SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
                                 const glm::mat4 &Transform)
 {
     SubmitSingleDrawCommand(RenderPass, [=, this](const VkCommandBuffer &CommandBuffer) {
-	    const auto resolution = GetSwapChain()->GetResolution();
+        const auto resolution = GetSwapChain()->GetResolution();
         Material->Use(CommandBuffer, RenderPass, resolution);
 
         const auto camera = GraphicsEngine::GetDefaultCamera();
-	    const auto &cam_parameters = camera.GetComponent<Camera>();
+        const auto &cam_parameters = camera.GetComponent<Camera>();
 
         UniformVP vp;
         vp.view = cam_parameters.GetView();
@@ -142,6 +142,10 @@ void RenderingStage::UnregisterFromRenderPass(NonOwningPtr<RenderPass> RenderPas
 void RenderingStage::ChangeResolution(uint32_t Width, uint32_t Height)
 {
     GetSwapChain()->Recreate(Width, Height);
+    LOG_FORMAT("Swapchain for Rendering Stage '{}' has been recreated with a resoltion of [{},{}]",
+               name,
+               Width,
+               Height);
 }
 
 bool RenderingStage::HasPresentationTextures() const

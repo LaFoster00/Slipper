@@ -145,7 +145,7 @@ Entity GraphicsEngine::GetDefaultCamera()
 
 void GraphicsEngine::AddWindow(Window &Window)
 {
-    windows.insert(&Window);
+    windows.push_back(&Window);
     Window.GetSurface().CreateSwapChain();
 
     windowRenderingStage = AddRenderingStage("Window",
@@ -266,9 +266,10 @@ void GraphicsEngine::EndFrame()
     const auto result = vkQueuePresentKHR(device.presentQueue, &present_info);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-        // This should be handled by even OnWindowResize
-        // current_surface->RecreateSwapChain();
-        ASSERT(1, "Hallo")
+        auto capabilities = device.physicalDevice.getSurfaceCapabilitiesKHR(
+            windows[0]->GetSurface());
+        OnWindowResized(
+            windows[0], capabilities.currentExtent.width, capabilities.currentExtent.height);
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to present swap chain image!");

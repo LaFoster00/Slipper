@@ -98,7 +98,6 @@ class Application
         std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction);
 
  private:
-    void WindowResize();
     void ViewportResize(NonOwningPtr<RenderingStage> Stage);
 
  public:

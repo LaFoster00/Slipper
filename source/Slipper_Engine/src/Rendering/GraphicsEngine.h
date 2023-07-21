@@ -98,7 +98,7 @@ class GraphicsEngine : DeviceDependentObject
     ~GraphicsEngine();
 
  public:
-    std::unordered_set<NonOwningPtr<Window>> windows;
+    std::vector<NonOwningPtr<Window>> windows;
 
     NonOwningPtr<RenderPass> viewportRenderPass = nullptr;
     NonOwningPtr<RenderingStage> viewportRenderingStage;
