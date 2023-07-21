@@ -42,7 +42,6 @@ void Application::Init(ApplicationInfo &ApplicationInfo)
     AddComponentBefore(new InputManager(), ecsComponent);
     materialManager = AddComponent(new MaterialManager());
 
-
     GraphicsEngine::Init();
     GraphicsEngine::Get().AddWindow(*window);
 
@@ -122,11 +121,11 @@ void Application::Run()
             //  Init()
             for (auto &rendering_stage :
                  GraphicsEngine::Get().renderingStages | std::ranges::views::values) {
-                for (auto &stage_update : renderingStagesUpdate[rendering_stage]) {
-                    GraphicsEngine::Get().BeginRenderingStage(rendering_stage->name);
+                GraphicsEngine::Get().BeginRenderingStage(rendering_stage->name);
+                for (auto &stage_update : renderingStagesUpdates[rendering_stage]) {
                     stage_update(rendering_stage.get());
-                    GraphicsEngine::Get().EndRenderingStage();
                 }
+                GraphicsEngine::Get().EndRenderingStage();
             }
 
             GraphicsEngine::Get().EndFrame();
@@ -192,14 +191,14 @@ void Application::AddAdditionalRenderStageUpdate(
     NonOwningPtr<RenderingStage> Stage,
     std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction)
 {
-    renderingStagesUpdate[Stage].emplace_back(UpdateFunction);
+    renderingStagesUpdates[Stage].emplace_back(UpdateFunction);
 }
 
 void Application::AddAdditionalRenderStageUpdateFront(
     NonOwningPtr<RenderingStage> Stage,
     std::function<void(NonOwningPtr<RenderingStage>)> UpdateFunction)
 {
-    auto &updates = renderingStagesUpdate[Stage];
+    auto &updates = renderingStagesUpdates[Stage];
     updates.emplace(updates.begin(), UpdateFunction);
 }
 
