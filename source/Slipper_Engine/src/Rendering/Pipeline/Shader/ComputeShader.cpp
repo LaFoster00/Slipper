@@ -21,6 +21,21 @@ ComputeShader::~ComputeShader()
     device.logicalDevice.destroyShaderModule(m_shaderStage.shaderModule, nullptr);
 }
 
+void ComputeShader::Dispatch(vk::CommandBuffer CommandBuffer,
+                             uint32_t GroupCountX,
+                             uint32_t GroupCountY,
+                             uint32_t GroupCountZ) const
+{
+    CommandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, *m_computePipeline);
+    CommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute,
+                                     m_computePipeline->vkPipelineLayout,
+                                     0,
+                                     GetDescriptorSets(),
+                                     {});
+
+    CommandBuffer.dispatch(GroupCountX, GroupCountY, GroupCountZ);
+}
+
 void ComputeShader::LoadShader(const std::string_view ShaderPath)
 {
     ShaderStage new_shader_stage;

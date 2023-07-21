@@ -44,8 +44,9 @@ GraphicsPipeline &GraphicsShader::RegisterRenderPass(NonOwningPtr<const RenderPa
     return CreateGraphicsPipeline(RenderPass, layouts);
 }
 
-void GraphicsShader::Use(const VkCommandBuffer& CommandBuffer, NonOwningPtr<const RenderPass> RenderPass,
-	VkExtent2D Extent) const
+void GraphicsShader::Use(const vk::CommandBuffer &CommandBuffer,
+                         NonOwningPtr<const RenderPass> RenderPass,
+                         VkExtent2D Extent) const
 {
     if (!m_graphicsPipelines.contains(RenderPass)) {
         ASSERT(true, "RenderPass {} is not registered for this shader.", RenderPass->name)
@@ -56,14 +57,8 @@ void GraphicsShader::Use(const VkCommandBuffer& CommandBuffer, NonOwningPtr<cons
     pipeline->Bind(CommandBuffer, Extent);
 
     const auto descriptor_sets = GetDescriptorSets();
-    vkCmdBindDescriptorSets(CommandBuffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            pipeline->vkPipelineLayout,
-                            0,
-                            static_cast<uint32_t>(descriptor_sets.size()),
-                            descriptor_sets.data(),
-                            0,
-                            nullptr);
+    CommandBuffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics, pipeline->vkPipelineLayout, 0, GetDescriptorSets(), {});
 }
 
 void GraphicsShader::LoadShader(
@@ -88,8 +83,9 @@ void GraphicsShader::LoadShader(
     shaderLayout = new ShaderLayout(shader_codes);
 }
 
-GraphicsPipeline& GraphicsShader::CreateGraphicsPipeline(NonOwningPtr<const RenderPass> RenderPass,
-	const std::vector<VkDescriptorSetLayout>& DescriptorSetLayouts)
+GraphicsPipeline &GraphicsShader::CreateGraphicsPipeline(
+    NonOwningPtr<const RenderPass> RenderPass,
+    const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts)
 {
     std::vector<VkPipelineShaderStageCreateInfo> createInfos;
     createInfos.reserve(m_shaderStages.size());

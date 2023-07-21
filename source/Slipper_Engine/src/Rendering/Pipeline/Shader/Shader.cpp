@@ -36,9 +36,9 @@ UniformBuffer *Shader::GetUniformBuffer(const std::string Name,
     ASSERT(false, "Object '{}' does not exist.", Name);
 }
 
-std::vector<VkDescriptorSet> Shader::GetDescriptorSets(const std::optional<uint32_t> Index) const
+std::vector<vk::DescriptorSet> Shader::GetDescriptorSets(const std::optional<uint32_t> Index) const
 {
-    std::vector<VkDescriptorSet> ds;
+    std::vector<vk::DescriptorSet> ds;
     for (auto vk_descriptor_sets : m_vkDescriptorSets | std::ranges::views::values) {
         ds.push_back(
             vk_descriptor_sets[Index.has_value() ? Index.value() :

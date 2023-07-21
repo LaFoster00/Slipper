@@ -10,7 +10,13 @@ class ComputePipeline : DeviceDependentObject
 
     ~ComputePipeline();
 
+    operator vk::Pipeline() const
+    {
+        return vkPipeline;
+    }
+
  public:
-    vk::Pipeline vkComputePipeline = VK_NULL_HANDLE;
+    vk::Pipeline vkPipeline = VK_NULL_HANDLE;
+    vk::PipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
 };
 }  // namespace Slipper

@@ -18,7 +18,7 @@ class GraphicsShader : public Shader
      * Current frame is optional and will be fetched from the currentFrame of the GraphicsEngine if
      * empty.
      */
-    void Use(const VkCommandBuffer &CommandBuffer,
+    void Use(const vk::CommandBuffer &CommandBuffer,
              NonOwningPtr<const RenderPass> RenderPass,
              VkExtent2D Extent) const;
 

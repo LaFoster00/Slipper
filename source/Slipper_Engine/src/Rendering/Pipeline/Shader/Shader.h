@@ -142,7 +142,7 @@ class Shader : public DeviceDependentObject
     [[nodiscard]] UniformBuffer *GetUniformBuffer(const std::string Name,
                                                   const std::optional<uint32_t> Index = {}) const;
 
-    [[nodiscard]] std::vector<VkDescriptorSet> GetDescriptorSets(
+    [[nodiscard]] std::vector<vk::DescriptorSet> GetDescriptorSets(
         std::optional<uint32_t> Index = {}) const;
 
     [[nodiscard]] std::optional<Ref<DescriptorSetLayoutBinding>> GetNamedBinding(
