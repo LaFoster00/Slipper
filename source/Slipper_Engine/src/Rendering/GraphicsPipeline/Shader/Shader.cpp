@@ -11,10 +11,10 @@ namespace Slipper
 {
 const char *ShaderTypeNames[]{"UNDEFINED", "Vertex", "Fragment", "Compute"};
 
-Shader::Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
+Shader::Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStages,
                const std::optional<std::vector<RenderPass *>> RenderPasses)
 {
-    LoadShader(ShaderStagesCode);
+    LoadShader(ShaderStages);
 
     CreateDescriptorPool();
     CreateDescriptorSetLayouts();
@@ -126,7 +126,7 @@ void Shader::LoadShader(const std::vector<std::tuple<std::string_view, ShaderTyp
                    filepath)
     }
 
-    shaderLayout = std::make_unique<ShaderLayout>(shader_codes);
+    shaderLayout = new ShaderLayout(shader_codes);
 }
 
 void Shader::CreateDescriptorPool()

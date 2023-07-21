@@ -3,7 +3,8 @@
 
 namespace Slipper::Editor
 {
-class Editor;
+	class ComputeShaderTest;
+	class Editor;
 
 class SlipperEditor : public Application
 {
@@ -28,5 +29,6 @@ class SlipperEditor : public Application
  private:
     NonOwningPtr<Editor> m_editor;
     NonOwningPtr<Gui> m_editorGui;
+    NonOwningPtr<ComputeShaderTest> m_computeShaderTest;
 };
 }  // namespace Slipper::Editor

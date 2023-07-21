@@ -20,18 +20,23 @@ if ("${BUILD_TYPE}" STREQUAL "Debug")
     endif()
 endif()
 
+add_subdirectory(EditorContent)
+
 # Set the output folder where your program will be created
 SetBuildDirectory()
 
 message("Building Engine Executable")    
 # Fetch all source files
 file(GLOB_RECURSE SLIPPER_EDITOR_SOURCE_FILES "*.h" "*.cpp") 
-set(SLIPPER_EDITOR_NAME SlipperEditor CACHE STRING "Engine Name")
+set(SLIPPER_EDITOR_NAME SlipperEditor CACHE STRING "Editor Name")
 add_executable(${SLIPPER_EDITOR_NAME} ${SLIPPER_EDITOR_SOURCE_FILES})
 
 set_property(TARGET ${SLIPPER_EDITOR_NAME} PROPERTY CXX_STANDARD 20)
 
-#Make engine dependent on engine content
+#Make editor dependent on editor content
+add_dependencies(${SLIPPER_EDITOR_NAME} ${SLIPPER_EDITOR_CONTENT_NAME})
+
+#Make editor dependent on engine
 add_dependencies(${SLIPPER_EDITOR_NAME} ${SLIPPER_ENGINE_NAME})
 
 set(SLIPPER_EDITOR_INCLUDE_DIRECTORIES

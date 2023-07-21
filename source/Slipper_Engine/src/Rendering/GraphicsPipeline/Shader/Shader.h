@@ -99,7 +99,7 @@ class Shader : public DeviceDependentObject
     };
 
     Shader() = delete;
-    Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStagesCode,
+    Shader(const std::vector<std::tuple<std::string_view, ShaderType>> &ShaderStages,
            std::optional<std::vector<RenderPass *>> RenderPasses = {});
     ~Shader();
 
@@ -128,8 +128,8 @@ class Shader : public DeviceDependentObject
     }
 
     void BindShaderUniform(const DescriptorSetLayoutBinding &Binding,
-                             const IShaderBindableData &Object,
-                             std::optional<uint32_t> Index = {}) const
+                           const IShaderBindableData &Object,
+                           std::optional<uint32_t> Index = {}) const
     {
         ASSERT(Binding.descriptorType == Object.GetDescriptorType(),
                "Descriptor '{}' is not of type {}",
@@ -164,8 +164,8 @@ class Shader : public DeviceDependentObject
     void AllocateDescriptorSets();
 
     void BindShaderUniform_Interface(const DescriptorSetLayoutBinding &Binding,
-                                       const IShaderBindableData &Object,
-                                       std::optional<uint32_t> Index = {}) const;
+                                     const IShaderBindableData &Object,
+                                     std::optional<uint32_t> Index = {}) const;
     void UpdateDescriptorSets(vk::WriteDescriptorSet DescriptorWrite,
                               const DescriptorSetLayoutBinding &Binding,
                               std::optional<uint32_t> Index) const;
@@ -182,7 +182,7 @@ class Shader : public DeviceDependentObject
 
  public:
     std::string name;
-    std::unique_ptr<ShaderLayout> shaderLayout;
+	OwningPtr<ShaderLayout> shaderLayout;
     std::map<DescriptorSetLayoutBinding::HashT, std::vector<OwningPtr<UniformBuffer>>>
         uniformBindingBuffers;
 

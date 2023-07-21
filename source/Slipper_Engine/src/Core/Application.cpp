@@ -39,7 +39,7 @@ void Application::Init(ApplicationInfo &ApplicationInfo)
 
     // Setup Application Components
     ecsComponent = AddComponent(new Ecs());
-    AddComponent(new InputManager(), ecsComponent);
+    AddComponentBefore(new InputManager(), ecsComponent);
     materialManager = AddComponent(new MaterialManager());
 
 

@@ -57,12 +57,27 @@ class Application
 
     template<typename T, typename U>
         requires IsAppComponent<T> && IsAppComponent<U>
-    NonOwningPtr<T> AddComponent(T *ProgramComponent, NonOwningPtr<U> ExecuteBefore)
+    NonOwningPtr<T> AddComponentBefore(T *ProgramComponent, NonOwningPtr<U> ExecuteBefore)
     {
         auto execute_before_itr = std::find(
             appComponentsOrdered.begin(), appComponentsOrdered.end(), ExecuteBefore);
         if (execute_before_itr != appComponentsOrdered.end()) {
             appComponentsOrdered.emplace(execute_before_itr, ProgramComponent);
+        }
+
+        ProgramComponent->Init();
+        return static_cast<T *>(appComponents.emplace_back(ProgramComponent).get());
+    }
+
+    template<typename T, typename U>
+        requires IsAppComponent<T> && IsAppComponent<U>
+    NonOwningPtr<T> AddComponentAfter(T *ProgramComponent, NonOwningPtr<U> ExecuteAfter)
+    {
+        auto execute_after_itr = std::find(
+            appComponentsOrdered.begin(), appComponentsOrdered.end(), ExecuteAfter);
+        std::advance(execute_after_itr, 1);
+        if (execute_after_itr != appComponentsOrdered.end()) {
+            appComponentsOrdered.emplace(execute_after_itr, ProgramComponent);
         }
 
         ProgramComponent->Init();

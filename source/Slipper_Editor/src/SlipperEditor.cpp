@@ -1,5 +1,6 @@
 #include "SlipperEditor.h"
 
+#include "ComputeShaderTest.h"
 #include "Core/AppComponents/Ecs.h"
 #include "Core/AppComponents/Gui.h"
 #include "Editor.h"
@@ -29,13 +30,15 @@ void SlipperEditor::Init(ApplicationInfo &ApplicationInfo)
 {
     Application::Init(ApplicationInfo);
     GraphicsEngine::Get().SetupDebugRender(window->GetSurface());
-    m_editor = AddComponent(new Editor(), ecsComponent);
+    m_editor = AddComponentBefore(new Editor(), ecsComponent);
     m_editorGui = AddComponent(
         new Gui("Editor Gui", GraphicsEngine::Get().windowRenderPass, true));
     
     AddAdditionalRenderStageUpdate(
         GraphicsEngine::Get().windowRenderingStage,
         std::bind(&SlipperEditor::UpdateEditor, this, std::placeholders::_1));
+
+    m_computeShaderTest = AddComponent(new ComputeShaderTest());
 }
 
 void SlipperEditor::UpdateEditor(NonOwningPtr<RenderingStage> RenderingStage) const

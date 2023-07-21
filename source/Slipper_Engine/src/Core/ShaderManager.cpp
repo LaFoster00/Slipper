@@ -30,6 +30,8 @@ NonOwningPtr<Shader> ShaderManager::LoadShader(const std::vector<std::string_vie
             shader_stages.emplace_back(filepath, ShaderType::VERTEX);
         else if (file_ending == "frag")
             shader_stages.emplace_back(filepath, ShaderType::FRAGMENT);
+        else if (file_ending == "comp")
+            shader_stages.emplace_back(filepath, ShaderType::COMPUTE);
     }
     const auto &new_shader = m_shaders.emplace_back(new Shader(shader_stages));
     LOG_FORMAT("Loaded shader '{}'", shader_name);
