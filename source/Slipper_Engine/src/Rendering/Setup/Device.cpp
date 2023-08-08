@@ -297,6 +297,50 @@ bool Device::CheckFeatureSupport() const
     return supported_features.samplerAnisotropy && supported_features.geometryShader;
 }
 
+uint32_t SelectQueue(const std::vector<vk::QueueFamilyProperties> &QueueFamilies,
+                     const std::unordered_set<uint32_t> &TakenFamilies,
+                     const vk::QueueFlags QueueFlags)
+{
+    // All the viable candidates for the currently searched queue
+    std::vector<size_t> candidates;
+    // The candidates sorted by how many different kinds of flags they have
+    std::map<uint32_t, size_t> smallest_candidate;
+
+    for (size_t family_index = 0; family_index < QueueFamilies.size(); ++family_index) {
+        if (QueueFamilies[family_index].queueFlags & QueueFlags) {
+            candidates.push_back(family_index);
+            uint32_t supported_operations = 0;
+            if (QueueFamilies[family_index].queueFlags & vk::QueueFlagBits::eCompute)
+                ++supported_operations;
+            if (QueueFamilies[family_index].queueFlags & vk::QueueFlagBits::eGraphics)
+                ++supported_operations;
+            if (QueueFamilies[family_index].queueFlags & vk::QueueFlagBits::eOpticalFlowNV)
+                ++supported_operations;
+            if (QueueFamilies[family_index].queueFlags & vk::QueueFlagBits::eProtected)
+                ++supported_operations;
+            if (QueueFamilies[family_index].queueFlags & vk::QueueFlagBits::eSparseBinding)
+                ++supported_operations;
+            if (QueueFamilies[family_index].queueFlags & vk::QueueFlagBits::eTransfer)
+                ++supported_operations;
+            if (QueueFamilies[family_index].queueFlags & vk::QueueFlagBits::eVideoDecodeKHR)
+                ++supported_operations;
+            smallest_candidate.insert({supported_operations, family_index});
+        }
+    }
+
+    for (const auto queue_family : smallest_candidate | std::views::values) {
+        if (!TakenFamilies.contains(queue_family)) {
+            return queue_family;
+        }
+    }
+
+    if (!smallest_candidate.empty()) {
+        return smallest_candidate.begin()->second;
+    }
+
+    throw std::invalid_argument("No queue family with requested queue flags exists");
+}
+
 const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface)
 {
     if (queueFamilyIndices.IsComplete())
@@ -304,32 +348,51 @@ const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface
 
     QueueFamilyIndices indices;
 
+    // All the different queue families
     const std::vector<vk::QueueFamilyProperties> queue_families =
         physicalDevice.getQueueFamilyProperties();
 
-    int graphics_queue_family_index = 0;
-    for (const auto &queue_family : queue_families) {
-        if (queue_family.queueFlags & vk::QueueFlagBits::eGraphics) {
-            indices.graphicsFamily = graphics_queue_family_index;
-            break;
-        }
-
-        graphics_queue_family_index++;
+    for (size_t i = 0; i < queue_families.size(); ++i) {
+        LOG_FORMAT("Queue Family [{}] Count:{} upports:", i, queue_families[i].queueCount)
+        if (queue_families[i].queueFlags & vk::QueueFlagBits::eCompute)
+            LOG("\tCompute");
+        if (queue_families[i].queueFlags & vk::QueueFlagBits::eGraphics)
+            LOG("\tGraphics");
+        if (queue_families[i].queueFlags & vk::QueueFlagBits::eOpticalFlowNV)
+            LOG("\tOpticalFlowNV");
+        if (queue_families[i].queueFlags & vk::QueueFlagBits::eProtected)
+            LOG("\tProtected");
+        if (queue_families[i].queueFlags & vk::QueueFlagBits::eSparseBinding)
+            LOG("\tSparseBinding");
+        if (queue_families[i].queueFlags & vk::QueueFlagBits::eTransfer)
+            LOG("\tTransfer");
+        if (queue_families[i].queueFlags & vk::QueueFlagBits::eVideoDecodeKHR)
+            LOG("\tVideoDecodeKHR");
     }
 
-    if (physicalDevice.getSurfaceSupportKHR(graphics_queue_family_index, *Surface)) {
-        indices.presentFamily = graphics_queue_family_index;
-    }
+    // All the queue families that are already taken
+    std::unordered_set<uint32_t> taken_families;
 
-    graphics_queue_family_index = 0;
-    for (const auto &queue_family : queue_families) {
-        if ((queue_family.queueFlags & vk::QueueFlagBits::eGraphics) &&
-            queue_family.queueFlags & vk::QueueFlagBits::eTransfer) {
-            indices.transferFamily = graphics_queue_family_index;
-            break;
-        }
+    // Get the queue family that supports graphics operations
+    indices.graphicsFamily = SelectQueue(
+        queue_families, taken_families, vk::QueueFlagBits::eGraphics);
+    taken_families.insert(indices.graphicsFamily.value());
 
-        ++graphics_queue_family_index;
+    indices.computeFamily = SelectQueue(
+        queue_families, taken_families, vk::QueueFlagBits::eCompute);
+    taken_families.insert(indices.computeFamily.value());
+
+    indices.transferFamily = SelectQueue(queue_families,
+                                         taken_families,
+                                         vk::QueueFlagBits::eTransfer &
+                                             vk::QueueFlagBits::eGraphics);
+    taken_families.insert(indices.transferFamily.value());
+
+    // Get the queue family with surface support
+    for (uint32_t family_index = 0; family_index < static_cast<uint32_t>(queue_families.size());
+         ++family_index) {
+        if (physicalDevice.getSurfaceSupportKHR(family_index, *Surface))
+            indices.presentFamily = family_index;
     }
 
     queueFamilyIndices = indices;

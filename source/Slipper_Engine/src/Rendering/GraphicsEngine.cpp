@@ -39,8 +39,12 @@ GraphicsEngine::~GraphicsEngine()
 
     memoryCommandPool.reset();
 
-    for (const auto in_flight_fence : m_inFlightFences) {
-        vkDestroyFence(device, in_flight_fence, nullptr);
+    for (const auto in_flight_fence : m_renderingInFlightFences) {
+        device.logicalDevice.destroyFence(in_flight_fence);
+    }
+
+    for (const auto compute_in_flight_fence : m_computeInFlightFences) {
+        device.logicalDevice.destroyFence(compute_in_flight_fence);
     }
 
     ShaderManager::Shutdown();
@@ -53,15 +57,19 @@ void GraphicsEngine::Init()
     m_graphicsInstance = new GraphicsEngine();
     auto &device = Device::Get();
 
-    VkFenceCreateInfo fence_info{};
-    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    vk::FenceCreateInfo fence_info{};
+    fence_info.flags = vk::FenceCreateFlagBits::eSignaled;
 
-    m_graphicsInstance->m_inFlightFences.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+    m_graphicsInstance->m_renderingInFlightFences.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+    m_graphicsInstance->m_computeInFlightFences.resize(Engine::MAX_FRAMES_IN_FLIGHT);
     for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
-        VK_ASSERT(
-            vkCreateFence(device, &fence_info, nullptr, &m_graphicsInstance->m_inFlightFences[i]),
-            "Failed to create fence!")
+        VK_HPP_ASSERT(device.logicalDevice.createFence(
+                          &fence_info, nullptr, &m_graphicsInstance->m_computeInFlightFences[i]),
+                      "Failed to create compute fence !")
+
+        VK_HPP_ASSERT(device.logicalDevice.createFence(
+                          &fence_info, nullptr, &m_graphicsInstance->m_renderingInFlightFences[i]),
+                      "Failed to create graphics fence !")
     }
 
     m_graphicsInstance->memoryCommandPool = std::make_unique<CommandPool>(
@@ -200,7 +208,10 @@ void GraphicsEngine::SetupSimpleDraw() const
 
 void GraphicsEngine::NewFrame() const
 {
-    vkWaitForFences(device, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+    device.logicalDevice.waitForFences(
+        {m_computeInFlightFences[m_currentFrame], m_renderingInFlightFences[m_currentFrame]},
+        VK_TRUE,
+        UINT64_MAX);
 }
 
 void GraphicsEngine::BeginRenderingStage(std::string_view Name)
@@ -229,52 +240,50 @@ void GraphicsEngine::EndRenderingStage()
 
 void GraphicsEngine::EndFrame()
 {
-    vkResetFences(device, 1, &m_inFlightFences[m_currentFrame]);
+    // We reset both fences together since we also wait for both together so there isnt really a point in doing them seperatly
+    device.logicalDevice.resetFences(
+        {m_renderingInFlightFences[m_currentFrame], m_computeInFlightFences[m_currentFrame]});
 
-    VkSubmitInfo submit_info{};
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    vk::SubmitInfo submit_info;
 
-    std::vector<VkCommandBuffer> command_buffers;
+    std::vector<vk::CommandBuffer> command_buffers;
     command_buffers.reserve(renderingStages.size());
 
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
         command_buffers.push_back(rendering_stage->commandPool->vkCommandBuffers[m_currentFrame]);
     }
 
-    std::vector<VkSemaphore> wait_semaphores;
+    std::vector<vk::Semaphore> rendering_finished_semaphores;
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
         if (rendering_stage->IsPresentStage()) {
-            wait_semaphores.emplace_back(rendering_stage->GetCurrentImageAvailableSemaphore());
+            rendering_finished_semaphores.emplace_back(
+                rendering_stage->GetCurrentImageAvailableSemaphore());
         }
     }
 
-    constexpr VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    submit_info.waitSemaphoreCount = wait_semaphores.size();
-    submit_info.pWaitSemaphores = wait_semaphores.data();
-    submit_info.pWaitDstStageMask = wait_stages;
-    submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
-    submit_info.pCommandBuffers = command_buffers.data();
+    constexpr vk::PipelineStageFlags wait_stages[] = {
+        vk::PipelineStageFlagBits::eVertexInput,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput};
+    submit_info.setWaitSemaphores(rendering_finished_semaphores);
+    submit_info.setWaitDstStageMask(wait_stages);
+    submit_info.setCommandBuffers(command_buffers);
 
-    std::vector<VkSemaphore> signal_semaphores;
+    std::vector<vk::Semaphore> signal_semaphores;
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
         if (rendering_stage->IsPresentStage()) {
             signal_semaphores.emplace_back(rendering_stage->GetCurrentRenderFinishSemaphore());
         }
     }
-    submit_info.signalSemaphoreCount = signal_semaphores.size();
-    submit_info.pSignalSemaphores = signal_semaphores.data();
+    submit_info.setSignalSemaphores(signal_semaphores);
 
-    VK_ASSERT(
-        vkQueueSubmit(device.graphicsQueue, 1, &submit_info, m_inFlightFences[m_currentFrame]),
-        "Failed to submit draw command buffer!");
+    VK_HPP_ASSERT(
+        device.graphicsQueue.submit(1, &submit_info, m_renderingInFlightFences[m_currentFrame]),
+        "Failed to submit draw command buffer!")
 
-    VkPresentInfoKHR present_info{};
-    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    vk::PresentInfoKHR present_info;
+    present_info.setWaitSemaphores(signal_semaphores);
 
-    present_info.waitSemaphoreCount = signal_semaphores.size();
-    present_info.pWaitSemaphores = signal_semaphores.data();
-
-    std::vector<VkSwapchainKHR> present_swap_chains;
+    std::vector<vk::SwapchainKHR> present_swap_chains;
     std::vector<uint32_t> swap_chain_image_indices;
 
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
@@ -283,22 +292,19 @@ void GraphicsEngine::EndFrame()
             swap_chain_image_indices.push_back(rendering_stage->GetCurrentImageIndex());
         }
     }
+    present_info.setSwapchains(present_swap_chains);
+    present_info.setImageIndices(swap_chain_image_indices);
 
-    present_info.swapchainCount = static_cast<uint32_t>(present_swap_chains.size());
-    present_info.pSwapchains = present_swap_chains.data();
-    present_info.pImageIndices = swap_chain_image_indices.data();
-    ;
     present_info.pResults = nullptr;  // Optional
 
-    const auto result = vkQueuePresentKHR(device.presentQueue, &present_info);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    const auto result = device.presentQueue.presentKHR(&present_info);
+    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
         auto capabilities = device.physicalDevice.getSurfaceCapabilitiesKHR(
             windows[0]->GetSurface());
         OnWindowResized(
             windows[0], capabilities.currentExtent.width, capabilities.currentExtent.height);
     }
-    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    else if (result != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to present swap chain image!");
     }
 

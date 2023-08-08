@@ -8,6 +8,7 @@ class Window;
 
 struct QueueFamilyIndices
 {
+    std::optional<uint32_t> computeFamily;
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
     std::optional<uint32_t> transferFamily;
@@ -15,7 +16,7 @@ struct QueueFamilyIndices
     bool IsComplete() const
     {
         return graphicsFamily.has_value() && presentFamily.has_value() &&
-               transferFamily.has_value();
+               transferFamily.has_value() && computeFamily.has_value();
     }
 };
 
@@ -104,6 +105,7 @@ class Device
 
     QueueFamilyIndices queueFamilyIndices;
 
+    vk::Queue computeQueue;
     vk::Queue graphicsQueue;
     vk::Queue presentQueue;
     vk::Queue transferQueue;

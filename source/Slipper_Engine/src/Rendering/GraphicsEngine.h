@@ -103,7 +103,8 @@ class GraphicsEngine : DeviceDependentObject
 
     static GraphicsEngine *m_graphicsInstance;
 
-    std::vector<VkFence> m_inFlightFences;
+    std::vector<vk::Fence> m_computeInFlightFences;
+    std::vector<vk::Fence> m_renderingInFlightFences;
 
     uint32_t m_currentFrame = 0;
     NonOwningPtr<RenderPass> m_currentRenderPass = nullptr;

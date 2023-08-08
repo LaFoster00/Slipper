@@ -22,6 +22,11 @@ class SwapChain : public DeviceDependentObject
         return Impl_GetSwapChain();
     }
 
+    operator vk::SwapchainKHR() const
+    {
+        return Impl_GetSwapChain();
+    }
+
     [[nodiscard]] const vk::Extent2D &GetResolution() const
     {
         return resolution;
