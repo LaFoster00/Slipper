@@ -88,11 +88,7 @@ void GraphicsEngine::Init()
         true);
 
     m_graphicsInstance->viewportRenderingStage = m_graphicsInstance->AddRenderingStage(
-        "Viewport",
-        m_graphicsInstance->viewportSwapChain,
-        device.graphicsQueue,
-        device.queueFamilyIndices.graphicsFamily.value(),
-        false);
+        "Viewport", m_graphicsInstance->viewportSwapChain, false);
 
     m_graphicsInstance->viewportRenderingStage->RegisterForRenderPass(
         m_graphicsInstance->viewportRenderPass);
@@ -157,21 +153,14 @@ void GraphicsEngine::AddWindow(Window &Window)
     windows.push_back(&Window);
     Window.GetSurface().CreateSwapChain();
 
-    windowRenderingStage = AddRenderingStage("Window",
-                                             Window.GetSurface().swapChain.get(),
-                                             device.graphicsQueue,
-                                             device.queueFamilyIndices.graphicsFamily.value(),
-                                             true);
+    windowRenderingStage = AddRenderingStage("Window", Window.GetSurface().swapChain.get(), true);
 
     windowRenderingStage->RegisterForRenderPass(windowRenderPass);
 }
 
 NonOwningPtr<RenderingStage> GraphicsEngine::AddRenderingStage(std::string Name,
                                                                NonOwningPtr<SwapChain> SwapChain,
-                                                               VkQueue CommandQueue,
-                                                               uint32_t CommandQueueFamilyIndex,
-                                                               bool NativeSwapChain,
-                                                               int32_t CommandBufferCount)
+                                                               bool NativeSwapChain)
 {
 
     if (renderingStages.contains(Name)) {
@@ -179,14 +168,7 @@ NonOwningPtr<RenderingStage> GraphicsEngine::AddRenderingStage(std::string Name,
         return nullptr;
     }
 
-    return renderingStages
-        .emplace(Name,
-                 new RenderingStage(Name,
-                                    SwapChain,
-                                    CommandQueue,
-                                    CommandQueueFamilyIndex,
-                                    NativeSwapChain,
-                                    CommandBufferCount))
+    return renderingStages.emplace(Name, new RenderingStage(Name, SwapChain, NativeSwapChain))
         .first->second.get();
 }
 
@@ -207,9 +189,7 @@ void GraphicsEngine::SetupSimpleDraw() const
 void GraphicsEngine::NewFrame() const
 {
     device.logicalDevice.waitForFences(
-        {
-            m_renderingInFlightFences[m_currentFrame],  // m_computeInFlightFences[m_currentFrame]
-        },
+        {m_renderingInFlightFences[m_currentFrame], m_computeInFlightFences[m_currentFrame]},
         VK_TRUE,
         UINT64_MAX);
 }
@@ -242,38 +222,64 @@ void GraphicsEngine::EndFrame()
 {
     // We reset both fences together since we also wait for both together so there isnt really a
     // point in doing them seperately
-    device.logicalDevice.resetFences({
-        m_renderingInFlightFences[m_currentFrame],  // m_computeInFlightFences[m_currentFrame]
-    });
+    device.logicalDevice.resetFences(
+        {m_renderingInFlightFences[m_currentFrame], m_computeInFlightFences[m_currentFrame]});
 
-    std::vector<vk::Semaphore> rendering_finished_semaphores;
+    // Submit compute commands
+    std::vector<vk::Semaphore> compute_finished_semaphores;
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
+        compute_finished_semaphores.emplace_back(
+            rendering_stage->GetCurrentComputeFinishedSemaphore());
+    }
+
+    std::vector<vk::CommandBuffer> compute_command_buffers;
+    compute_command_buffers.reserve(renderingStages.size());
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
+        compute_command_buffers.push_back(
+            rendering_stage->computeCommandPool->GetCurrentCommandBuffer());
+    }
+
+    vk::SubmitInfo compute_submit_info(
+        nullptr, nullptr, compute_command_buffers, compute_finished_semaphores);
+
+    VK_HPP_ASSERT(device.computeQueue.submit(
+                      1, &compute_submit_info, m_computeInFlightFences[m_currentFrame]),
+                  "Failed to submit compute command buffers!")
+
+    // Submit graphics commands
+    std::vector<vk::Semaphore> wait_semaphores;
+    wait_semaphores.insert(wait_semaphores.end(),
+                           compute_finished_semaphores.begin(),
+                           compute_finished_semaphores.end());
+
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
         if (rendering_stage->IsPresentStage()) {
-            rendering_finished_semaphores.emplace_back(
-                rendering_stage->GetCurrentImageAvailableSemaphore());
+            wait_semaphores.emplace_back(rendering_stage->GetCurrentImageAvailableSemaphore());
         }
     }
 
-    constexpr vk::PipelineStageFlags wait_stages =
-        vk::PipelineStageFlagBits::eVertexInput |
-        vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    std::vector<vk::PipelineStageFlags> wait_stages;
+    wait_stages.insert(wait_stages.begin(),
+                       compute_finished_semaphores.size(),
+                       vk::PipelineStageFlagBits::eVertexInput);  // Compute shader stage mask
+    wait_stages.emplace_back(vk::PipelineStageFlagBits::eColorAttachmentOutput);
 
-    std::vector<vk::Semaphore> signal_semaphores;
+    std::vector<vk::Semaphore> render_finished_semaphores;
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
         if (rendering_stage->IsPresentStage()) {
-            signal_semaphores.emplace_back(rendering_stage->GetCurrentRenderFinishSemaphore());
+            render_finished_semaphores.emplace_back(
+                rendering_stage->GetCurrentRenderFinishSemaphore());
         }
     }
 
     std::vector<vk::CommandBuffer> command_buffers;
     command_buffers.reserve(renderingStages.size());
-
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
-        command_buffers.push_back(rendering_stage->commandPool->vkCommandBuffers[m_currentFrame]);
+        command_buffers.push_back(rendering_stage->graphicsCommandPool->GetCurrentCommandBuffer());
     }
 
     const vk::SubmitInfo submit_info(
-        rendering_finished_semaphores, wait_stages, command_buffers, signal_semaphores);
+        wait_semaphores, wait_stages, command_buffers, render_finished_semaphores);
 
     VK_HPP_ASSERT(
         device.graphicsQueue.submit(1, &submit_info, m_renderingInFlightFences[m_currentFrame]),
@@ -290,7 +296,7 @@ void GraphicsEngine::EndFrame()
     }
 
     const vk::PresentInfoKHR present_info(
-        signal_semaphores, present_swap_chains, swap_chain_image_indices, nullptr);
+        render_finished_semaphores, present_swap_chains, swap_chain_image_indices, nullptr);
 
     if (const auto result = device.presentQueue.presentKHR(&present_info);
         result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {

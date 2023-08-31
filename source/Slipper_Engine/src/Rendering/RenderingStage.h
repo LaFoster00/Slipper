@@ -22,16 +22,17 @@ class RenderingStage : public DeviceDependentObject
     //      device.graphicsQueue,
     //      device.queueFamilyIndices.graphicsFamily.value(),
     //      Engine::MAX_FRAMES_IN_FLIGHT)
-    RenderingStage(std::string Name,
-                   NonOwningPtr<SwapChain> SwapChain,
-                   VkQueue CommandQueue,
-                   uint32_t CommandQueueFamilyIndex,
-                   bool NativeSwapChain,
-                   int32_t CommandBufferCount = Engine::MAX_FRAMES_IN_FLIGHT);
+    RenderingStage(std::string Name, NonOwningPtr<SwapChain> SwapChain, bool NativeSwapChain);
     ~RenderingStage();
 
-    VkCommandBuffer BeginRender() const;
+    void BeginRender() const;
     void EndRender();
+
+    void SubmitSingleComputeCommand(const RenderPass *RP,
+                                    std::function<void(const VkCommandBuffer &)> Command);
+
+    void SubmitRepeatedComputeCommand(const RenderPass *RP,
+                                      std::function<void(const VkCommandBuffer &)> Command);
 
     void SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
                     NonOwningPtr<const Material> Material,
@@ -39,9 +40,8 @@ class RenderingStage : public DeviceDependentObject
                     const glm::mat4 &Transform);
     void SubmitSingleDrawCommand(const RenderPass *RP,
                                  std::function<void(const VkCommandBuffer &)> Command);
-    void SubmitRepeatedDrawCommand(
-        const RenderPass *RP,
-        std::function<void(const VkCommandBuffer &, const RenderPass &)> Command);
+    void SubmitRepeatedDrawCommand(const RenderPass *RP,
+                                   std::function<void(const VkCommandBuffer &)> Command);
 
     void RegisterForRenderPass(NonOwningPtr<RenderPass> RenderPass);
     void UnregisterFromRenderPass(NonOwningPtr<RenderPass> RenderPass);
@@ -63,10 +63,16 @@ class RenderingStage : public DeviceDependentObject
 
     VkSemaphore GetCurrentImageAvailableSemaphore() const;
     VkSemaphore GetCurrentRenderFinishSemaphore() const;
+    VkSemaphore GetCurrentComputeFinishedSemaphore() const;
 
-    CommandPool &GetCommandPool() const
+    CommandPool &GetGraphicsCommandPool() const
     {
-        return *commandPool;
+        return *graphicsCommandPool;
+    }
+
+    CommandPool &GetComputeCommandPool() const
+    {
+        return *computeCommandPool;
     }
 
     bool IsPresentStage() const
@@ -80,16 +86,26 @@ class RenderingStage : public DeviceDependentObject
     std::unordered_set<NonOwningPtr<RenderPass>> renderPasses;
 
     // Draw Commands
-    OwningPtr<CommandPool> commandPool;
+    OwningPtr<CommandPool> graphicsCommandPool;
     std::unordered_map<NonOwningPtr<const RenderPass>,
                        std::vector<std::function<void(const VkCommandBuffer &)>>>
-        singleCommands;
-    std::unordered_map<
-        NonOwningPtr<const RenderPass>,
-        std::vector<std::function<void(const VkCommandBuffer &, const RenderPass &)>>>
-        repeatedCommands;
+        singleGraphicsCommands;
+    std::unordered_map<NonOwningPtr<const RenderPass>,
+                       std::vector<std::function<void(const VkCommandBuffer &)>>>
+        repeatedGraphicsCommands;
+
+    // Compute Commands
+    OwningPtr<CommandPool> computeCommandPool;
+    std::unordered_map<NonOwningPtr<const RenderPass>,
+                       std::vector<std::function<void(const VkCommandBuffer &)>>>
+        singleComputeCommands;
+    std::unordered_map<NonOwningPtr<const RenderPass>,
+                       std::vector<std::function<void(const VkCommandBuffer &)>>>
+        repeatedComputeCommands;
 
  private:
     bool m_nativeSwapChain;
+
+    std::vector<vk::Semaphore> m_computeFinishedSemaphores;
 };
 }  // namespace Slipper

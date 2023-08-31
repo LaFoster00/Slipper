@@ -42,13 +42,9 @@ class GraphicsEngine : DeviceDependentObject
     void DestroyRenderPass(RenderPass *RenderPass);
 
     void AddWindow(Window &Window);
-    NonOwningPtr<RenderingStage> AddRenderingStage(
-        std::string Name,
-        NonOwningPtr<SwapChain> SwapChain,
-        VkQueue CommandQueue,
-        uint32_t CommandQueueFamilyIndex,
-        bool NativeSwapChain,
-        int32_t CommandBufferCount = Engine::MAX_FRAMES_IN_FLIGHT);
+    NonOwningPtr<RenderingStage> AddRenderingStage(std::string Name,
+                                                   NonOwningPtr<SwapChain> SwapChain,
+                                                   bool NativeSwapChain);
 
     void NewFrame() const;
     void BeginRenderingStage(std::string_view Name);
@@ -64,7 +60,7 @@ class GraphicsEngine : DeviceDependentObject
 
     [[nodiscard]] VkCommandBuffer GetCurrentGuiCommandBuffer() const
     {
-        return viewportRenderingStage->commandPool->vkCommandBuffers[m_currentFrame];
+        return viewportRenderingStage->graphicsCommandPool->GetCurrentCommandBuffer();
     }
 
     [[nodiscard]] uint32_t GetCurrentFrame() const
@@ -74,7 +70,7 @@ class GraphicsEngine : DeviceDependentObject
 
     [[nodiscard]] NonOwningPtr<CommandPool> GetViewportCommandPool() const
     {
-        return viewportRenderingStage->commandPool;
+        return viewportRenderingStage->graphicsCommandPool;
     }
 
  private:

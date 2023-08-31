@@ -16,21 +16,35 @@ namespace Slipper
 {
 RenderingStage::RenderingStage(std::string Name,
                                NonOwningPtr<SwapChain> SwapChain,
-                               VkQueue CommandQueue,
-                               uint32_t CommandQueueFamilyIndex,
-                               const bool NativeSwapChain,
-                               int32_t CommandBufferCount)
+                               const bool NativeSwapChain)
     : name(Name), swapChain(std::move(SwapChain)), m_nativeSwapChain(NativeSwapChain)
 {
-    commandPool = new CommandPool(CommandQueue, CommandQueueFamilyIndex, CommandBufferCount);
+    graphicsCommandPool = new CommandPool(device.graphicsQueue,
+                                          device.queueFamilyIndices.graphicsFamily.value(),
+                                          Engine::MAX_FRAMES_IN_FLIGHT);
+    computeCommandPool = new CommandPool(device.computeQueue,
+                                         device.queueFamilyIndices.computeFamily.value(),
+                                         Engine::MAX_FRAMES_IN_FLIGHT);
+    m_computeFinishedSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+
+    constexpr vk::SemaphoreCreateInfo semaphore_create_info{vk::SemaphoreCreateFlags()};
+    for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
+        VK_HPP_ASSERT(device.logicalDevice.createSemaphore(
+                          &semaphore_create_info, nullptr, &m_computeFinishedSemaphores[i]),
+                      "Failed to create compute semaphore!");
+    }
 }
 
 RenderingStage::~RenderingStage()
 {
+    for (const auto compute_finished_semaphore : m_computeFinishedSemaphores) {
+        device.logicalDevice.destroySemaphore(compute_finished_semaphore);
+    }
+
     renderPasses.clear();
 }
 
-VkCommandBuffer RenderingStage::BeginRender() const
+void RenderingStage::BeginRender() const
 {
     if (m_nativeSwapChain) {
         const auto result = TryGetSwapChain<SurfaceSwapChain>()->AcquireNextImageKhr();
@@ -44,32 +58,38 @@ VkCommandBuffer RenderingStage::BeginRender() const
             throw std::runtime_error("Failed to acquire swap chain image!");
         }
     }
-    const auto draw_command_buffer =
-        commandPool->vkCommandBuffers[GraphicsEngine::Get().GetCurrentFrame()];
-    commandPool->BeginCommandBuffer(draw_command_buffer);
 
+    const auto draw_command_buffer = graphicsCommandPool->BeginCurrentCommandBuffer();
     for (const auto render_pass : renderPasses) {
         render_pass->BeginRenderPass(GetSwapChain(), GetCurrentImageIndex(), draw_command_buffer);
     }
 
-    return draw_command_buffer;
+    computeCommandPool->BeginCurrentCommandBuffer();
 }
 
 void RenderingStage::EndRender()
 {
-    const auto draw_command_buffer =
-        commandPool->vkCommandBuffers[GraphicsEngine::Get().GetCurrentFrame()];
+    const auto draw_command_buffer = graphicsCommandPool->GetCurrentCommandBuffer();
+    const auto compute_command_buffer = computeCommandPool->GetCurrentCommandBuffer();
 
     for (auto render_pass : renderPasses) {
-        for (auto &repeated_draw_command : repeatedCommands[render_pass]) {
-            repeated_draw_command(draw_command_buffer, *render_pass);
+        // Execute all compute commands
+        for (auto &repeated_compute_command : repeatedComputeCommands[render_pass]) {
+            repeated_compute_command(compute_command_buffer);
         }
+        for (auto &single_compute_command : singleComputeCommands[render_pass]) {
+            single_compute_command(draw_command_buffer);
+        }
+        singleComputeCommands.at(render_pass).clear();
 
-        for (auto &single_draw_command : singleCommands[render_pass]) {
+        // Execute all graphics commands
+        for (auto &repeated_draw_command : repeatedGraphicsCommands[render_pass]) {
+            repeated_draw_command(draw_command_buffer);
+        }
+        for (auto &single_draw_command : singleGraphicsCommands[render_pass]) {
             single_draw_command(draw_command_buffer);
         }
-
-        singleCommands.at(render_pass).clear();
+        singleGraphicsCommands.at(render_pass).clear();
 
         render_pass->EndRenderPass(draw_command_buffer);
 
@@ -82,7 +102,20 @@ void RenderingStage::EndRender()
                                                        vk::ImageLayout::eShaderReadOnlyOptimal);
         }
     }
-    commandPool->EndCommandBuffer(draw_command_buffer);
+    computeCommandPool->EndCommandBuffer(compute_command_buffer);
+    graphicsCommandPool->EndCommandBuffer(draw_command_buffer);
+}
+
+void RenderingStage::SubmitSingleComputeCommand(
+    const RenderPass *RP, std::function<void(const VkCommandBuffer &)> Command)
+{
+    singleComputeCommands[RP].emplace_back(Command);
+}
+
+void RenderingStage::SubmitRepeatedComputeCommand(
+    const RenderPass *RP, std::function<void(const VkCommandBuffer &)> Command)
+{
+    repeatedComputeCommands[RP].emplace_back(Command);
 }
 
 void RenderingStage::SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
@@ -115,13 +148,13 @@ void RenderingStage::SubmitDraw(NonOwningPtr<const RenderPass> RenderPass,
 void RenderingStage::SubmitSingleDrawCommand(const RenderPass *RP,
                                              std::function<void(const VkCommandBuffer &)> Command)
 {
-    singleCommands[RP].emplace_back(Command);
+    singleGraphicsCommands[RP].emplace_back(Command);
 }
 
 void RenderingStage::SubmitRepeatedDrawCommand(
-    const RenderPass *RP, std::function<void(const VkCommandBuffer &, const RenderPass &)> Command)
+    const RenderPass *RP, std::function<void(const VkCommandBuffer &)> Command)
 {
-    repeatedCommands[RP].emplace_back(Command);
+    repeatedGraphicsCommands[RP].emplace_back(Command);
 }
 
 void RenderingStage::RegisterForRenderPass(NonOwningPtr<RenderPass> RenderPass)
@@ -188,5 +221,10 @@ VkSemaphore RenderingStage::GetCurrentRenderFinishSemaphore() const
 {
     return TryGetSwapChain<SurfaceSwapChain>()
         ->m_renderFinishedSemaphores[GraphicsEngine::Get().GetCurrentFrame()];
+}
+
+VkSemaphore RenderingStage::GetCurrentComputeFinishedSemaphore() const
+{
+    return m_computeFinishedSemaphores[GraphicsEngine::Get().GetCurrentFrame()];
 }
 }  // namespace Slipper

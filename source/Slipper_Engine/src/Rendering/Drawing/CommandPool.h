@@ -27,21 +27,36 @@ class CommandPool : DeviceDependentObject
 
     operator VkCommandPool() const
     {
-        return vkCommandPool;
+        return m_vkCommandPool;
     }
 
-    vk::Queue GetQueue() const
+    [[nodiscard]] vk::Queue GetQueue() const
     {
         return m_queue;
+    }
+
+    [[nodiscard]] vk::CommandBuffer GetCurrentCommandBuffer() const;
+
+    vk::CommandBuffer BeginCurrentCommandBuffer()
+    {
+        const auto command_buffer = GetCurrentCommandBuffer();
+        BeginCommandBuffer(command_buffer);
+        return command_buffer;
+    }
+
+    vk::CommandBuffer EndCurrentCommandBuffer() const
+    {
+        const auto command_buffer = GetCurrentCommandBuffer();
+        EndCommandBuffer(command_buffer);
+        return command_buffer;
     }
 
  private:
     vk::CommandBuffer CreateSingleUseCommandBuffer();
     void DestroySingleUseCommandBuffer(vk::CommandBuffer CommandBuffer);
 
- public:
-    vk::CommandPool vkCommandPool;
-    std::vector<vk::CommandBuffer> vkCommandBuffers;
+    vk::CommandPool m_vkCommandPool;
+    std::vector<vk::CommandBuffer> m_vkCommandBuffers;
 
  private:
     std::vector<vk::CommandBuffer> m_singleUseVkCommandBuffers;
@@ -68,14 +83,12 @@ struct SingleUseCommandBuffer
 
     ~SingleUseCommandBuffer() noexcept
     {
-        if (buffer.has_value())
-        {
-            if (!m_submitted)
-            {
+        if (buffer.has_value()) {
+            if (!m_submitted) {
                 DEBUG_BREAK
             }
             m_commandPool.DestroySingleUseCommandBuffer(buffer.value());
-            }
+        }
     }
 
     SingleUseCommandBuffer(const SingleUseCommandBuffer &Other) = delete;
