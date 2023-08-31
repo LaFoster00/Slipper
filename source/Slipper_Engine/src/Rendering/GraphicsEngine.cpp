@@ -207,7 +207,9 @@ void GraphicsEngine::SetupSimpleDraw() const
 void GraphicsEngine::NewFrame() const
 {
     device.logicalDevice.waitForFences(
-        {m_computeInFlightFences[m_currentFrame], m_renderingInFlightFences[m_currentFrame]},
+        {
+            m_renderingInFlightFences[m_currentFrame],  // m_computeInFlightFences[m_currentFrame]
+        },
         VK_TRUE,
         UINT64_MAX);
 }
@@ -240,8 +242,9 @@ void GraphicsEngine::EndFrame()
 {
     // We reset both fences together since we also wait for both together so there isnt really a
     // point in doing them seperately
-    device.logicalDevice.resetFences(
-        {m_renderingInFlightFences[m_currentFrame], m_computeInFlightFences[m_currentFrame]});
+    device.logicalDevice.resetFences({
+        m_renderingInFlightFences[m_currentFrame],  // m_computeInFlightFences[m_currentFrame]
+    });
 
     std::vector<vk::Semaphore> rendering_finished_semaphores;
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
