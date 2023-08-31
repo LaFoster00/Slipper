@@ -73,9 +73,7 @@ void GraphicsEngine::Init()
     }
 
     m_graphicsInstance->memoryCommandPool = std::make_unique<CommandPool>(
-        device.transferQueue ? device.transferQueue : device.graphicsQueue,
-        device.transferQueue ? device.queueFamilyIndices.transferFamily.value() :
-                               device.queueFamilyIndices.graphicsFamily.value());
+        device.transferQueue, device.queueFamilyIndices.transferFamily.value());
 
     m_graphicsInstance->windowRenderPass = m_graphicsInstance->CreateRenderPass(
         "Window", SwapChain::swapChainFormat, Texture2D::FindDepthFormat(), true);
@@ -240,18 +238,10 @@ void GraphicsEngine::EndRenderingStage()
 
 void GraphicsEngine::EndFrame()
 {
-    // We reset both fences together since we also wait for both together so there isnt really a point in doing them seperatly
+    // We reset both fences together since we also wait for both together so there isnt really a
+    // point in doing them seperately
     device.logicalDevice.resetFences(
         {m_renderingInFlightFences[m_currentFrame], m_computeInFlightFences[m_currentFrame]});
-
-    vk::SubmitInfo submit_info;
-
-    std::vector<vk::CommandBuffer> command_buffers;
-    command_buffers.reserve(renderingStages.size());
-
-    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
-        command_buffers.push_back(rendering_stage->commandPool->vkCommandBuffers[m_currentFrame]);
-    }
 
     std::vector<vk::Semaphore> rendering_finished_semaphores;
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
@@ -261,12 +251,9 @@ void GraphicsEngine::EndFrame()
         }
     }
 
-    constexpr vk::PipelineStageFlags wait_stages[] = {
-        vk::PipelineStageFlagBits::eVertexInput,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput};
-    submit_info.setWaitSemaphores(rendering_finished_semaphores);
-    submit_info.setWaitDstStageMask(wait_stages);
-    submit_info.setCommandBuffers(command_buffers);
+    constexpr vk::PipelineStageFlags wait_stages =
+        vk::PipelineStageFlagBits::eVertexInput |
+        vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
     std::vector<vk::Semaphore> signal_semaphores;
     for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
@@ -274,14 +261,20 @@ void GraphicsEngine::EndFrame()
             signal_semaphores.emplace_back(rendering_stage->GetCurrentRenderFinishSemaphore());
         }
     }
-    submit_info.setSignalSemaphores(signal_semaphores);
+
+    std::vector<vk::CommandBuffer> command_buffers;
+    command_buffers.reserve(renderingStages.size());
+
+    for (const auto &rendering_stage : renderingStages | std::ranges::views::values) {
+        command_buffers.push_back(rendering_stage->commandPool->vkCommandBuffers[m_currentFrame]);
+    }
+
+    const vk::SubmitInfo submit_info(
+        rendering_finished_semaphores, wait_stages, command_buffers, signal_semaphores);
 
     VK_HPP_ASSERT(
         device.graphicsQueue.submit(1, &submit_info, m_renderingInFlightFences[m_currentFrame]),
         "Failed to submit draw command buffer!")
-
-    vk::PresentInfoKHR present_info;
-    present_info.setWaitSemaphores(signal_semaphores);
 
     std::vector<vk::SwapchainKHR> present_swap_chains;
     std::vector<uint32_t> swap_chain_image_indices;
@@ -292,14 +285,13 @@ void GraphicsEngine::EndFrame()
             swap_chain_image_indices.push_back(rendering_stage->GetCurrentImageIndex());
         }
     }
-    present_info.setSwapchains(present_swap_chains);
-    present_info.setImageIndices(swap_chain_image_indices);
 
-    present_info.pResults = nullptr;  // Optional
+    const vk::PresentInfoKHR present_info(
+        signal_semaphores, present_swap_chains, swap_chain_image_indices, nullptr);
 
-    const auto result = device.presentQueue.presentKHR(&present_info);
-    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
-        auto capabilities = device.physicalDevice.getSurfaceCapabilitiesKHR(
+    if (const auto result = device.presentQueue.presentKHR(&present_info);
+        result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
+        const auto capabilities = device.physicalDevice.getSurfaceCapabilitiesKHR(
             windows[0]->GetSurface());
         OnWindowResized(
             windows[0], capabilities.currentExtent.width, capabilities.currentExtent.height);

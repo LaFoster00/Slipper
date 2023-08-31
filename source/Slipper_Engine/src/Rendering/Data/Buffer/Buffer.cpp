@@ -59,8 +59,7 @@ Buffer::Buffer(Buffer &&Source) noexcept
 
 void Buffer::CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer)
 {
-    auto &memory_command_pool = *GraphicsEngine::Get().memoryCommandPool;
-    SingleUseCommandBuffer command_buffer(memory_command_pool);
+    SingleUseCommandBuffer command_buffer(*GraphicsEngine::Get().memoryCommandPool);
 
     VkBufferCopy copy_region{};
     copy_region.srcOffset = 0;

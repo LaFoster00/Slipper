@@ -18,19 +18,21 @@ Device::~Device()
     logicalDevice.destroy();
 }
 
-void Device::InitLogicalDevice()
+// Gets the next unique queue if QueueIndex is left free otherwise returns index
+vk::Queue GetQueue(uint32_t QueueFamilyIndex, std::optional<uint32_t> QueueIndex = {})
 {
-    std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
-    std::set<uint32_t> unique_queue_families = {queueFamilyIndices.graphicsFamily.value(),
-                                                queueFamilyIndices.presentFamily.value(),
-                                                queueFamilyIndices.transferFamily.value()};
+    static std::unordered_map<uint32_t, uint32_t> next_queue_index;
 
-    float queue_priority = 1.0f;
-    for (uint32_t queue_family : unique_queue_families) {
-        vk::DeviceQueueCreateInfo queue_create_info({}, queue_family, 1, &queue_priority);
-        queue_create_infos.push_back(queue_create_info);
+    if (QueueIndex.has_value()) {
+        return Device::Get().logicalDevice.getQueue(QueueFamilyIndex, QueueIndex.value());
     }
 
+    return Device::Get().logicalDevice.getQueue(QueueFamilyIndex,
+                                                next_queue_index[QueueFamilyIndex]++);
+}
+
+void Device::InitLogicalDevice()
+{
     // All features are checked for support during device selection
     vk::PhysicalDeviceFeatures device_features;
     device_features.setSamplerAnisotropy(VK_TRUE);
@@ -60,6 +62,20 @@ void Device::InitLogicalDevice()
         std::cout << '\n\n';
     }
 
+    std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
+    std::map<uint32_t, std::vector<float>> unique_queue_family_priorities;
+
+    unique_queue_family_priorities[queueFamilyIndices.graphicsFamily.value()].push_back(1.0f);
+    unique_queue_family_priorities[queueFamilyIndices.presentFamily.value()].push_back(1.0f);
+    unique_queue_family_priorities[queueFamilyIndices.transferFamily.value()].push_back(1.0f);
+    unique_queue_family_priorities[queueFamilyIndices.computeFamily.value()].push_back(1.0f);
+    
+    for (auto &[queue_family, queue_priorities] : unique_queue_family_priorities) {
+        
+        vk::DeviceQueueCreateInfo queue_create_info({}, queue_family, queue_priorities);
+        queue_create_infos.push_back(queue_create_info);
+    }
+
     vk::DeviceCreateInfo create_info({},
                                      queue_create_infos,
                                      enabled_layers,
@@ -70,12 +86,10 @@ void Device::InitLogicalDevice()
     VK_HPP_ASSERT(physicalDevice.createDevice(&create_info, nullptr, &logicalDevice),
                   "Failed to create logical device")
 
-    graphicsQueue = logicalDevice.getQueue(queueFamilyIndices.graphicsFamily.value(), 0);
-    presentQueue = logicalDevice.getQueue(queueFamilyIndices.presentFamily.value(), 0);
-
-    if (queueFamilyIndices.transferFamily.has_value()) {
-        logicalDevice.getQueue(queueFamilyIndices.transferFamily.value(), 0, &transferQueue);
-    }
+    computeQueue = GetQueue(queueFamilyIndices.computeFamily.value());
+    graphicsQueue = GetQueue(queueFamilyIndices.graphicsFamily.value());
+    presentQueue = GetQueue(queueFamilyIndices.presentFamily.value());
+    transferQueue = GetQueue(queueFamilyIndices.transferFamily.value());
 }
 
 Device *Device::PickPhysicalDevice(const Surface *Surface, const bool InitLogicalDevice)
@@ -95,12 +109,14 @@ Device *Device::PickPhysicalDevice(const Surface *Surface, const bool InitLogica
 
     ASSERT(!devices.empty(), "Failed to find suitable GPU!");
 
+    //Save picked instance
+    m_instance = devices.begin()->second;
+
     if (InitLogicalDevice && !devices.empty()) {
         devices.begin()->second->InitLogicalDevice();
     }
 
-    // Safe final device and delete the rest
-    m_instance = devices.begin()->second;
+    //Delete the rest of the instances
     devices.erase(devices.begin()->first);
 
     for (const auto new_device : devices | std::ranges::views::values) {
@@ -307,7 +323,7 @@ uint32_t SelectQueue(const std::vector<vk::QueueFamilyProperties> &QueueFamilies
     std::map<uint32_t, size_t> smallest_candidate;
 
     for (size_t family_index = 0; family_index < QueueFamilies.size(); ++family_index) {
-        if (QueueFamilies[family_index].queueFlags & QueueFlags) {
+        if ((QueueFamilies[family_index].queueFlags & QueueFlags) == QueueFlags) {
             candidates.push_back(family_index);
             uint32_t supported_operations = 0;
             if (QueueFamilies[family_index].queueFlags & vk::QueueFlagBits::eCompute)
@@ -384,7 +400,7 @@ const QueueFamilyIndices *Device::QueryQueueFamilyIndices(const Surface *Surface
 
     indices.transferFamily = SelectQueue(queue_families,
                                          taken_families,
-                                         vk::QueueFlagBits::eTransfer &
+                                         vk::QueueFlagBits::eTransfer |
                                              vk::QueueFlagBits::eGraphics);
     taken_families.insert(indices.transferFamily.value());
 

@@ -96,7 +96,7 @@ class Device
     const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *Surface);
 
  public:
-    /* Gets destroyed toghether with its instance. */
+    /* Gets destroyed together with its instance. */
     vk::PhysicalDevice physicalDevice;
     vk::Device logicalDevice;
 
