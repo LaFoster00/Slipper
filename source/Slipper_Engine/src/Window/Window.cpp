@@ -1,7 +1,7 @@
 #include "Window.h"
 
 #include "InputEvent.h"
-#include "Presentation/Surface.h"
+#include "Context.h"
 
 namespace Slipper
 {
@@ -22,13 +22,14 @@ Window::Window(WindowInfo CreateInfo)
 
     InputManager::RegisterGlfwInputCallbacks(*this);
 
-    m_surface = std::make_unique<Surface>(*this);
+    m_context = std::unique_ptr<Context>(Context::CreateContext(*this));
 }
 
 Window::~Window()
 {
-    vkDeviceWaitIdle(Device::Get());
-    m_surface.reset();
+    m_context->WaitIdle();
+    
+    m_context.reset();
     glfwDestroyWindow(glfwWindow);
 }
 

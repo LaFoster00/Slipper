@@ -1,7 +1,5 @@
 #include "Input.h"
 
-#include <imgui_internal.h>
-
 #include "AppEvents.h"
 #include "Application.h"
 #include "InputEvent.h"

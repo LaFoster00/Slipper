@@ -34,8 +34,8 @@ void Application::Init(ApplicationInfo &ApplicationInfo)
     window = new Window(window_create_info);
     window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
-    Device::PickPhysicalDevice(&window->GetSurface(), true);
-    GraphicsSettings::Get().MSAA_SAMPLES = Device::Get().GetMaxUsableFramebufferSampleCount();
+    VKDevice::PickPhysicalDevice(&window->GetContext(), true);
+    GraphicsSettings::Get().MSAA_SAMPLES = VKDevice::Get().GetMaxUsableFramebufferSampleCount();
 
     // Setup Application Components
     ecsComponent = AddComponent(new Ecs());
@@ -59,7 +59,7 @@ void Application::Init(ApplicationInfo &ApplicationInfo)
 
 void Application::Shutdown()
 {
-    vkDeviceWaitIdle(Device::Get());
+    vkDeviceWaitIdle(VKDevice::Get());
 
     for (const auto &app_component : appComponents) {
         app_component->Shutdown();
@@ -69,7 +69,7 @@ void Application::Shutdown()
 
     GraphicsEngine::Shutdown();
     window.reset();
-    Device::Destroy();
+    VKDevice::Destroy();
     glfwTerminate();
 }
 
@@ -204,7 +204,7 @@ void Application::AddAdditionalRenderStageUpdateFront(
 
 void Application::ViewportResize(NonOwningPtr<RenderingStage> Stage)
 {
-    vkDeviceWaitIdle(Device::Get());
+    vkDeviceWaitIdle(VKDevice::Get());
     auto &[context, resized, width, height] = viewportsResize.at(Stage);
     resized = false;
     GraphicsEngine::OnViewportResize(Stage, width, height);

@@ -4,7 +4,8 @@
 
 namespace Slipper
 {
-using MouseCodeT = int;
+	class Window;
+	using MouseCodeT = int;
 
 enum class MouseCode : MouseCodeT
 {

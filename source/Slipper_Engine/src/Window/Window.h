@@ -4,7 +4,7 @@ namespace Slipper
 {
 class InputManager;
 class WindowEvent;
-class Surface;
+class Context;
 class Event;
 
 using EventCallback = std::function<void(Event &)>;
@@ -30,9 +30,9 @@ class Window
 
     void SetTitle(std::string_view Name);
 
-    Surface &GetSurface() const
+    Context &GetContext() const
     {
-        return *m_surface;
+        return *m_context;
     }
 
     operator GLFWwindow *() const
@@ -62,7 +62,7 @@ class Window
 
  private:
     WindowInfo m_info;
-    std::unique_ptr<Surface> m_surface;
+    std::unique_ptr<Context> m_context;
     EventCallback m_eventCallback;
 };
 }  // namespace Slipper

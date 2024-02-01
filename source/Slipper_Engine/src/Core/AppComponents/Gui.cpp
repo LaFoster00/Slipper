@@ -11,7 +11,7 @@
 
 namespace Slipper
 {
-Device *Gui::m_device = nullptr;
+VKDevice *Gui::m_device = nullptr;
 
 void Gui::ImGuiResources::CreateDescriptorPool(const VkDescriptorPoolSize *Sizes,
                                                uint32_t SizesCount,
@@ -38,7 +38,7 @@ void Gui::Init()
     if (m_initialized)
         return;
 
-    m_device = &Device::Get();
+    m_device = &VKDevice::Get();
 
     // For each context we can initialize a new Imgui vulkan backend and therefore a different
     // render pass

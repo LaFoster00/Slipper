@@ -6,7 +6,7 @@ namespace Slipper
 {
 	class RenderingStage;
 	class RenderPass;
-class Device;
+class VKDevice;
 class Window;
 
 class Gui : public AppComponent
@@ -37,7 +37,7 @@ class Gui : public AppComponent
     void Shutdown() override;
 
  private:
-    static Device *m_device;
+    static VKDevice *m_device;
 
     static inline ImFontAtlas *m_fontAtlas = nullptr;
 

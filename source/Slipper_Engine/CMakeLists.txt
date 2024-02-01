@@ -68,10 +68,10 @@ set(SLIPPER_ENGINE_INCLUDE_DIRECTORIES
     src/Engine
     src/Filesystem
     src/Platform
-    src/Rendering
-    src/Rendering/Data
-    src/Rendering/Pipeline
-    src/Rendering/Pipeline/Shader
+    src/GPU
+    src/GPU/Mesh
+    src/Services
+    src/Model
     src/SceneObjects
     src/Tutorial
     src/Window

@@ -1,8 +1,8 @@
 #include "ComputeShaderTest.h"
-
-#include "ComputeShader.h"
-#include "Buffer/Buffer.h"
 #include "ShaderManager.h"
+#include "Vulkan/vk_Buffer.h"
+#include "Vulkan/vk_ComputeShader.h"
+#include "Vulkan/vk_Settings.h"
 
 namespace Slipper::Editor
 {

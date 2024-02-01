@@ -1,22 +1,20 @@
 #include "Editor.h"
 
-#include <imgui_internal.h>
-
 #include "CameraComponent.h"
 #include "Core/AppComponents/Gui.h"
 #include "Core/Application.h"
 #include "Input.h"
-#include "Drawing/Sampler.h"
 #include "EditorCameraSystem.h"
 #include "EntityOutliner.h"
 #include "GraphicsEngine.h"
-#include "Presentation/OffscreenSwapChain.h"
 #include "SceneOutliner.h"
-#include "Texture/Texture2D.h"
 #include "TransformComponent.h"
 #include <ImGuizmo.cpp>
 
 #include "TextureManager.h"
+#include "Vulkan/vk_OffscreenSwapChain.h"
+#include "Vulkan/vk_Sampler.h"
+#include "Vulkan/vk_Texture2D.h"
 
 namespace Slipper::Editor
 {
