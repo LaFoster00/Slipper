@@ -4,7 +4,34 @@
 # Configuration of clang-format
 # =============================
 #
-# Tested to work with versions: 8 to 11.
+# We'll use defaults from the LLVM style
+
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+### Resharper Default Vonfig
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands: false
+AlignTrailingComments: false
+AlwaysBreakTemplateDeclarations: Yes
+IncludeCategories: 
+  - Regex: '^<.*'
+    Priority: 1
+  - Regex: '^".*'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 3
+IncludeIsMainRegex: '([-_](test|unittest))?$'
+IndentCaseBlocks: true
+InsertNewlineAtEOF: true
+MacroBlockBegin: ''
+MacroBlockEnd: ''
+MaxEmptyLinesToKeep: 2
+NamespaceIndentation: All
+SpacesInAngles: false
+###
 
 # This causes parameters on continuations to align to the opening brace.
 #
@@ -36,8 +63,8 @@ AllowShortBlocksOnASingleLine: false
 BinPackArguments: false
 BinPackParameters: false
 
-# Line width (don't exceed 100).
-ColumnLimit: 99
+# Line width (don't exceed 121).
+ColumnLimit: 120
 
 # Cause initializer lists to have one member initialized per line, in the case
 # that all initializers can't fit on a single line.
@@ -62,19 +89,23 @@ ContinuationIndentWidth: 4
 
 # This tries to match Slipper's style as much as possible. One
 BreakBeforeBraces: Custom
-BraceWrapping: {
-    AfterClass: 'true'
-    AfterControlStatement: 'false'
-    AfterEnum : 'true'
-    AfterFunction : 'true'
-    AfterNamespace : 'true'
-    AfterStruct : 'true'
-    AfterUnion : 'true'
-    BeforeCatch : 'true'
-    BeforeElse : 'true'
-    IndentBraces : 'false'
-    AfterObjCDeclaration: 'true'
-}
+BraceWrapping: 
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: false
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: true
+  BeforeWhile: true
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
 
 # For switch statements, indent the cases.
 IndentCaseLabels: true
@@ -155,3 +186,4 @@ AlwaysBreakBeforeMultilineStrings: true
 # We don't want literal strings to break,
 # however clang-format seems to ignore this (sigh).
 PenaltyBreakString: 1000000
+...
