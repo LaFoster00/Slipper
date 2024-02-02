@@ -1,7 +1,7 @@
 #pragma once
 #include "vk_SwapChain.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 class OffscreenSwapChain : public SwapChain
 {

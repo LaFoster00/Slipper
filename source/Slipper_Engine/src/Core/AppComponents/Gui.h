@@ -4,48 +4,52 @@
 
 namespace Slipper
 {
-	class RenderingStage;
-	class RenderPass;
-class VKDevice;
-class Window;
-
-class Gui : public AppComponent
-{
-    struct ImGuiResources
+    namespace GPU
     {
-        VkDescriptorPool imGuiDescriptorPool;
-
-        void CreateDescriptorPool(const VkDescriptorPoolSize *Sizes,
-                                  uint32_t SizesCount,
-                                  uint32_t MaxSets);
-    };
-
- public:
-    explicit Gui(std::string_view Name, NonOwningPtr<RenderPass> RenderPass, bool InstallCallbacks = false);
-	void StartNewFrame() const;
-	void EndNewFrame(NonOwningPtr<RenderingStage> RenderingStage) const;
-    NonOwningPtr<ImGuiContext> GetImguiContext() const
-    {
-        return m_context;
+        class RenderingStage;
     }
 
- private:
-	void SetupDocksapce() const;
+    namespace GPU::Vulkan
+    {
+        class VKDevice;
+        class RenderPass;
+    }
 
- public:
-    void Init() override;
-    void Shutdown() override;
+    class Gui : public AppComponent
+    {
+        struct ImGuiResources
+        {
+            VkDescriptorPool imGuiDescriptorPool;
 
- private:
-    static VKDevice *m_device;
+            void CreateDescriptorPool(const VkDescriptorPoolSize *Sizes, uint32_t SizesCount, uint32_t MaxSets);
+        };
 
-    static inline ImFontAtlas *m_fontAtlas = nullptr;
+     public:
+        explicit Gui(std::string_view Name, NonOwningPtr<GPU::Vulkan::RenderPass> RenderPass, bool InstallCallbacks = false);
+        void StartNewFrame() const;
+        void EndNewFrame(NonOwningPtr<GPU::RenderingStage> RenderingStage) const;
+        NonOwningPtr<ImGuiContext> GetImguiContext() const
+        {
+            return m_context;
+        }
 
-	bool m_initialized = false;
-    bool m_installCallbacks;
-    
-	ImGuiResources *m_resources = nullptr;
-    ImGuiContext *m_context = nullptr;
-    NonOwningPtr<RenderPass> m_renderPass;
-};
+     private:
+        void SetupDocksapce() const;
+
+     public:
+        void Init() override;
+        void Shutdown() override;
+
+     private:
+        static GPU::Vulkan::VKDevice *m_device;
+
+        static inline ImFontAtlas *m_fontAtlas = nullptr;
+
+        bool m_initialized = false;
+        bool m_installCallbacks;
+
+        ImGuiResources *m_resources = nullptr;
+        ImGuiContext *m_context = nullptr;
+        NonOwningPtr<GPU::Vulkan::RenderPass> m_renderPass;
+    };
 }  // namespace Slipper

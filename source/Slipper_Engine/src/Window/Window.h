@@ -1,68 +1,74 @@
 #pragma once
+#include "Vulkan/vk_Surface.h"
 
 namespace Slipper
 {
-class InputManager;
-class WindowEvent;
-class Context;
-class Event;
-
-using EventCallback = std::function<void(Event &)>;
-
-struct WindowInfo
-{
-    std::string name;
-    uint32_t width;
-    uint32_t height;
-    bool resizable;
-};
-
-class Window
-{
-    friend WindowEvent;
-    friend InputManager;
-
- public:
-    Window(WindowInfo CreateInfo);
-    Window(Window &Window) = delete;
-    Window(Window &&Window) = delete;
-    ~Window();
-
-    void SetTitle(std::string_view Name);
-
-    Context &GetContext() const
+    namespace GPU
     {
-        return *m_context;
+        class Context;
     }
 
-    operator GLFWwindow *() const
+    class InputManager;
+    class WindowEvent;
+    class Event;
+    using EventCallback = std::function<void(Event &)>;
+
+    struct WindowInfo
     {
-        return glfwWindow;
-    }
+        std::string name;
+        uint32_t width;
+        uint32_t height;
+        bool resizable;
+    };
 
-    void SetEventCallback(const EventCallback Callback)
+    class Window
     {
-        m_eventCallback = Callback;
-    }
+        friend WindowEvent;
+        friend InputManager;
 
-    VkExtent2D GetSize() const
-    {
-        return {m_info.width, m_info.height};
-    }
+     public:
+        Window(WindowInfo CreateInfo);
+        Window(Window &Window) = delete;
+        Window(Window &&Window) = delete;
+        ~Window();
 
-    std::string_view GetName() const
-    {
-        return m_info.name;
-    }
+        void SetTitle(std::string_view Name);
 
-    static void OnUpdate();
+        GPU::Context &GetContext() const
+        {
+            return *m_context;
+        }
 
- public:
-    GLFWwindow *glfwWindow;
+        operator GLFWwindow *() const
+        {
+            return glfwWindow;
+        }
 
- private:
-    WindowInfo m_info;
-    std::unique_ptr<Context> m_context;
-    EventCallback m_eventCallback;
-};
+        void SetEventCallback(const EventCallback Callback)
+        {
+            m_eventCallback = Callback;
+        }
+
+        VkExtent2D GetSize() const
+        {
+            return {m_info.width, m_info.height};
+        }
+
+        std::string_view GetName() const
+        {
+            return m_info.name;
+        }
+
+        glm::int2 GetResolution() const;
+
+        static void OnUpdate();
+
+     public:
+        GLFWwindow *glfwWindow;
+
+     private:
+        WindowInfo m_info;
+        std::unique_ptr<GPU::Context> m_context;
+        EventCallback m_eventCallback;
+    };
 }  // namespace Slipper

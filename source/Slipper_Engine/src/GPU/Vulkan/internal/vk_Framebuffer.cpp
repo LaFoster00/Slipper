@@ -1,8 +1,9 @@
-#include "Framebuffer.h"
+#include "../vk_Framebuffer.h"
 
-#include "RenderPass.h"
+#include "Vulkan/vk_RenderPass.h"
+#include "Vulkan/vk_Device.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 Framebuffer::Framebuffer(const RenderPass *RenderPass,
                          const VkImageView *Attachments,

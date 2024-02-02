@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 	struct DescriptorSetLayoutBindingMinimal;
 	struct DescriptorSetLayoutBinding;

@@ -1,13 +1,11 @@
-#include "Texture.h"
+#include "../vk_Texture.h"
+
+#include "Vulkan/vk_Device.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "Buffer/Buffer.h"
-#include "Drawing/CommandPool.h"
-#include "GraphicsEngine.h"
-
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 Texture::Texture(const vk::ImageType Type,
                  const vk::Extent3D Extent,

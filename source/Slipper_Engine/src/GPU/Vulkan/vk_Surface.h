@@ -1,47 +1,52 @@
 #pragma once
-
-#include "SurfaceSwapChain.h"
+#include "vk_SurfaceSwapChain.h"
 
 namespace Slipper
 {
-class RenderPass;
+    class Window;
+}
 
-class Surface
+namespace Slipper::GPU::Vulkan
 {
- public:
-    Surface(const Window &Window);
-    ~Surface();
+    class SurfaceSwapChain;
+    class RenderPass;
 
-    operator VkSurfaceKHR() const
+    class Surface
     {
-        return vkSurface;
-    }
+     public:
+        Surface(const Window &Window);
+        ~Surface();
 
-    operator vk::SurfaceKHR&()
-    {
-        return vkSurface;
-    }
+        operator VkSurfaceKHR() const
+        {
+            return vkSurface;
+        }
 
-    operator const vk::SurfaceKHR &() const
-    {
-        return vkSurface;
-    }
+        operator vk::SurfaceKHR &()
+        {
+            return vkSurface;
+        }
 
-    [[nodiscard]] const VkExtent2D &GetResolution() const
-    {
-        return swapChain->GetResolution();
-    }
+        operator const vk::SurfaceKHR &() const
+        {
+            return vkSurface;
+        }
 
-    // ONLY CALL AFTER DEVICE IS CREATED
-    void CreateSwapChain();
+        [[nodiscard]] const VkExtent2D &GetResolution() const
+        {
+            return swapChain->GetResolution();
+        }
 
- private:
-    void CleanupSwapChain(bool DestroySwapChain);
+        // ONLY CALL AFTER DEVICE IS CREATED
+        void CreateSwapChain();
 
- public:
-    vk::SurfaceKHR vkSurface;
-    const Window &window;
+     private:
+        void CleanupSwapChain(bool DestroySwapChain);
 
-    OwningPtr<SurfaceSwapChain> swapChain;
-};
-}  // namespace Slipper
+     public:
+        vk::SurfaceKHR vkSurface;
+        const Window &window;
+
+        OwningPtr<SurfaceSwapChain> swapChain;
+    };
+}  // namespace Slipper::GPU::Vulkan

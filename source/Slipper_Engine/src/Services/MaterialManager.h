@@ -1,44 +1,41 @@
 #pragma once
 #include "AppComponent.h"
 #include "Material.h"
+#include "Vulkan/vk_GraphicsShader.h"
+#include "Vulkan/vk_Material.h"
 
 namespace Slipper
 {
-struct DescriptorSetLayoutBinding;
-struct MaterialUniform;
-class Shader;
-class Material;
-
-class MaterialManager : public AppComponent
-{
-    friend Material;
-
- public:
-    MaterialManager(const std::string_view &Name = "Material Manager") : AppComponent(Name)
+    class MaterialManager : public AppComponent
     {
-    }
+        friend GPU::Material;
 
-    static NonOwningPtr<Material> AddMaterial(std::string Name,
-                                              NonOwningPtr<GraphicsShader> Shader);
-    static NonOwningPtr<Material> GetMaterial(std::string Name);
-    static std::optional<NonOwningPtr<Material>> TryGetMaterial(std::string Name);
+     public:
+        MaterialManager(const std::string_view &Name = "Material Manager") : AppComponent(Name)
+        {
+        }
 
- private:
-    struct UniformUpdateFunc
-    {
-        uint32_t frames_updated;
-        MaterialUniform uniform;
+        static NonOwningPtr<GPU::Material> AddMaterial(std::string Name,
+                                                       NonOwningPtr<GPU::Vulkan::GraphicsShader> Shader);
+        static NonOwningPtr<GPU::Material> GetMaterial(std::string Name);
+        static std::optional<NonOwningPtr<GPU::Material>> TryGetMaterial(std::string Name);
+
+     private:
+        struct UniformUpdateFunc
+        {
+            uint32_t frames_updated;
+            GPU::Vulkan::MaterialUniform uniform;
+        };
+
+        static void AddUniformUpdate(const GPU::Material &Material, GPU::Vulkan::MaterialUniform UniformUpdate);
+
+        void OnUpdate() override;
+
+     private:
+        static inline std::unordered_map<std::string, OwningPtr<GPU::Material>> m_materials;
+        static inline std::unordered_map<
+            NonOwningPtr<const GPU::Material>,
+            std::unordered_map<NonOwningPtr<GPU::Vulkan::DescriptorSetLayoutBinding>, UniformUpdateFunc>>
+            m_uniformUpdates;
     };
-
-    static void AddUniformUpdate(const Material &Material, MaterialUniform UniformUpdate);
-
-    void OnUpdate() override;
-
- private:
-    static inline std::unordered_map<std::string, OwningPtr<Material>> m_materials;
-    static inline std::unordered_map<
-        NonOwningPtr<const Material>,
-        std::unordered_map<NonOwningPtr<DescriptorSetLayoutBinding>, UniformUpdateFunc>>
-        m_uniformUpdates;
-};
 }  // namespace Slipper

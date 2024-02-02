@@ -1,15 +1,17 @@
-#include "GraphicsPipeline.h"
+#include "../vk_GraphicsPipeline.h"
 
-#include "Mesh/Mesh.h"
-#include "PipelineLayout.h"
+#include "GraphicsSettings.h"
+#include "Vulkan/vk_Device.h"
+#include "Vulkan/vk_Mesh.h"
+#include "Vulkan/vk_PipelineLayout.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 GraphicsPipeline::GraphicsPipeline(
     const std::vector<VkPipelineShaderStageCreateInfo> &ShaderStages,
     const NonOwningPtr<const RenderPass> RenderPass,
     const std::vector<VkDescriptorSetLayout> &DescriptorSetLayouts)
-    : device(Device::Get()), m_renderPass(RenderPass), m_shaderStages(ShaderStages)
+    : device(VKDevice::Get()), m_renderPass(RenderPass), m_shaderStages(ShaderStages)
 {
     vkPipelineLayout = PipelineLayout::CreatePipelineLayout(device, DescriptorSetLayouts);
     Create();
@@ -78,7 +80,7 @@ void GraphicsPipeline::Create()
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = static_cast<VkSampleCountFlagBits>(
-        GraphicsSettings::Get().MSAA_SAMPLES);
+        static_cast<vk::SampleCountFlagBits>(GraphicsSettings::MSAA_SAMPLES));
 
     VkPipelineDepthStencilStateCreateInfo depth_stencil{};
     depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;

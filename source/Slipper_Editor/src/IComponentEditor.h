@@ -27,14 +27,14 @@ inline EditorDrawFallback FallbackDraw = [](const entt::type_info &Type) {
     ImGui::Begin("Fallback Editor", &open);
     ImGui::Text(
         "There is no editor registered for component of type: %s \n Consider adding one and "
-        "registering it using the EditorRegistry::AddEditor() function!",
+        "registering it using the IEcsComponent interface!",
         Type.name().data());
     ImGui::End();
 };
 
 struct EditorInfo
 {
-    EditorInfo(){};
+    EditorInfo() = default;
 
  private:
     // For use with zero size components. These should not have to define an actual editor

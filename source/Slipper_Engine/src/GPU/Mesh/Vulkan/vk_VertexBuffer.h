@@ -1,16 +1,15 @@
 #pragma once
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
-struct Vertex;
-class CommandPool;
+    struct Vertex;
 
-class VertexBuffer : public Buffer
-{
- public:
-    VertexBuffer(const Vertex *Vertices, size_t NumVertices);
+    class VertexBuffer : public Buffer
+    {
+     public:
+        VertexBuffer(const Vertex *Vertices, size_t NumVertices);
 
- public:
-    size_t numVertex;
-};
-}  // namespace Slipper
+     public:
+        size_t numVertex;
+    };
+}  // namespace Slipper::GPU::Vulkan

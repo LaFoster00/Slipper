@@ -1,10 +1,10 @@
 #pragma once
+#include "vk_CommandPool.h"
+#include "vk_DeviceDependentObject.h"
+#include "vk_IShaderBindableData.h"
+#include "vk_Sampler.h"
 
-#include "Drawing/CommandPool.h"
-#include "Drawing/Sampler.h"
-#include "IShaderBindableData.h"
-
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 class Texture;
 class Sampler;

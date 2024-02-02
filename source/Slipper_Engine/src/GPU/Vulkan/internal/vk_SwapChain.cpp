@@ -1,11 +1,12 @@
-#include "SwapChain.h"
+#include "../vk_SwapChain.h"
 
-#include "Data/Texture/Texture.h"
-#include "RenderPass.h"
-#include "Texture/DepthBuffer.h"
-#include "Texture/RenderTarget.h"
+#include "GraphicsSettings.h"
+#include "Vulkan/vk_DepthBuffer.h"
+#include "Vulkan/vk_RenderPass.h"
+#include "Vulkan/vk_RenderTarget.h"
+#include "Vulkan/vk_Texture2D.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 SwapChain::SwapChain(vk::Extent2D Extent, vk::Format RenderingFormat)
     : imageRenderingFormat(RenderingFormat),
@@ -100,7 +101,7 @@ void SwapChain::CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass)
     vk_framebuffers.resize(m_vkImageViews.size());
     for (size_t i = 0; i < m_vkImageViews.size(); i++) {
         std::vector<vk::ImageView> attachments;
-        if (GraphicsSettings::Get().MSAA_SAMPLES != vk::SampleCountFlagBits::e1) {
+        if (GraphicsSettings::MSAA_SAMPLES != SampleCount::e1) {
             attachments.push_back(renderTarget->imageInfo.views[0]);
             attachments.push_back(depthBuffer->imageInfo.views[0]);
             attachments.push_back(m_vkImageViews[i]);

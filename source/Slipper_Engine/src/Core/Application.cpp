@@ -4,13 +4,12 @@
 #include "AppComponents/Ecs.h"
 #include "AppEvents.h"
 #include "Event.h"
-#include "GraphicsEngine.h"
+#include "GraphicsSettings.h"
 #include "Input.h"
 #include "MaterialManager.h"
-#include "Setup/GraphicsSettings.h"
-#include "Setup/VulkanInstance.h"
 #include "Time/Time.h"
 #include "Window.h"
+#include "Vulkan/vk_Instance.h"
 
 namespace Slipper
 {
@@ -24,7 +23,7 @@ void Application::Init(ApplicationInfo &ApplicationInfo)
     name = ApplicationInfo.Name;
 
     glfwInit();
-    vulkanInstance = new VulkanInstance();
+    vulkanInstance = new GPU::Vulkan::VulkanInstance();
 
     WindowInfo window_create_info;
     window_create_info.width = 1280;
@@ -34,8 +33,8 @@ void Application::Init(ApplicationInfo &ApplicationInfo)
     window = new Window(window_create_info);
     window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
-    VKDevice::PickPhysicalDevice(&window->GetContext(), true);
-    GraphicsSettings::Get().MSAA_SAMPLES = VKDevice::Get().GetMaxUsableFramebufferSampleCount();
+    GPU::Vulkan::VKDevice::PickPhysicalDevice(&window->GetContext(), true);
+    GPU::GraphicsSettings::MSAA_SAMPLES = static_cast<GPU::SampleCount>(GPU::Vulkan::VKDevice::Get().GetMaxUsableFramebufferSampleCount());
 
     // Setup Application Components
     ecsComponent = AddComponent(new Ecs());

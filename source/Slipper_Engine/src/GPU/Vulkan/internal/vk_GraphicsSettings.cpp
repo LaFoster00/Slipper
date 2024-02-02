@@ -1,6 +1,5 @@
 #include "GraphicsSettings.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
-GraphicsSettings *GraphicsSettings::m_instance = nullptr;
 }

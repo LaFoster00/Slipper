@@ -1,13 +1,12 @@
-#include "SurfaceSwapChain.h"
+#include "../vk_SurfaceSwapChain.h"
 
-#include "GraphicsEngine.h"
-#include "Surface.h"
-#include "Window.h"
+#include "Vulkan/vk_Surface.h"
+#include "Window/Window.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 SurfaceSwapChain::SurfaceSwapChain(Surface &Surface)
-    : SwapChain({}, Engine::TARGET_WINDOW_COLOR_FORMAT),
+    : SwapChain({}, TARGET_WINDOW_COLOR_FORMAT),
       surface(Surface),
       vkSwapChain(VK_NULL_HANDLE)
 {
@@ -47,9 +46,9 @@ VkPresentModeKHR SurfaceSwapChain::ChoosePresentMode() const
 vk::SurfaceFormatKHR SurfaceSwapChain::ChooseSurfaceFormat() const
 {
     for (const auto &available_format : swapChainSupport.formats) {
-        if (available_format.format == Engine::TARGET_WINDOW_COLOR_FORMAT &&
-            available_format.colorSpace == Engine::TARGET_COLOR_SPACE) {
-            swapChainFormat = Engine::TARGET_WINDOW_COLOR_FORMAT;
+        if (available_format.format == TARGET_WINDOW_COLOR_FORMAT &&
+            available_format.colorSpace == TARGET_COLOR_SPACE) {
+            swapChainFormat = TARGET_WINDOW_COLOR_FORMAT;
             return available_format;
         }
     }
@@ -134,10 +133,10 @@ void SurfaceSwapChain::Impl_Create()
         VkSemaphoreCreateInfo semaphore_info{};
         semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-        m_imageAvailableSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
-        m_renderFinishedSemaphores.resize(Engine::MAX_FRAMES_IN_FLIGHT);
+        m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        m_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 
-        for (int i = 0; i < Engine::MAX_FRAMES_IN_FLIGHT; ++i) {
+        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
             VK_ASSERT(vkCreateSemaphore(
                           device, &semaphore_info, nullptr, &m_imageAvailableSemaphores[i]),
                       "Failed to create semaphore!")

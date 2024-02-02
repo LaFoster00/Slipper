@@ -2,7 +2,7 @@
 #include "vk_Texture.h"
 
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 typedef unsigned char stbi_uc;
 

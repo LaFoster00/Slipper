@@ -1,7 +1,8 @@
 #pragma once
-#include "Texture2D.h"
 
-namespace Slipper
+#include "vk_Texture.h"
+
+namespace Slipper::GPU::Vulkan
 {
 class RenderTarget : public Texture
 {

@@ -1,7 +1,7 @@
 #pragma once
-#include "Texture.h"
+#include "vk_Texture.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 class DepthBuffer : public Texture
 {

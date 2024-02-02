@@ -1,6 +1,4 @@
-#include "ShaderReflectionUtil.h"
-
-#include "Shader.h"
+#include "vk_ShaderReflectionUtil.h"
 
 namespace Slipper
 {

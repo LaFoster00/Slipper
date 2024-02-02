@@ -1,11 +1,11 @@
-#include "UniformBuffer.h"
+#include "../vk_UniformBuffer.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 UniformBuffer::UniformBuffer(const VkDeviceSize SizeUniformObject)
     : Buffer(SizeUniformObject,
-             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 {
     m_descriptorInfo = std::make_unique<VkDescriptorBufferInfo>();
     m_descriptorInfo->buffer = vkBuffer;

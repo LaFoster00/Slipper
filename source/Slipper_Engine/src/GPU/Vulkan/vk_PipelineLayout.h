@@ -4,7 +4,7 @@ struct VkViewport;
 struct VkRect2D;
 struct VkPipelineColorBlendAttachmentState;
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 class SwapChain;
 class VKDevice;

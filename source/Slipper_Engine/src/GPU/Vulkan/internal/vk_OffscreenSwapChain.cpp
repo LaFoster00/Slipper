@@ -1,8 +1,6 @@
-#include "OffscreenSwapChain.h"
+#include "../vk_OffscreenSwapChain.h"
 
 #include "Core/Application.h"
-#include "GraphicsEngine.h"
-#include "Texture/Texture2D.h"
 #include "Window.h"
 
 namespace Slipper

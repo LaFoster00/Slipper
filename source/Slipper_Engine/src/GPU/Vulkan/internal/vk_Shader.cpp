@@ -1,7 +1,4 @@
-#include "Shader.h"
-
-#include "GraphicsEngine.h"
-#include "Buffer/UniformBuffer.h"
+#include "../vk_Shader.h"
 
 namespace Slipper
 {

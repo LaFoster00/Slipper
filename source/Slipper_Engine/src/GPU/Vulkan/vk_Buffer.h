@@ -1,93 +1,96 @@
 #pragma once
-#include "DeviceDependentObject.h"
+
+#include "vk_Device.h"
+#include "vk_DeviceDependentObject.h"
 #include "vk_IShaderBindableData.h"
+#include "vk_ShaderLayout.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
-struct ShaderUniformObject;
-class CommandPool;
+    struct ShaderUniformObject;
+    class CommandPool;
 
-class Buffer : DeviceDependentObject, public IShaderBindableData
-{
- public:
-    Buffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
-
-    ~Buffer() noexcept override;
-
-    Buffer(Buffer &&Source) noexcept;
-
-    /* Sets the buffers data to that of the supplied pointer based on the size specified during
-     * creation. */
-    template<typename TDataObject>
-    static void SetBufferData(const TDataObject DataObject, const Buffer &Buffer)
-        requires std::is_pointer_v<TDataObject>
+    class Buffer : DeviceDependentObject, public IShaderBindableData
     {
-        void *data;
-        vkMapMemory(VKDevice::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
-        memcpy(data, DataObject, static_cast<size_t>(Buffer.vkBufferSize));
-        vkUnmapMemory(VKDevice::Get(), Buffer);
-    }
+     public:
+        Buffer(VkDeviceSize Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties);
 
-    static void SetBufferData(const ShaderUniformObject *DataObject, const Buffer &Buffer);
-    static void CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer);
+        ~Buffer() noexcept override;
 
-    void SetBufferData(const ShaderUniformObject *DataObject) const
-    {
-        SetBufferData(DataObject, *this);
-    }
+        Buffer(Buffer &&Source) noexcept;
 
-    void CopyBuffer(const Buffer &SrcBuffer) const
-    {
-        CopyBuffer(SrcBuffer, *this);
-    }
+        /* Sets the buffers data to that of the supplied pointer based on the size specified during
+         * creation. */
+        template<typename TDataObject>
+        static void SetBufferData(const TDataObject DataObject, const Buffer &Buffer)
+            requires std::is_pointer_v<TDataObject>
+        {
+            void *data;
+            vkMapMemory(VKDevice::Get(), Buffer, 0, Buffer.vkBufferSize, 0, &data);
+            memcpy(data, DataObject, static_cast<size_t>(Buffer.vkBufferSize));
+            vkUnmapMemory(VKDevice::Get(), Buffer);
+        }
 
-    operator VkBuffer() const
-    {
-        return vkBuffer;
-    }
+        static void SetBufferData(const ShaderUniformObject *DataObject, const Buffer &Buffer);
+        static void CopyBuffer(const Buffer &SrcBuffer, const Buffer &DstBuffer);
 
-    operator VkDeviceMemory() const
-    {
-        return vkBufferMemory;
-    }
+        void SetBufferData(const ShaderUniformObject *DataObject) const
+        {
+            SetBufferData(DataObject, *this);
+        }
 
-    operator vk::Buffer() const
-    {
-        return vkBuffer;
-    }
+        void CopyBuffer(const Buffer &SrcBuffer) const
+        {
+            CopyBuffer(SrcBuffer, *this);
+        }
 
-    [[nodiscard]] std::optional<vk::DescriptorImageInfo> GetDescriptorImageInfo() const override
-    {
-        return {};
-    }
+        operator VkBuffer() const
+        {
+            return vkBuffer;
+        }
 
-    [[nodiscard]] std::optional<vk::DescriptorBufferInfo> GetDescriptorBufferInfo() const override
-    {
-        return vk::DescriptorBufferInfo(vkBuffer, 0, vkBufferSize);
-    }
+        operator VkDeviceMemory() const
+        {
+            return vkBufferMemory;
+        }
 
-    [[nodiscard]] constexpr vk::DescriptorType GetDescriptorType() const override
-    {
-        return vk::DescriptorType::eStorageBuffer;
-    }
+        operator vk::Buffer() const
+        {
+            return vkBuffer;
+        }
 
-    void AdditionalBindingChecks(const DescriptorSetLayoutBinding &Binding) const override
-    {
-        ASSERT(Binding.size <= vkBufferSize,
-               "Buffer size mismatch: Shader Binding -> {} | Supplied Buffer -> {}",
-               Binding.size,
-               vkBufferSize);
-    }
+        [[nodiscard]] std::optional<vk::DescriptorImageInfo> GetDescriptorImageInfo() const override
+        {
+            return {};
+        }
 
-    void AdditionalBindingChecks(const DescriptorSetLayoutBindingMinimal &Binding) const override
-    {
-        LOG("Binding and object directly to a shader is dangerous and doesnt provide any extra "
-            "safety checks. Please avoid.")
-    }
+        [[nodiscard]] std::optional<vk::DescriptorBufferInfo> GetDescriptorBufferInfo() const override
+        {
+            return vk::DescriptorBufferInfo(vkBuffer, 0, vkBufferSize);
+        }
 
- protected:
-    VkBuffer vkBuffer;
-    VkDeviceMemory vkBufferMemory;
-    VkDeviceSize vkBufferSize;
-};
-}  // namespace Slipper
+        [[nodiscard]] constexpr vk::DescriptorType GetDescriptorType() const override
+        {
+            return vk::DescriptorType::eStorageBuffer;
+        }
+
+        void AdditionalBindingChecks(const DescriptorSetLayoutBinding &Binding) const override
+        {
+            ASSERT(Binding.size <= vkBufferSize,
+                   "Buffer size mismatch: Shader Binding -> {} | Supplied Buffer -> {}",
+                   Binding.size,
+                   vkBufferSize);
+        }
+
+        void AdditionalBindingChecks(const DescriptorSetLayoutBindingMinimal &Binding) const override
+        {
+            LOG("Binding and object directly to a shader is dangerous and doesnt provide any extra "
+                "safety checks. Please avoid.")
+        }
+
+     protected:
+        VkBuffer vkBuffer;
+        VkDeviceMemory vkBufferMemory;
+        VkDeviceSize vkBufferSize;
+    };
+}  // namespace Slipper::GPU::Vulkan

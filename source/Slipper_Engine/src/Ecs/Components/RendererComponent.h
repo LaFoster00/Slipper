@@ -3,24 +3,24 @@
 
 namespace Slipper
 {
-class Material;
-class RenderPass;
-class RenderingStage;
-class Model;
-
-struct Renderer : public IEcsComponent<Renderer>
-{
-    Renderer(NonOwningPtr<RenderingStage> Stage,
-             NonOwningPtr<Model> Model,
-             NonOwningPtr<Material> Shader)
+    namespace GPU
     {
-        stage = Stage;
-        model = Model;
-        material = Shader;
+        class Material;
+        class Model;
+        class RenderingStage;
     }
 
-    NonOwningPtr<RenderingStage> stage;
-    NonOwningPtr<Model> model;
-    NonOwningPtr<Material> material;
-};
+    struct Renderer : public IEcsComponent<Renderer>
+    {
+        Renderer(NonOwningPtr<GPU::RenderingStage> Stage, NonOwningPtr<GPU::Model> Model, NonOwningPtr<GPU::Material> Shader)
+        {
+            stage = Stage;
+            model = Model;
+            material = Shader;
+        }
+
+        NonOwningPtr<GPU::RenderingStage> stage;
+        NonOwningPtr<GPU::Model> model;
+        NonOwningPtr<GPU::Material> material;
+    };
 }  // namespace Slipper

@@ -1,7 +1,8 @@
-#include "ShaderReflection.h"
+#include "vk_ShaderReflection.h"
 
-#include "Shader.h"
 #include "spirv_reflect.h"
+#include "Vulkan/vk_ShaderLayout.h"
+
 
 namespace Slipper
 {

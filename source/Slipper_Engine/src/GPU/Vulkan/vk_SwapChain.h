@@ -1,103 +1,104 @@
 #pragma once
+#include "vk_Device.h"
+#include "vk_DeviceDependentObject.h"
+#include "vk_Settings.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
-class RenderPass;
-class Framebuffer;
-class DepthBuffer;
-class RenderTarget;
-class Texture2D;
-class Window;
-class VKDevice;
-class Surface;
+    class RenderPass;
+    class Framebuffer;
+    class DepthBuffer;
+    class RenderTarget;
+    class Texture2D;
+    class VKDevice;
+    class Surface;
 
-class SwapChain : public DeviceDependentObject
-{
- public:
-    SwapChain() = delete;
-    virtual ~SwapChain();
-
-    operator VkSwapchainKHR() const
+    class SwapChain : public DeviceDependentObject
     {
-        return Impl_GetSwapChain();
-    }
+     public:
+        SwapChain() = delete;
+        virtual ~SwapChain();
 
-    operator vk::SwapchainKHR() const
-    {
-        return Impl_GetSwapChain();
-    }
+        operator VkSwapchainKHR() const
+        {
+            return Impl_GetSwapChain();
+        }
 
-    [[nodiscard]] const vk::Extent2D &GetResolution() const
-    {
-        return resolution;
-    }
+        operator vk::SwapchainKHR() const
+        {
+            return Impl_GetSwapChain();
+        }
 
-    [[nodiscard]] const vk::Format &GetImageFormat() const
-    {
-        return imageRenderingFormat;
-    }
+        [[nodiscard]] const vk::Extent2D &GetResolution() const
+        {
+            return resolution;
+        }
 
-    [[nodiscard]] const vk::Format &GetDepthFormat() const
-    {
-        return depthFormat;
-    }
+        [[nodiscard]] const vk::Format &GetImageFormat() const
+        {
+            return imageRenderingFormat;
+        }
 
-    void Recreate(uint32_t Width, uint32_t Height);
-    void CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass);
-    void DestroyFramebuffers(NonOwningPtr<RenderPass> RenderPass);
+        [[nodiscard]] const vk::Format &GetDepthFormat() const
+        {
+            return depthFormat;
+        }
 
-    virtual vk::Image GetCurrentSwapChainImage() const;
-    virtual uint32_t GetCurrentSwapChainImageIndex() const = 0;
+        void Recreate(uint32_t Width, uint32_t Height);
+        void CreateFramebuffers(NonOwningPtr<RenderPass> RenderPass);
+        void DestroyFramebuffers(NonOwningPtr<RenderPass> RenderPass);
 
-    std::vector<vk::ImageView> &GetVkImageViews()
-    {
-        return m_vkImageViews;
-    }
+        virtual vk::Image GetCurrentSwapChainImage() const;
+        virtual uint32_t GetCurrentSwapChainImageIndex() const = 0;
 
-    const std::unordered_map<NonOwningPtr<RenderPass>, std::vector<vk::Framebuffer>>
-        &GetVkFramebuffers() const
-    {
-        return m_vkFramebuffers;
-    }
+        std::vector<vk::ImageView> &GetVkImageViews()
+        {
+            return m_vkImageViews;
+        }
 
-    VkFramebuffer GetVkFramebuffer(NonOwningPtr<RenderPass> RenderPass, uint32_t Frame)
-    {
-        return m_vkFramebuffers[RenderPass][Frame];
-    }
+        const std::unordered_map<NonOwningPtr<RenderPass>, std::vector<vk::Framebuffer>> &GetVkFramebuffers() const
+        {
+            return m_vkFramebuffers;
+        }
 
- protected:
-    SwapChain(vk::Extent2D Extent, vk::Format RenderingFormat);
+        VkFramebuffer GetVkFramebuffer(NonOwningPtr<RenderPass> RenderPass, uint32_t Frame)
+        {
+            return m_vkFramebuffers[RenderPass][Frame];
+        }
 
-    void Create();
-    virtual void Impl_Create() = 0;
-    void Cleanup(bool KeepRenderPasses, bool CalledFromDestructor = false);
-    virtual void Impl_Cleanup() = 0;
+     protected:
+        SwapChain(vk::Extent2D Extent, vk::Format RenderingFormat);
 
-    virtual VkSwapchainKHR Impl_GetSwapChain() const = 0;
+        void Create();
+        virtual void Impl_Create() = 0;
+        void Cleanup(bool KeepRenderPasses, bool CalledFromDestructor = false);
+        virtual void Impl_Cleanup() = 0;
 
-    void CreateImageViews();
+        virtual VkSwapchainKHR Impl_GetSwapChain() const = 0;
 
-    std::vector<vk::Image> &GetVkImages()
-    {
-        return m_vkImages;
-    }
+        void CreateImageViews();
 
- public:
-    static inline vk::Format swapChainFormat = Engine::TARGET_WINDOW_COLOR_FORMAT;
-    SwapChainSupportDetails swapChainSupport;
+        std::vector<vk::Image> &GetVkImages()
+        {
+            return m_vkImages;
+        }
 
-    std::unique_ptr<RenderTarget> renderTarget;
-    std::unique_ptr<DepthBuffer> depthBuffer;
+     public:
+        static inline vk::Format swapChainFormat = TARGET_WINDOW_COLOR_FORMAT;
+        SwapChainSupportDetails swapChainSupport;
 
- protected:
-    vk::Format imageRenderingFormat;
-    vk::ColorSpaceKHR imageColorSpace;
-    vk::Format depthFormat;
-    vk::Extent2D resolution;
+        std::unique_ptr<RenderTarget> renderTarget;
+        std::unique_ptr<DepthBuffer> depthBuffer;
 
- private:
-    std::vector<vk::Image> m_vkImages;
-    std::vector<vk::ImageView> m_vkImageViews;
-    std::unordered_map<NonOwningPtr<RenderPass>, std::vector<vk::Framebuffer>> m_vkFramebuffers;
-};
-}  // namespace Slipper
+     protected:
+        vk::Format imageRenderingFormat;
+        vk::ColorSpaceKHR imageColorSpace;
+        vk::Format depthFormat;
+        vk::Extent2D resolution;
+
+     private:
+        std::vector<vk::Image> m_vkImages;
+        std::vector<vk::ImageView> m_vkImageViews;
+        std::unordered_map<NonOwningPtr<RenderPass>, std::vector<vk::Framebuffer>> m_vkFramebuffers;
+    };
+}  // namespace Slipper::GPU::Vulkan

@@ -1,32 +1,34 @@
 #pragma once
 
-namespace Slipper
-{
-class VKDevice;
-class RenderPass;
-class SwapChain;
+#include "vk_DeviceDependentObject.h"
 
-class Framebuffer : DeviceDependentObject
+namespace Slipper::GPU::Vulkan
 {
- public:
-    Framebuffer(const RenderPass *RenderPass,
-                const VkImageView *Attachments,
-                uint32_t AttachmentCount,
-                VkExtent2D Extent);
-    ~Framebuffer();
+    class VKDevice;
+    class RenderPass;
+    class SwapChain;
 
-    operator VkFramebuffer() const
+    class Framebuffer : DeviceDependentObject
     {
-        return vkFramebuffer;
-    }
+     public:
+        Framebuffer(const RenderPass *RenderPass,
+                    const VkImageView *Attachments,
+                    uint32_t AttachmentCount,
+                    VkExtent2D Extent);
+        ~Framebuffer();
 
- private:
-    void Create(const RenderPass *RenderPass,
-                const VkImageView *Attachments,
-                uint32_t AttachmentCount,
-                VkExtent2D Extent);
+        operator VkFramebuffer() const
+        {
+            return vkFramebuffer;
+        }
 
- public:
-    VkFramebuffer vkFramebuffer;
-};
+     private:
+        void Create(const RenderPass *RenderPass,
+                    const VkImageView *Attachments,
+                    uint32_t AttachmentCount,
+                    VkExtent2D Extent);
+
+     public:
+        VkFramebuffer vkFramebuffer;
+    };
 }  // namespace Slipper

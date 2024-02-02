@@ -1,116 +1,116 @@
 #pragma once
+#include "Device.h"
 
 namespace Slipper::GPU::Vulkan
 {
-class VulkanInstance;
-class Surface;
-class Window;
+    class VulkanInstance;
+    class Surface;
 
-struct QueueFamilyIndices
-{
-    std::optional<uint32_t> computeFamily;
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-    std::optional<uint32_t> transferFamily;
-
-    bool IsComplete() const
+    struct QueueFamilyIndices
     {
-        return graphicsFamily.has_value() && presentFamily.has_value() &&
-               transferFamily.has_value() && computeFamily.has_value();
-    }
-};
+        std::optional<uint32_t> computeFamily;
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
+        std::optional<uint32_t> transferFamily;
 
-struct SwapChainSupportDetails
-{
-	vk::SurfaceCapabilitiesKHR capabilities;
-    std::vector<vk::SurfaceFormatKHR> formats;
-    std::vector<vk::PresentModeKHR> presentModes;
-};
+        [[nodiscard]] bool IsComplete() const
+        {
+            return graphicsFamily.has_value() && presentFamily.has_value() && transferFamily.has_value() &&
+                computeFamily.has_value();
+        }
+    };
 
-// Singleton since there will only be support for a single device
-class VKDevice
-{
- public:
-    VKDevice() = delete;
-
-    static VKDevice &Get()
+    struct SwapChainSupportDetails
     {
-        return *m_instance;
-    }
+        vk::SurfaceCapabilitiesKHR capabilities;
+        std::vector<vk::SurfaceFormatKHR> formats;
+        std::vector<vk::PresentModeKHR> presentModes;
+    };
 
-    static vk::Device &GetVk()
+    // Singleton since there will only be support for a single device
+    class VKDevice : public Device
     {
-        return m_instance->logicalDevice;
-    }
+     public:
+        VKDevice() = delete;
 
-    static void Destroy()
-    {
-        delete m_instance;
-    }
+        static VKDevice &Get()
+        {
+            return *m_instance;
+        }
 
-    operator vk::Device &()
-    {
-        return logicalDevice;
-    }
+        static vk::Device &GetVk()
+        {
+            return m_instance->logicalDevice;
+        }
 
-    operator VkDevice() const
-    {
-        return logicalDevice;
-    }
+        static void Destroy()
+        {
+            delete m_instance;
+        }
 
-    operator vk::PhysicalDevice &()
-    {
-        return physicalDevice;
-    }
+        operator vk::Device &()
+        {
+            return logicalDevice;
+        }
 
-    operator VkPhysicalDevice() const
-    {
-        return physicalDevice;
-    }
+        operator VkDevice() const
+        {
+            return logicalDevice;
+        }
 
-    void InitLogicalDevice();
+        operator vk::PhysicalDevice &()
+        {
+            return physicalDevice;
+        }
 
-    static VKDevice *PickPhysicalDevice(const Surface *Surface, bool InitLogicalDevice);
+        operator VkPhysicalDevice() const
+        {
+            return physicalDevice;
+        }
 
-    [[nodiscard]] std::string DeviceInfoToString() const;
+        void InitLogicalDevice();
 
-    [[nodiscard]] static std::vector<const char *> GetRequiredExtensions();
+        static VKDevice *PickPhysicalDevice(const Surface *Surface, bool InitLogicalDevice);
 
-    vk::SurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const;
-    uint32_t SurfaceSwapChainImagesCount(const Surface *Surface) const;
-    static uint32_t CapabilitiesSwapChainImageCount(const SwapChainSupportDetails &Support);
-    SwapChainSupportDetails QuerySwapChainSupport(const Surface *Surface) const;
-    VkExtent2D GetSurfaceResolution(const Surface *Surface) const;
-    vk::SampleCountFlagBits GetMaxUsableFramebufferSampleCount() const;
+        [[nodiscard]] std::string DeviceInfoToString() const;
 
-    uint32_t FindMemoryType(uint32_t TypeFilter, vk::MemoryPropertyFlags Properties) const;
+        [[nodiscard]] static std::vector<const char *> GetRequiredExtensions();
 
- private:
-    VKDevice(vk::PhysicalDevice PhysicalDevice);
-    ~VKDevice();
+        vk::SurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilities(const Surface *Surface) const;
+        uint32_t SurfaceSwapChainImagesCount(const Surface *Surface) const;
+        static uint32_t CapabilitiesSwapChainImageCount(const SwapChainSupportDetails &Support);
+        SwapChainSupportDetails QuerySwapChainSupport(const Surface *Surface) const;
+        VkExtent2D GetSurfaceResolution(const Surface *Surface) const;
+        vk::SampleCountFlagBits GetMaxUsableFramebufferSampleCount() const;
 
-    bool IsDeviceSuitable(const Surface *Surface);
-    uint32_t RateDeviceSuitability() const;
-    bool CheckExtensionSupport() const;
-    bool CheckFeatureSupport() const;
-    const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *Surface);
+        uint32_t FindMemoryType(uint32_t TypeFilter, vk::MemoryPropertyFlags Properties) const;
 
- public:
-    /* Gets destroyed together with its instance. */
-    vk::PhysicalDevice physicalDevice;
-    vk::Device logicalDevice;
+     private:
+        VKDevice(vk::PhysicalDevice PhysicalDevice);
+        ~VKDevice();
 
-    vk::PhysicalDeviceProperties deviceProperties;
-    vk::PhysicalDeviceFeatures deviceFeatures;
+        bool IsDeviceSuitable(const Surface *Surface);
+        uint32_t RateDeviceSuitability() const;
+        bool CheckExtensionSupport() const;
+        bool CheckFeatureSupport() const;
+        const QueueFamilyIndices *QueryQueueFamilyIndices(const Surface *Surface);
 
-    QueueFamilyIndices queueFamilyIndices;
+     public:
+        /* Gets destroyed together with its instance. */
+        vk::PhysicalDevice physicalDevice;
+        vk::Device logicalDevice;
 
-    vk::Queue computeQueue;
-    vk::Queue graphicsQueue;
-    vk::Queue presentQueue;
-    vk::Queue transferQueue;
+        vk::PhysicalDeviceProperties deviceProperties;
+        vk::PhysicalDeviceFeatures deviceFeatures;
 
- private:
-    static VKDevice *m_instance;
-};
-}  // namespace Slipper
+        QueueFamilyIndices queueFamilyIndices;
+
+        vk::Queue computeQueue;
+        vk::Queue graphicsQueue;
+        vk::Queue presentQueue;
+        vk::Queue transferQueue;
+
+     private:
+        static VKDevice *m_instance;
+    };
+}  // namespace Slipper::GPU::Vulkan

@@ -1,9 +1,8 @@
-#include "Texture2D.h"
+#include "../vk_Texture2D.h"
 
-#include "Buffer/Buffer.h"
-#include "Path.h"
+#include "Vulkan/vk_Buffer.h"
 
-namespace Slipper
+namespace Slipper::GPU::Vulkan
 {
 Texture2D::Texture2D(const StbImage Image, const bool GenerateMipMaps)
     : Texture(vk::ImageType::e2D, Image.extent, Image.format, {}, GenerateMipMaps),

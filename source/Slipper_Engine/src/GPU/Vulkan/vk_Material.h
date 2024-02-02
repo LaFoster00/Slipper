@@ -2,41 +2,45 @@
 
 namespace Slipper
 {
-class UniformBuffer;
-class RenderPass;
-class GraphicsShader;
-class MaterialManager;
-class IShaderBindableData;
-struct DescriptorSetLayoutBinding;
+    class MaterialManager;
+}
 
-struct MaterialUniform
+namespace Slipper::GPU::Vulkan
 {
-    Ref<DescriptorSetLayoutBinding> shaderBinding;
-    NonOwningPtr<IShaderBindableData> data;
-};
+    class UniformBuffer;
+    class RenderPass;
+    class GraphicsShader;
+    class IShaderBindableData;
+    struct DescriptorSetLayoutBinding;
 
-class Material
-{
-    friend MaterialManager;
+    struct MaterialUniform
+    {
+        Ref<DescriptorSetLayoutBinding> shaderBinding;
+        NonOwningPtr<IShaderBindableData> data;
+    };
 
- public:
-    Material(NonOwningPtr<GraphicsShader> Shader);
+    class Material
+    {
+        friend MaterialManager;
 
-    bool SetUniform(const std::string &Name, IShaderBindableData &Uniform);
+     public:
+        Material(NonOwningPtr<GraphicsShader> Shader);
 
-    void Use(const VkCommandBuffer &CommandBuffer,
-             NonOwningPtr<const RenderPass> RenderPass,
-             VkExtent2D Extent) const;
+        bool SetUniform(const std::string &Name, IShaderBindableData &Uniform);
 
-    [[nodiscard]] UniformBuffer *GetUniformBuffer(const std::string Name,
-                                                  const std::optional<uint32_t> Index = {}) const;
+        void Use(const VkCommandBuffer &CommandBuffer,
+                 NonOwningPtr<const RenderPass> RenderPass,
+                 VkExtent2D Extent) const;
 
- private:
-    void BindUniformForThisFrame(const MaterialUniform &Uniform) const;
+        [[nodiscard]] UniformBuffer *GetUniformBuffer(const std::string Name,
+                                                      const std::optional<uint32_t> Index = {}) const;
 
- public:
-    NonOwningPtr<GraphicsShader> shader;
-    // Uses string_view hash
-    std::unordered_map<std::string, MaterialUniform> uniforms;
-};
-}  // namespace Slipper
+     private:
+        void BindUniformForThisFrame(const MaterialUniform &Uniform) const;
+
+     public:
+        NonOwningPtr<GraphicsShader> shader;
+        // Uses string_view hash
+        std::unordered_map<std::string, MaterialUniform> uniforms;
+    };
+}  // namespace Slipper::GPU::Vulkan

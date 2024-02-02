@@ -1,7 +1,4 @@
-#include "RenderPass.h"
-
-#include "Presentation/SwapChain.h"
-#include "Shader/Shader.h"
+#include "../vk_RenderPass.h"
 
 namespace Slipper
 {

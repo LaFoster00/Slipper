@@ -1,7 +1,8 @@
 #pragma once
-#include "Shader.h"
 
-namespace Slipper
+#include "vk_Shader.h"
+
+namespace Slipper::GPU::Vulkan
 {
 class ComputePipeline;
 class RenderPass;

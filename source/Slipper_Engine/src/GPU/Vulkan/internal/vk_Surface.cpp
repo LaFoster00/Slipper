@@ -1,7 +1,5 @@
-#include "Surface.h"
+#include "../vk_Surface.h"
 
-#include "Shader/Shader.h"
-#include "SurfaceSwapChain.h"
 #include "Window.h"
 
 namespace Slipper

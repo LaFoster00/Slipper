@@ -1,110 +1,109 @@
 #pragma once
-
-#include "DeviceDependentObject.h"
-#include "RenderingStage.h"
-#include "Vulkan/vk_CommandPool.h"
+#include "Vulkan/vk_DeviceDependentObject.h"
+#include "Vulkan/vk_RenderingStage.h"
 
 namespace Slipper
 {
-class RenderingStage;
-class OffscreenSwapChain;
-class Model;
-class Texture2D;
-class Texture;
-class CommandPool;
-class Shader;
-class RenderPass;
-class Mesh;
-class VertexBuffer;
-class VKDevice;
-class Window;
-class Surface;
+    class Window;
+}
 
-class GraphicsEngine : DeviceDependentObject
+namespace Slipper::GPU
 {
- public:
-    static GraphicsEngine &Get()
+    class Context;
+    class CommandPool;
+
+    namespace Vulkan
     {
-        return *m_graphicsInstance;
+        class VKRenderingStage;
+        class OffscreenSwapChain;
+        class SwapChain;
+        class RenderPass;
+        class Surface;
     }
 
-    static void Init();
-
-    static void Shutdown();
-
-    static void SetupDebugResources();
-    void SetupDebugRender(Surface &Surface) const;
-    void SetupSimpleDraw() const;
-
-    RenderPass *CreateRenderPass(const std::string &Name,
-                                 vk::Format RenderingFormat,
-                                 vk::Format DepthFormat,
-                                 bool ForPresentation);
-    void DestroyRenderPass(RenderPass *RenderPass);
-
-    void AddWindow(Window &Window);
-    NonOwningPtr<RenderingStage> AddRenderingStage(std::string Name,
-                                                   NonOwningPtr<SwapChain> SwapChain,
-                                                   bool NativeSwapChain);
-
-    void NewFrame() const;
-    void BeginRenderingStage(std::string_view Name);
-    void EndRenderingStage();
-    void EndFrame();
-
-    static void OnViewportResize(NonOwningPtr<RenderingStage> Stage,
-                                 uint32_t Width,
-                                 uint32_t Height);
-    static void OnWindowResized(Window *Window, int Width, int Height);
-
-    static Entity GetDefaultCamera();
-
-    [[nodiscard]] VkCommandBuffer GetCurrentGuiCommandBuffer() const
+    class GraphicsEngine : Vulkan::DeviceDependentObject
     {
-        return viewportRenderingStage->graphicsCommandPool->GetCurrentCommandBuffer();
-    }
+     public:
+        static GraphicsEngine &Get()
+        {
+            return *m_graphicsInstance;
+        }
 
-    [[nodiscard]] uint32_t GetCurrentFrame() const
-    {
-        return m_currentFrame;
-    }
+        static void Init();
 
-    [[nodiscard]] NonOwningPtr<CommandPool> GetViewportCommandPool() const
-    {
-        return viewportRenderingStage->graphicsCommandPool;
-    }
+        static void Shutdown();
 
- private:
-    GraphicsEngine();
-    ~GraphicsEngine();
+        static void SetupDebugResources();
+        void SetupDebugRender(Context &Context) const;
+        void SetupSimpleDraw() const;
 
- public:
-    std::vector<NonOwningPtr<Window>> windows;
+        Vulkan::RenderPass *CreateRenderPass(const std::string &Name,
+                                             vk::Format RenderingFormat,
+                                             vk::Format DepthFormat,
+                                             bool ForPresentation);
+        void DestroyRenderPass(Vulkan::RenderPass *RenderPass);
 
-    NonOwningPtr<RenderPass> viewportRenderPass = nullptr;
-    OwningPtr<OffscreenSwapChain> viewportSwapChain;
-    NonOwningPtr<RenderingStage> viewportRenderingStage;
+        void AddWindow(Window &Window);
+        NonOwningPtr<RenderingStage> AddRenderingStage(std::string Name,
+                                                                 NonOwningPtr<Vulkan::SwapChain> SwapChain,
+                                                                 bool NativeSwapChain);
 
-    NonOwningPtr<RenderPass> windowRenderPass = nullptr;
-    NonOwningPtr<RenderingStage> windowRenderingStage;
+        void NewFrame() const;
+        void BeginRenderingStage(std::string_view Name);
+        void EndRenderingStage();
+        void EndFrame();
 
-    std::unordered_map<std::string, std::unique_ptr<RenderPass>> renderPasses;
-    std::unordered_map<NonOwningPtr<RenderPass>, std::string> renderPassNames;
-    std::unordered_map<std::string, OwningPtr<RenderingStage>> renderingStages;
+        static void OnViewportResize(NonOwningPtr<RenderingStage> Stage, uint32_t Width, uint32_t Height);
+        static void OnWindowResized(Window *Window, int Width, int Height);
 
-    // Memory Transfer Commands
-    std::unique_ptr<CommandPool> memoryCommandPool;
+        static Entity GetDefaultCamera();
 
- private:
-    NonOwningPtr<Surface> surface = nullptr;
+        [[nodiscard]] VkCommandBuffer GetCurrentGuiCommandBuffer() const
+        {
+            return viewportRenderingStage->GetGraphicsCommandPool()->GetCurrentCommandBuffer();
+        }
 
-    static GraphicsEngine *m_graphicsInstance;
+        [[nodiscard]] uint32_t GetCurrentFrame() const
+        {
+            return m_currentFrame;
+        }
 
-    std::vector<vk::Fence> m_computeInFlightFences;
-    std::vector<vk::Fence> m_renderingInFlightFences;
+        [[nodiscard]] NonOwningPtr<CommandPool> GetViewportCommandPool() const
+        {
+            return viewportRenderingStage->GetGraphicsCommandPool();
+        }
 
-    uint32_t m_currentFrame = 0;
-    NonOwningPtr<RenderPass> m_currentRenderPass = nullptr;
-    NonOwningPtr<RenderingStage> m_currentRenderingStage = nullptr;
-};
-}  // namespace Slipper
+     private:
+        GraphicsEngine();
+        ~GraphicsEngine();
+
+     public:
+        std::vector<NonOwningPtr<Window>> windows;
+
+        NonOwningPtr<Vulkan::RenderPass> viewportRenderPass = nullptr;
+        OwningPtr<Vulkan::OffscreenSwapChain> viewportSwapChain;
+        NonOwningPtr<RenderingStage> viewportRenderingStage;
+
+        NonOwningPtr<Vulkan::RenderPass> windowRenderPass = nullptr;
+        NonOwningPtr<RenderingStage> windowRenderingStage;
+
+        std::unordered_map<std::string, std::unique_ptr<Vulkan::RenderPass>> renderPasses;
+        std::unordered_map<NonOwningPtr<Vulkan::RenderPass>, std::string> renderPassNames;
+        std::unordered_map<std::string, OwningPtr<RenderingStage>> renderingStages;
+
+        // Memory Transfer Commands
+        std::unique_ptr<CommandPool> memoryCommandPool;
+
+     private:
+        NonOwningPtr<Vulkan::Surface> surface = nullptr;
+
+        static GraphicsEngine *m_graphicsInstance;
+
+        std::vector<vk::Fence> m_computeInFlightFences;
+        std::vector<vk::Fence> m_renderingInFlightFences;
+
+        uint32_t m_currentFrame = 0;
+        NonOwningPtr<Vulkan::RenderPass> m_currentRenderPass = nullptr;
+        NonOwningPtr<RenderingStage> m_currentRenderingStage = nullptr;
+    };
+}  // namespace Slipper::GPU

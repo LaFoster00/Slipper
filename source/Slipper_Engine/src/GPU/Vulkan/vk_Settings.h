@@ -2,8 +2,6 @@
 
 namespace Slipper
 {
-class VulkanInstance;
-
 namespace GPU::Vulkan
 {
 inline constexpr bool LINEAR_WINDOW_COLOR = true;
